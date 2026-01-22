@@ -1,0 +1,828 @@
+import express from 'express';
+import { supabase } from '../config/supabase.js';
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+import os from 'os';
+import fs from 'fs/promises';
+import { extractTextFromFile, isValidFileType, isValidFileSize } from '../services/fileProcessor.js';
+import { analyzeDocument } from '../services/claudeService.js';
+import { generateEmbedding, chunkText, cosineSimilarity } from '../services/openaiService.js';
+import {
+  extractDocId,
+  extractSheetId,
+  getGoogleSourceType,
+  fetchPublicGoogleDoc,
+  fetchPublicGoogleSheet,
+  hashContent,
+  checkAndFetchIfModified
+} from '../services/googleDocs.js';
+
+const router = express.Router();
+
+// Configure multer for document uploads
+const upload = multer({
+  dest: os.tmpdir(),
+  limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10485760 }, // 10MB default
+  fileFilter: (req, file, cb) => {
+    if (isValidFileType(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Allowed types: PDF, DOCX, TXT, PNG, JPG, XLSX, CSV'));
+    }
+  }
+});
+
+/**
+ * GET /api/documents/:clientId
+ * Get all documents for a client
+ */
+router.get('/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/documents/detail/:documentId
+ * Get single document by ID
+ */
+router.get('/detail/:documentId', async (req, res) => {
+  try {
+    const { documentId } = req.params;
+
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .single();
+
+    if (error) throw error;
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        error: 'Document not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (error) {
+    console.error('Error fetching document:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/documents/:clientId/chunks/:documentId
+ * Get chunks for a specific document
+ */
+router.get('/:clientId/chunks/:documentId', async (req, res) => {
+  try {
+    const { documentId } = req.params;
+
+    const { data, error } = await supabase
+      .from('document_chunks')
+      .select('*')
+      .eq('document_id', documentId)
+      .order('chunk_index', { ascending: true });
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('Error fetching document chunks:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/documents/:clientId/upload
+ * Upload and process document
+ */
+router.post('/:clientId/upload', upload.single('file'), async (req, res) => {
+  let tempFilePath = null;
+
+  try {
+    const { clientId } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No file uploaded'
+      });
+    }
+
+    tempFilePath = req.file.path;
+    const fileName = req.file.originalname;
+    const fileType = req.file.mimetype;
+    const fileSize = req.file.size;
+
+    // Verify client exists
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('id', clientId)
+      .single();
+
+    if (clientError || !client) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    // Upload file to Supabase Storage
+    const fileExt = path.extname(fileName);
+    const storagePath = `documents/${clientId}/${uuidv4()}${fileExt}`;
+
+    const fileBuffer = await fs.readFile(tempFilePath);
+
+    const { error: uploadError } = await supabase.storage
+      .from('client-assets')
+      .upload(storagePath, fileBuffer, {
+        contentType: fileType,
+        upsert: false
+      });
+
+    if (uploadError) throw uploadError;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('client-assets')
+      .getPublicUrl(storagePath);
+
+    // Create initial document record (processing = false)
+    const { data: document, error: insertError } = await supabase
+      .from('documents')
+      .insert([{
+        client_id: clientId,
+        file_name: fileName,
+        file_type: fileType,
+        file_url: publicUrl,
+        file_size: fileSize,
+        processed: false
+      }])
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+
+    // Process document asynchronously
+    processDocumentAsync(document.id, tempFilePath, fileName, fileType);
+
+    res.status(201).json({
+      success: true,
+      data: document,
+      message: 'Document uploaded. Processing in background...'
+    });
+
+  } catch (error) {
+    console.error('Error uploading document:', error);
+
+    // Cleanup temp file
+    if (tempFilePath) {
+      try {
+        await fs.unlink(tempFilePath);
+      } catch (e) {
+        console.error('Error deleting temp file:', e);
+      }
+    }
+
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Process document in background - now with chunking and embeddings
+ */
+async function processDocumentAsync(documentId, filePath, fileName, fileType) {
+  try {
+    console.log(`Processing document ${documentId}...`);
+
+    // Extract text
+    const textContent = await extractTextFromFile(filePath, fileType);
+
+    if (!textContent || textContent.length < 10) {
+      throw new Error('Insufficient text content extracted from file');
+    }
+
+    // Analyze with Claude
+    const analysis = await analyzeDocument(textContent, fileName, fileType);
+
+    // Generate document-level embedding for the summary
+    const docEmbedding = await generateEmbedding(
+      `${analysis.title} ${analysis.summary} ${analysis.keywords.join(' ')}`
+    );
+
+    // Chunk the full text content
+    const chunks = chunkText(textContent, 1000, 200);
+    console.log(`Created ${chunks.length} chunks for document ${documentId}`);
+
+    // Generate embeddings for each chunk and store them
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      try {
+        const chunkEmbedding = await generateEmbedding(chunk.text);
+
+        await supabase
+          .from('document_chunks')
+          .insert([{
+            document_id: documentId,
+            chunk_index: i,
+            content: chunk.text,
+            start_index: chunk.startIndex,
+            end_index: chunk.endIndex,
+            embedding: JSON.stringify(chunkEmbedding)
+          }]);
+      } catch (chunkError) {
+        console.error(`Error processing chunk ${i} of document ${documentId}:`, chunkError);
+      }
+    }
+
+    // Update document record
+    const { error: updateError } = await supabase
+      .from('documents')
+      .update({
+        title: analysis.title,
+        summary: analysis.summary,
+        tags: analysis.tags,
+        keywords: analysis.keywords,
+        topic: analysis.topic,
+        sentiment: analysis.sentiment,
+        sentiment_score: analysis.sentiment_score,
+        embedding: JSON.stringify(docEmbedding),
+        chunk_count: chunks.length,
+        processed: true
+      })
+      .eq('id', documentId);
+
+    if (updateError) throw updateError;
+
+    console.log(`Document ${documentId} processed successfully with ${chunks.length} chunks`);
+
+  } catch (error) {
+    console.error(`Error processing document ${documentId}:`, error);
+
+    // Mark as failed
+    await supabase
+      .from('documents')
+      .update({
+        processed: false,
+        title: 'Processing Failed',
+        summary: `Error: ${error.message}`
+      })
+      .eq('id', documentId);
+  } finally {
+    // Cleanup temp file
+    try {
+      await fs.unlink(filePath);
+    } catch (e) {
+      console.error('Error deleting temp file:', e);
+    }
+  }
+}
+
+/**
+ * POST /api/documents/:clientId/google
+ * Add a Google Doc/Sheet as a source
+ */
+router.post('/:clientId/google', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'Google Docs/Sheets URL is required'
+      });
+    }
+
+    // Determine source type
+    const sourceType = getGoogleSourceType(url);
+    if (!sourceType) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid URL. Please provide a Google Docs or Google Sheets URL.'
+      });
+    }
+
+    // Verify client exists
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('id', clientId)
+      .single();
+
+    if (clientError || !client) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    let content, title, docId;
+
+    if (sourceType === 'google_doc') {
+      docId = extractDocId(url);
+      if (!docId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Could not extract document ID from URL'
+        });
+      }
+
+      const docData = await fetchPublicGoogleDoc(docId);
+      content = docData.content;
+      title = docData.title;
+    } else if (sourceType === 'google_sheet') {
+      docId = extractSheetId(url);
+      if (!docId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Could not extract spreadsheet ID from URL'
+        });
+      }
+
+      const sheetData = await fetchPublicGoogleSheet(docId);
+      content = sheetData.content;
+      title = sheetData.title;
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: 'Google Slides not yet supported'
+      });
+    }
+
+    // Generate content hash for change detection
+    const contentHash = hashContent(content);
+
+    // Create document record
+    const { data: document, error: insertError } = await supabase
+      .from('documents')
+      .insert([{
+        client_id: clientId,
+        file_name: title,
+        file_type: sourceType,
+        file_url: url,
+        file_size: content ? content.length : 0,
+        google_doc_id: docId,
+        source_type: 'google',
+        last_synced: new Date().toISOString(),
+        content_hash: contentHash,
+        processed: false
+      }])
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+
+    // Process document asynchronously
+    processGoogleDocAsync(document.id, content, title, sourceType);
+
+    res.status(201).json({
+      success: true,
+      data: document,
+      message: 'Google Doc added. Processing in background...'
+    });
+
+  } catch (error) {
+    console.error('Error adding Google Doc:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/documents/:documentId/sync
+ * Sync/refresh a Google Doc source
+ */
+router.post('/:documentId/sync', async (req, res) => {
+  try {
+    const { documentId } = req.params;
+
+    // Get document
+    const { data: document, error: fetchError } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .single();
+
+    if (fetchError || !document) {
+      return res.status(404).json({
+        success: false,
+        error: 'Document not found'
+      });
+    }
+
+    if (document.source_type !== 'google' || !document.google_doc_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'This document is not a Google source'
+      });
+    }
+
+    let content, title;
+    const sourceType = document.file_type;
+
+    if (sourceType === 'google_doc') {
+      const docData = await fetchPublicGoogleDoc(document.google_doc_id);
+      content = docData.content;
+      title = docData.title;
+    } else if (sourceType === 'google_sheet') {
+      const sheetData = await fetchPublicGoogleSheet(document.google_doc_id);
+      content = sheetData.content;
+      title = sheetData.title;
+    }
+
+    // Delete old chunks
+    await supabase
+      .from('document_chunks')
+      .delete()
+      .eq('document_id', documentId);
+
+    // Update last_synced
+    await supabase
+      .from('documents')
+      .update({
+        last_synced: new Date().toISOString(),
+        processed: false
+      })
+      .eq('id', documentId);
+
+    // Re-process document
+    processGoogleDocAsync(documentId, content, title, sourceType);
+
+    res.json({
+      success: true,
+      message: 'Sync started. Document is being re-processed...'
+    });
+
+  } catch (error) {
+    console.error('Error syncing Google Doc:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/documents/:clientId/sync-all
+ * Check all Google sources for updates and sync only changed ones
+ */
+router.post('/:clientId/sync-all', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    // Get all Google sources for this client
+    const { data: googleDocs, error: fetchError } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('source_type', 'google');
+
+    if (fetchError) throw fetchError;
+
+    if (!googleDocs || googleDocs.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No Google sources to sync',
+        synced: 0,
+        checked: 0
+      });
+    }
+
+    const results = {
+      checked: googleDocs.length,
+      synced: 0,
+      unchanged: 0,
+      errors: []
+    };
+
+    // Check each doc for changes
+    for (const doc of googleDocs) {
+      try {
+        const checkResult = await checkAndFetchIfModified(
+          doc.google_doc_id,
+          doc.file_type,
+          doc.content_hash
+        );
+
+        if (checkResult.modified) {
+          // Delete old chunks
+          await supabase
+            .from('document_chunks')
+            .delete()
+            .eq('document_id', doc.id);
+
+          // Update the document
+          await supabase
+            .from('documents')
+            .update({
+              last_synced: new Date().toISOString(),
+              content_hash: checkResult.contentHash,
+              processed: false
+            })
+            .eq('id', doc.id);
+
+          // Re-process in background
+          processGoogleDocAsync(doc.id, checkResult.content, checkResult.title, doc.file_type);
+          results.synced++;
+        } else {
+          results.unchanged++;
+        }
+      } catch (error) {
+        results.errors.push({ docId: doc.id, error: error.message });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Sync complete. ${results.synced} updated, ${results.unchanged} unchanged.`,
+      ...results
+    });
+
+  } catch (error) {
+    console.error('Error in batch sync:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Process Google Doc in background - now with chunking
+ */
+async function processGoogleDocAsync(documentId, content, title, sourceType) {
+  try {
+    console.log(`Processing Google Doc ${documentId}...`);
+
+    if (!content || content.length < 10) {
+      throw new Error('Insufficient content extracted from Google Doc');
+    }
+
+    // Analyze with Claude
+    const analysis = await analyzeDocument(content, title, sourceType);
+
+    // Generate document-level embedding
+    const docEmbedding = await generateEmbedding(
+      `${analysis.title} ${analysis.summary} ${analysis.keywords.join(' ')}`
+    );
+
+    // Chunk the content
+    const chunks = chunkText(content, 1000, 200);
+    console.log(`Created ${chunks.length} chunks for Google Doc ${documentId}`);
+
+    // Generate embeddings for each chunk
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      try {
+        const chunkEmbedding = await generateEmbedding(chunk.text);
+
+        await supabase
+          .from('document_chunks')
+          .insert([{
+            document_id: documentId,
+            chunk_index: i,
+            content: chunk.text,
+            start_index: chunk.startIndex,
+            end_index: chunk.endIndex,
+            embedding: JSON.stringify(chunkEmbedding)
+          }]);
+      } catch (chunkError) {
+        console.error(`Error processing chunk ${i} of Google Doc ${documentId}:`, chunkError);
+      }
+    }
+
+    // Update document record
+    const { error: updateError } = await supabase
+      .from('documents')
+      .update({
+        title: analysis.title,
+        summary: analysis.summary,
+        tags: analysis.tags,
+        keywords: analysis.keywords,
+        topic: analysis.topic,
+        sentiment: analysis.sentiment,
+        sentiment_score: analysis.sentiment_score,
+        embedding: JSON.stringify(docEmbedding),
+        chunk_count: chunks.length,
+        processed: true
+      })
+      .eq('id', documentId);
+
+    if (updateError) throw updateError;
+
+    console.log(`Google Doc ${documentId} processed successfully with ${chunks.length} chunks`);
+
+  } catch (error) {
+    console.error(`Error processing Google Doc ${documentId}:`, error);
+
+    await supabase
+      .from('documents')
+      .update({
+        processed: false,
+        title: 'Processing Failed',
+        summary: `Error: ${error.message}`
+      })
+      .eq('id', documentId);
+  }
+}
+
+/**
+ * POST /api/documents/search/:clientId
+ * Semantic search for documents using vector similarity
+ */
+router.post('/search/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { query, limit = 5, includeChunks = true } = req.body;
+
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        error: 'Search query is required'
+      });
+    }
+
+    // Generate embedding for query
+    const queryEmbedding = await generateEmbedding(query);
+
+    // Get all documents for this client
+    const { data: documents, error: docError } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('processed', true);
+
+    if (docError) throw docError;
+
+    // Calculate document-level similarity scores
+    const scoredDocs = documents.map(doc => {
+      let embedding;
+      try {
+        embedding = JSON.parse(doc.embedding || '[]');
+      } catch {
+        embedding = [];
+      }
+
+      const similarity = cosineSimilarity(queryEmbedding, embedding);
+
+      return {
+        ...doc,
+        similarity_score: similarity
+      };
+    });
+
+    // Sort by similarity and get top results
+    const topDocs = scoredDocs
+      .sort((a, b) => b.similarity_score - a.similarity_score)
+      .slice(0, limit);
+
+    // If requested, also search chunks for more precise retrieval
+    let relevantChunks = [];
+    if (includeChunks && topDocs.length > 0) {
+      const docIds = topDocs.map(d => d.id);
+
+      const { data: chunks, error: chunkError } = await supabase
+        .from('document_chunks')
+        .select('*')
+        .in('document_id', docIds);
+
+      if (!chunkError && chunks) {
+        // Score chunks
+        const scoredChunks = chunks.map(chunk => {
+          let embedding;
+          try {
+            embedding = JSON.parse(chunk.embedding || '[]');
+          } catch {
+            embedding = [];
+          }
+
+          const similarity = cosineSimilarity(queryEmbedding, embedding);
+          const parentDoc = topDocs.find(d => d.id === chunk.document_id);
+
+          return {
+            ...chunk,
+            similarity_score: similarity,
+            documentTitle: parentDoc?.title || 'Unknown'
+          };
+        });
+
+        // Get top chunks
+        relevantChunks = scoredChunks
+          .sort((a, b) => b.similarity_score - a.similarity_score)
+          .slice(0, 10);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        documents: topDocs,
+        chunks: relevantChunks
+      }
+    });
+  } catch (error) {
+    console.error('Error searching documents:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/documents/:documentId
+ * Delete document and its chunks
+ */
+router.delete('/:documentId', async (req, res) => {
+  try {
+    const { documentId } = req.params;
+
+    // Get document to find file path
+    const { data: document, error: fetchError } = await supabase
+      .from('documents')
+      .select('file_url')
+      .eq('id', documentId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Delete chunks first
+    await supabase
+      .from('document_chunks')
+      .delete()
+      .eq('document_id', documentId);
+
+    // Delete from storage (extract path from URL)
+    if (document?.file_url && !document.file_url.includes('docs.google.com')) {
+      const urlParts = document.file_url.split('/');
+      const bucketPath = urlParts.slice(urlParts.indexOf('documents')).join('/');
+
+      await supabase.storage
+        .from('client-assets')
+        .remove([bucketPath]);
+    }
+
+    // Delete document record
+    const { error } = await supabase
+      .from('documents')
+      .delete()
+      .eq('id', documentId);
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: 'Document deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+export default router;
