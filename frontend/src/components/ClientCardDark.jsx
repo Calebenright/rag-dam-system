@@ -1,4 +1,4 @@
-import { FolderOpen, Trash2, FileText, MessageSquare } from 'lucide-react';
+import { FolderOpen, Trash2, FileText, MessageSquare, Crown } from 'lucide-react';
 
 // Pastel accent colors for cards
 const accents = [
@@ -9,9 +9,11 @@ const accents = [
   { bg: 'bg-pastel-coral', bgLight: 'bg-pastel-coral/10', border: 'border-pastel-coral/30', text: 'text-pastel-coral' },
 ];
 
-export default function ClientCard({ client, index = 0, onClick, onDelete }) {
-  // Use index for consistent accent color assignment
-  const accent = accents[index % accents.length];
+export default function ClientCard({ client, index = 0, onClick, onDelete, onMakeSuperclient, superclientExists }) {
+  // Use index for consistent accent color assignment, but superclient always gets coral
+  const accent = client.is_superclient
+    ? accents[4] // coral for superclient
+    : accents[index % accents.length];
 
   return (
     <div
@@ -49,13 +51,33 @@ export default function ClientCard({ client, index = 0, onClick, onDelete }) {
           </div>
         </div>
 
-        {/* Delete button */}
-        <button
-          onClick={onDelete}
-          className="absolute top-2 right-2 p-1.5 bg-neutral-900/80 backdrop-blur-sm text-neutral-400 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:text-pastel-coral hover:bg-pastel-coral/10"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {/* Action buttons */}
+        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+          {!client.is_superclient && !superclientExists && onMakeSuperclient && (
+            <button
+              onClick={onMakeSuperclient}
+              className="p-1.5 bg-neutral-900/80 backdrop-blur-sm text-neutral-400 rounded-lg hover:text-pastel-coral hover:bg-pastel-coral/10"
+              title="Make Superclient"
+            >
+              <Crown className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={onDelete}
+            className="p-1.5 bg-neutral-900/80 backdrop-blur-sm text-neutral-400 rounded-lg hover:text-pastel-coral hover:bg-pastel-coral/10"
+            title="Delete"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Superclient badge */}
+        {client.is_superclient && (
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 bg-pastel-coral/20 backdrop-blur-sm rounded-lg border border-pastel-coral/30">
+            <Crown className="w-3 h-3 text-pastel-coral" />
+            <span className="text-xs font-medium text-pastel-coral">Superclient</span>
+          </div>
+        )}
       </div>
 
       {/* Content */}

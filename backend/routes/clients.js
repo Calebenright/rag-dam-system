@@ -89,13 +89,29 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', upload.single('thumbnail'), async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, is_superclient } = req.body;
 
     if (!name) {
       return res.status(400).json({
         success: false,
         error: 'Client name is required'
       });
+    }
+
+    // Check if trying to create superclient and one already exists
+    if (is_superclient === 'true' || is_superclient === true) {
+      const { data: existingSuper } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('is_superclient', true)
+        .single();
+
+      if (existingSuper) {
+        return res.status(400).json({
+          success: false,
+          error: 'A superclient already exists. Only one superclient is allowed.'
+        });
+      }
     }
 
     let thumbnailUrl = null;
@@ -129,7 +145,8 @@ router.post('/', upload.single('thumbnail'), async (req, res) => {
       .insert([{
         name,
         description: description || '',
-        thumbnail_url: thumbnailUrl
+        thumbnail_url: thumbnailUrl,
+        is_superclient: is_superclient === 'true' || is_superclient === true
       }])
       .select()
       .single();
@@ -156,11 +173,35 @@ router.post('/', upload.single('thumbnail'), async (req, res) => {
 router.put('/:id', upload.single('thumbnail'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description } = req.body;
+    const { name, description, is_superclient } = req.body;
 
     const updates = {};
     if (name) updates.name = name;
     if (description !== undefined) updates.description = description;
+
+    // Handle superclient flag
+    if (is_superclient !== undefined) {
+      const makeSuper = is_superclient === 'true' || is_superclient === true;
+
+      if (makeSuper) {
+        // Check if another superclient exists
+        const { data: existingSuper } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('is_superclient', true)
+          .neq('id', id)
+          .single();
+
+        if (existingSuper) {
+          return res.status(400).json({
+            success: false,
+            error: 'A superclient already exists. Only one superclient is allowed.'
+          });
+        }
+      }
+
+      updates.is_superclient = makeSuper;
+    }
 
     // Upload new thumbnail if provided
     if (req.file) {

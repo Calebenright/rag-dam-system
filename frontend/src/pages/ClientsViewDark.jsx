@@ -42,6 +42,24 @@ export default function ClientsView() {
     }
   };
 
+  // Make superclient mutation
+  const makeSuperclientMutation = useMutation({
+    mutationFn: (clientId) => clientsApi.update(clientId, { is_superclient: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['clients']);
+    },
+  });
+
+  const handleMakeSuperclient = async (clientId, e) => {
+    e.stopPropagation();
+    if (window.confirm('Make this client the Superclient? Superclients have access to Leads verification and other global tools.')) {
+      await makeSuperclientMutation.mutateAsync(clientId);
+    }
+  };
+
+  // Check if superclient exists
+  const superclientExists = clients.some(c => c.is_superclient);
+
   return (
     <div className="min-h-screen bg-neutral-950 texture-dots">
       {/* Gradient accent bar at top */}
@@ -149,6 +167,8 @@ export default function ClientsView() {
                 index={index}
                 onClick={() => handleClientClick(client.id)}
                 onDelete={(e) => handleDeleteClient(client.id, e)}
+                onMakeSuperclient={(e) => handleMakeSuperclient(client.id, e)}
+                superclientExists={superclientExists}
               />
             ))}
           </div>

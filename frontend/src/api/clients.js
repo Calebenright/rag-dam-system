@@ -21,10 +21,11 @@ export const clientsApi = {
     return data.data;
   },
 
-  // Update client
-  update: async (id, formData) => {
-    const { data } = await api.put(`/api/clients/${id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+  // Update client (supports both FormData and plain object)
+  update: async (id, updateData) => {
+    const isFormData = updateData instanceof FormData;
+    const { data } = await api.put(`/api/clients/${id}`, updateData, {
+      headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {},
     });
     return data.data;
   },

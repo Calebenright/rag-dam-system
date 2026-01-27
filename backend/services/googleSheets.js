@@ -305,6 +305,40 @@ export async function deleteSheet(spreadsheetId, sheetId) {
 }
 
 /**
+ * Insert a new column at a specific index
+ * @param {string} spreadsheetId - The spreadsheet ID
+ * @param {number} sheetId - The numeric sheet ID (not the name)
+ * @param {number} columnIndex - The 0-based column index where the new column will be inserted
+ * @param {number} numColumns - Number of columns to insert (default 1)
+ */
+export async function insertColumn(spreadsheetId, sheetId, columnIndex, numColumns = 1) {
+  try {
+    const sheets = getSheetsClient();
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        requests: [{
+          insertDimension: {
+            range: {
+              sheetId,
+              dimension: 'COLUMNS',
+              startIndex: columnIndex,
+              endIndex: columnIndex + numColumns,
+            },
+            inheritFromBefore: columnIndex > 0,
+          },
+        }],
+      },
+    });
+
+    return { inserted: true, columnIndex, numColumns };
+  } catch (error) {
+    console.error('Error inserting column:', error.message);
+    throw error;
+  }
+}
+
+/**
  * Format cells (bold, colors, etc.)
  * @param {string} spreadsheetId - The spreadsheet ID
  * @param {number} sheetId - The sheet ID
@@ -424,6 +458,7 @@ export default {
   batchUpdate,
   addSheet,
   deleteSheet,
+  insertColumn,
   formatCells,
   parseSheetOperations,
   executeSheetOperation,

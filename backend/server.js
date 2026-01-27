@@ -9,8 +9,10 @@ import clientsRouter from './routes/clients.js';
 import documentsRouter from './routes/documents.js';
 import chatRouter from './routes/chat.js';
 import sheetsRouter from './routes/sheets.js';
+import dashboardsRouter from './routes/dashboards.js';
+import leadsRouter from './routes/leads.js';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,7 +20,7 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || ['http://localhost:3000', 'http://localhost:5173'],
+  origin: process.env.FRONTEND_URL || ['http://localhost:3000', 'http://localhost:3004', 'http://localhost:5173'],
   credentials: true
 }));
 app.use(morgan('dev'));
@@ -27,9 +29,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  windowMs: 1 * 60 * 1000, // 1 minute window
+  max: 120, // 120 requests per minute (2 per second average)
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
@@ -38,6 +42,8 @@ app.use('/api/clients', clientsRouter);
 app.use('/api/documents', documentsRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/sheets', sheetsRouter);
+app.use('/api/dashboards', dashboardsRouter);
+app.use('/api/leads', leadsRouter);
 
 // Health check
 app.get('/health', (req, res) => {

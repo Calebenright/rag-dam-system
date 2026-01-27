@@ -2,32 +2,35 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ArrowLeft, MessageSquare, Database, Loader2, Upload, Settings, FileSpreadsheet
+  ArrowLeft, MessageSquare, Database, Loader2, Settings, BarChart3, Users
 } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import { documentsApi } from '../api/documents';
-import DocumentUpload from '../components/DocumentUpload';
 import SourcesManager from '../components/SourcesManager';
 import EnhancedChatInterface from '../components/EnhancedChatInterface';
-import SheetsManager from '../components/SheetsManager';
+import DataboardManager from '../components/DataboardManager';
+import LeadsManager from '../components/LeadsManager';
 import clsx from 'clsx';
 
 export default function ClientDetail() {
   const { clientId } = useParams();
   const navigate = useNavigate();
-  const [agentTab, setAgentTab] = useState('chat'); // 'chat', 'sources', 'sheets', or 'upload'
-  const [selectedSheetId, setSelectedSheetId] = useState(null);
+  const [agentTab, setAgentTab] = useState('chat'); // 'chat', 'sources', 'databoards', or 'leads'
+
+  // Check if this is the Dodeka superclient (case-insensitive name check)
 
   // Fetch client details
   const { data: client, isLoading: isLoadingClient } = useQuery({
     queryKey: ['client', clientId],
     queryFn: () => clientsApi.getById(clientId),
+    staleTime: 60000, // 1 minute - client data rarely changes
   });
 
   // Fetch documents
   const { data: documents = [], isLoading: isLoadingDocs } = useQuery({
     queryKey: ['documents', clientId],
     queryFn: () => documentsApi.getByClientId(clientId),
+    staleTime: 5000, // 5 seconds - allow polling to work but prevent duplicate fetches
   });
 
   if (isLoadingClient) {
@@ -53,6 +56,9 @@ export default function ClientDetail() {
       </div>
     );
   }
+
+  // Only show Leads tab for superclient
+  const isSuperclient = client.is_superclient === true;
 
   return (
     <div className="h-screen bg-neutral-950 flex flex-col">
@@ -148,36 +154,39 @@ export default function ClientDetail() {
               </button>
 
               <button
-                onClick={() => setAgentTab('sheets')}
+                onClick={() => setAgentTab('databoards')}
                 className={clsx(
                   'w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                  agentTab === 'sheets'
+                  agentTab === 'databoards'
                     ? 'bg-pastel-mint/15 text-pastel-mint border-l-2 border-l-pastel-mint'
                     : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                 )}
               >
-                <FileSpreadsheet className="w-4 h-4 mr-3" />
-                Sheets
-                {agentTab === 'sheets' && (
+                <BarChart3 className="w-4 h-4 mr-3" />
+                Databoards
+                {agentTab === 'databoards' && (
                   <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-mint" />
                 )}
               </button>
 
-              <button
-                onClick={() => setAgentTab('upload')}
-                className={clsx(
-                  'w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                  agentTab === 'upload'
-                    ? 'bg-pastel-peach/15 text-pastel-peach border-l-2 border-l-pastel-peach'
-                    : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
-                )}
-              >
-                <Upload className="w-4 h-4 mr-3" />
-                Upload
-                {agentTab === 'upload' && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-peach" />
-                )}
-              </button>
+              {isSuperclient && (
+                <button
+                  onClick={() => setAgentTab('leads')}
+                  className={clsx(
+                    'w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                    agentTab === 'leads'
+                      ? 'bg-pastel-coral/15 text-pastel-coral border-l-2 border-l-pastel-coral'
+                      : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
+                  )}
+                >
+                  <Users className="w-4 h-4 mr-3" />
+                  Leads
+                  {agentTab === 'leads' && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-coral" />
+                  )}
+                </button>
+              )}
+
             </div>
           </nav>
 
@@ -188,7 +197,7 @@ export default function ClientDetail() {
                 <span className="w-2 h-2 rounded-full bg-pastel-mint" />
                 <span className="w-2 h-2 rounded-full bg-pastel-sky" />
                 <span className="w-2 h-2 rounded-full bg-pastel-lavender" />
-                <span className="w-2 h-2 rounded-full bg-pastel-peach" />
+                <span className="w-2 h-2 rounded-full bg-pastel-coral" />
               </div>
               <span>RAG System</span>
             </div>
@@ -201,7 +210,6 @@ export default function ClientDetail() {
             <EnhancedChatInterface
               clientId={clientId}
               client={client}
-              selectedSheetId={selectedSheetId}
             />
           ) : agentTab === 'sources' ? (
             <SourcesManager
@@ -209,28 +217,11 @@ export default function ClientDetail() {
               clientId={clientId}
               isLoading={isLoadingDocs}
             />
-          ) : agentTab === 'sheets' ? (
-            <SheetsManager
-              clientId={clientId}
-              onSelectSheet={setSelectedSheetId}
-              selectedSheetId={selectedSheetId}
-            />
-          ) : (
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="max-w-2xl mx-auto">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-pastel-peach/15 flex items-center justify-center border border-pastel-peach/20">
-                    <Upload className="w-5 h-5 text-pastel-peach" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-neutral-100">Upload Sources</h2>
-                    <p className="text-sm text-neutral-500">Add documents to your knowledge base</p>
-                  </div>
-                </div>
-                <DocumentUpload clientId={clientId} />
-              </div>
-            </div>
-          )}
+          ) : agentTab === 'databoards' ? (
+            <DataboardManager clientId={clientId} />
+          ) : agentTab === 'leads' ? (
+            <LeadsManager />
+          ) : null}
         </main>
       </div>
     </div>
