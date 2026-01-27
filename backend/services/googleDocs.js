@@ -105,12 +105,134 @@ export async function fetchPublicGoogleDoc(docId) {
   }
 }
 
-// Fetch Google Sheet content
-export async function fetchPublicGoogleSheet(sheetId) {
-  try {
-    // Export as CSV (works for public sheets)
-    const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+// Get Google Sheets auth client
+function getSheetsAuthClient() {
+  // Check for service account key file
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+    return new google.auth.GoogleAuth({
+      keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    });
+  }
 
+  // Check for base64-encoded credentials (for Render.com deployment)
+  if (process.env.GOOGLE_SHEETS_CREDENTIALS) {
+    try {
+      const decoded = Buffer.from(process.env.GOOGLE_SHEETS_CREDENTIALS, 'base64').toString('utf-8');
+      const credentials = JSON.parse(decoded);
+      return new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      });
+    } catch (e) {
+      // If not base64, try parsing as raw JSON
+      const credentials = JSON.parse(process.env.GOOGLE_SHEETS_CREDENTIALS);
+      return new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      });
+    }
+  }
+
+  // Check for inline credentials JSON
+  if (process.env.GOOGLE_CREDENTIALS_JSON) {
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+    return new google.auth.GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    });
+  }
+
+  return null;
+}
+
+// Fetch Google Sheet content using Sheets API (gets ALL tabs and proper title)
+export async function fetchPublicGoogleSheet(sheetId) {
+  console.log(`[fetchPublicGoogleSheet] Fetching sheet ID: ${sheetId}`);
+  try {
+    const auth = getSheetsAuthClient();
+    console.log(`[fetchPublicGoogleSheet] Auth client available: ${!!auth}`);
+
+    if (auth) {
+      // Use Google Sheets API for full access to all tabs
+      const sheets = google.sheets({ version: 'v4', auth });
+
+      // Get spreadsheet metadata (title and all sheet tabs)
+      const metadataResponse = await sheets.spreadsheets.get({
+        spreadsheetId: sheetId,
+        fields: 'properties.title,sheets.properties',
+      });
+
+      const title = metadataResponse.data.properties.title;
+      const sheetTabs = metadataResponse.data.sheets.map(s => ({
+        sheetId: s.properties.sheetId,
+        title: s.properties.title,
+        index: s.properties.index,
+        rowCount: s.properties.gridProperties?.rowCount,
+        columnCount: s.properties.gridProperties?.columnCount,
+      }));
+
+      console.log(`[fetchPublicGoogleSheet] Got title: "${title}", tabs: ${sheetTabs.map(t => t.title).join(', ')}`);
+
+      // Fetch content from ALL tabs
+      let allContent = [];
+
+      for (const tab of sheetTabs) {
+        try {
+          const dataResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId: sheetId,
+            range: tab.title,
+          });
+
+          const values = dataResponse.data.values || [];
+
+          // Convert each tab to formatted text
+          let tabContent = `\n=== TAB: ${tab.title} ===\n`;
+
+          if (values.length > 0) {
+            // Format as readable text with column alignment
+            values.forEach((row, rowIndex) => {
+              tabContent += row.join('\t') + '\n';
+            });
+          } else {
+            tabContent += '(empty)\n';
+          }
+
+          allContent.push({
+            tabName: tab.title,
+            tabIndex: tab.index,
+            content: tabContent,
+            rowCount: values.length,
+            data: values,
+          });
+        } catch (tabError) {
+          console.error(`Error fetching tab "${tab.title}":`, tabError.message);
+          allContent.push({
+            tabName: tab.title,
+            tabIndex: tab.index,
+            content: `\n=== TAB: ${tab.title} ===\n(Error fetching content)\n`,
+            rowCount: 0,
+            data: [],
+          });
+        }
+      }
+
+      // Combine all tab content into single string
+      const combinedContent = allContent.map(t => t.content).join('\n');
+
+      return {
+        title,
+        content: combinedContent,
+        sheetId,
+        tabs: sheetTabs,
+        tabData: allContent,
+      };
+    }
+
+    // Fallback to CSV export if no credentials (only gets first tab)
+    console.warn('No Google Sheets credentials configured, falling back to CSV export (first tab only)');
+
+    const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
     const response = await fetch(exportUrl);
 
     if (!response.ok) {
@@ -125,7 +247,7 @@ export async function fetchPublicGoogleSheet(sheetId) {
 
     const content = await response.text();
 
-    // Try to get title
+    // Try to get title from HTML
     let title = 'Untitled Google Sheet';
     try {
       const htmlUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
@@ -145,9 +267,11 @@ export async function fetchPublicGoogleSheet(sheetId) {
       title,
       content,
       sheetId,
+      tabs: [{ title: 'Sheet1', index: 0 }],
+      tabData: [{ tabName: 'Sheet1', content, rowCount: content.split('\n').length }],
     };
   } catch (error) {
-    console.error('Error fetching public Google Sheet:', error.message);
+    console.error('Error fetching Google Sheet:', error.message);
     throw error;
   }
 }
@@ -210,7 +334,8 @@ export async function checkAndFetchIfModified(docId, sourceType, lastContentHash
         modified: true,
         content: data.content,
         title: data.title,
-        contentHash: newHash
+        contentHash: newHash,
+        tabs: data.tabs || [],
       };
     }
 

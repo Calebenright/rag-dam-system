@@ -5,7 +5,7 @@ services:
   # Backend API Service
   - type: web
     name: rag-dam-api
-    runtime: node
+    env: node
     region: oregon
     plan: free
     rootDir: backend

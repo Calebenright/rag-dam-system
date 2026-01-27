@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
-import { analyzeImage, enhancedChat, generateEmbedding, cosineSimilarity, extractFromImage, analyzeMultipleImages, chatWithSheets } from '../services/openaiService.js';
+import { analyzeImage, enhancedChat, generateEmbedding, cosineSimilarity, extractFromImage, analyzeMultipleImages, chatWithSheets as chatWithSheetsOpenAI } from '../services/openaiService.js';
+import { enhancedChatWithContext as claudeChatWithSheets } from '../services/claudeService.js';
 import * as sheetsService from '../services/googleSheets.js';
 import multer from 'multer';
 import os from 'os';
@@ -212,6 +213,12 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
     // Perform semantic search to find relevant documents and chunks
     const { documents: relevantDocs, chunks: relevantChunks } = await semanticSearch(clientId, message, 5);
 
+    // Fetch connected sheets for this client
+    const { data: connectedSheets } = await supabase
+      .from('connected_sheets')
+      .select('*')
+      .eq('client_id', clientId);
+
     // Add client context if available
     let contextDocs = relevantDocs;
     if (client.description) {
@@ -318,16 +325,46 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
       }
     }
 
-    // Get AI response with full context including images
-    const aiResponse = await enhancedChat(
-      message,
-      contextDocs,
-      conversationHistory,
-      imageAnalysis,
-      formattedChunks,
-      uploadedImages,
-      sourceImages
+    // Detect if this is a sheet-related query
+    const sheetKeywords = [
+      'sheet', 'spreadsheet', 'tab', 'tabs', 'cell', 'row', 'column', 'excel',
+      'google sheet', 'data in', 'table', 'values in', 'what\'s in the'
+    ];
+    const lowerMessage = message.toLowerCase();
+    const hasConnectedSheets = connectedSheets && connectedSheets.length > 0;
+    const isSheetQuery = hasConnectedSheets && sheetKeywords.some(keyword => lowerMessage.includes(keyword));
+    const mentionsSheet = hasConnectedSheets && connectedSheets.some(sheet =>
+      lowerMessage.includes(sheet.name.toLowerCase()) ||
+      (sheet.sheet_tabs || []).some(tab => lowerMessage.includes(tab.title?.toLowerCase() || ''))
     );
+
+    let aiResponse;
+    let sheetOperations = [];
+
+    if ((isSheetQuery || mentionsSheet) && !imageFiles.length) {
+      // Use Claude with sheet tools for sheet-related queries
+      console.log('Using Claude with sheet tools for query:', message);
+      const claudeResult = await claudeChatWithSheets(
+        message,
+        contextDocs,
+        connectedSheets,
+        conversationHistory,
+        formattedChunks
+      );
+      aiResponse = claudeResult.response;
+      sheetOperations = claudeResult.operations || [];
+    } else {
+      // Use OpenAI for regular queries or queries with images
+      aiResponse = await enhancedChat(
+        message,
+        contextDocs,
+        conversationHistory,
+        imageAnalysis,
+        formattedChunks,
+        uploadedImages,
+        sourceImages
+      );
+    }
 
     // Prepare source references for storage
     const sourceRefs = relevantDocs
@@ -378,7 +415,8 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
         imagesProcessed: {
           uploaded: uploadedImages.length,
           fromSources: sourceImages.length
-        }
+        },
+        sheetOperations: sheetOperations.length > 0 ? sheetOperations : undefined
       }
     });
   } catch (error) {

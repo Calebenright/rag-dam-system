@@ -356,7 +356,7 @@ router.post('/:clientId/google', async (req, res) => {
       });
     }
 
-    let content, title, docId;
+    let content, title, docId, sheetTabs = [];
 
     if (sourceType === 'google_doc') {
       docId = extractDocId(url);
@@ -382,6 +382,26 @@ router.post('/:clientId/google', async (req, res) => {
       const sheetData = await fetchPublicGoogleSheet(docId);
       content = sheetData.content;
       title = sheetData.title;
+      sheetTabs = sheetData.tabs || [];
+
+      // Also add to connected_sheets for the chat agent to use
+      try {
+        await supabase
+          .from('connected_sheets')
+          .upsert({
+            client_id: clientId,
+            spreadsheet_id: docId,
+            sheet_url: url,
+            name: title,
+            sheet_tabs: sheetTabs,
+            last_synced: new Date().toISOString(),
+          }, {
+            onConflict: 'client_id,spreadsheet_id',
+          });
+      } catch (sheetConnectError) {
+        console.error('Error adding to connected_sheets:', sheetConnectError);
+        // Continue even if this fails - the document will still be added
+      }
     } else {
       return res.status(400).json({
         success: false,
@@ -405,7 +425,8 @@ router.post('/:clientId/google', async (req, res) => {
         source_type: 'google',
         last_synced: new Date().toISOString(),
         content_hash: contentHash,
-        processed: false
+        processed: false,
+        sheet_tabs: sheetTabs.length > 0 ? sheetTabs : null
       }])
       .select()
       .single();
@@ -417,8 +438,13 @@ router.post('/:clientId/google', async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: document,
-      message: 'Google Doc added. Processing in background...'
+      data: {
+        ...document,
+        tabs: sheetTabs
+      },
+      message: sourceType === 'google_sheet'
+        ? `Google Sheet added with ${sheetTabs.length} tab(s). Processing in background...`
+        : 'Google Doc added. Processing in background...'
     });
 
   } catch (error) {
@@ -459,7 +485,7 @@ router.post('/:documentId/sync', async (req, res) => {
       });
     }
 
-    let content, title;
+    let content, title, sheetTabs = [];
     const sourceType = document.file_type;
 
     if (sourceType === 'google_doc') {
@@ -470,6 +496,25 @@ router.post('/:documentId/sync', async (req, res) => {
       const sheetData = await fetchPublicGoogleSheet(document.google_doc_id);
       content = sheetData.content;
       title = sheetData.title;
+      sheetTabs = sheetData.tabs || [];
+
+      // Update connected_sheets with latest tabs
+      try {
+        await supabase
+          .from('connected_sheets')
+          .upsert({
+            client_id: document.client_id,
+            spreadsheet_id: document.google_doc_id,
+            sheet_url: document.file_url,
+            name: title,
+            sheet_tabs: sheetTabs,
+            last_synced: new Date().toISOString(),
+          }, {
+            onConflict: 'client_id,spreadsheet_id',
+          });
+      } catch (sheetConnectError) {
+        console.error('Error updating connected_sheets:', sheetConnectError);
+      }
     }
 
     // Delete old chunks
@@ -478,12 +523,14 @@ router.post('/:documentId/sync', async (req, res) => {
       .delete()
       .eq('document_id', documentId);
 
-    // Update last_synced
+    // Update last_synced and tabs
     await supabase
       .from('documents')
       .update({
+        file_name: title,
         last_synced: new Date().toISOString(),
-        processed: false
+        processed: false,
+        sheet_tabs: sheetTabs.length > 0 ? sheetTabs : null
       })
       .eq('id', documentId);
 
@@ -492,7 +539,9 @@ router.post('/:documentId/sync', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Sync started. Document is being re-processed...'
+      message: sourceType === 'google_sheet'
+        ? `Sync started. Refreshing ${sheetTabs.length} tab(s)...`
+        : 'Sync started. Document is being re-processed...'
     });
 
   } catch (error) {
@@ -553,14 +602,39 @@ router.post('/:clientId/sync-all', async (req, res) => {
             .delete()
             .eq('document_id', doc.id);
 
-          // Update the document
+          // Update the document with new tabs if it's a sheet
+          const updateData = {
+            file_name: checkResult.title,
+            last_synced: new Date().toISOString(),
+            content_hash: checkResult.contentHash,
+            processed: false
+          };
+
+          if (doc.file_type === 'google_sheet' && checkResult.tabs) {
+            updateData.sheet_tabs = checkResult.tabs;
+
+            // Also update connected_sheets
+            try {
+              await supabase
+                .from('connected_sheets')
+                .upsert({
+                  client_id: doc.client_id,
+                  spreadsheet_id: doc.google_doc_id,
+                  sheet_url: doc.file_url,
+                  name: checkResult.title,
+                  sheet_tabs: checkResult.tabs,
+                  last_synced: new Date().toISOString(),
+                }, {
+                  onConflict: 'client_id,spreadsheet_id',
+                });
+            } catch (sheetError) {
+              console.error('Error updating connected_sheets:', sheetError);
+            }
+          }
+
           await supabase
             .from('documents')
-            .update({
-              last_synced: new Date().toISOString(),
-              content_hash: checkResult.contentHash,
-              processed: false
-            })
+            .update(updateData)
             .eq('id', doc.id);
 
           // Re-process in background
@@ -595,13 +669,16 @@ router.post('/:clientId/sync-all', async (req, res) => {
 async function processGoogleDocAsync(documentId, content, title, sourceType) {
   try {
     console.log(`Processing Google Doc ${documentId}...`);
+    console.log(`Content length: ${content?.length || 0} characters`);
 
     if (!content || content.length < 10) {
       throw new Error('Insufficient content extracted from Google Doc');
     }
 
     // Analyze with Claude
+    console.log(`Starting Claude analysis for ${documentId}...`);
     const analysis = await analyzeDocument(content, title, sourceType);
+    console.log(`Claude analysis complete for ${documentId}:`, analysis.title);
 
     // Generate document-level embedding
     const docEmbedding = await generateEmbedding(
@@ -610,30 +687,58 @@ async function processGoogleDocAsync(documentId, content, title, sourceType) {
 
     // Chunk the content
     const chunks = chunkText(content, 1000, 200);
-    console.log(`Created ${chunks.length} chunks for Google Doc ${documentId}`);
+    console.log(`Chunking complete: ${chunks.length} chunks for Google Doc ${documentId}`);
 
-    // Generate embeddings for each chunk
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      try {
-        const chunkEmbedding = await generateEmbedding(chunk.text);
+    // Generate embeddings for chunks in batches (much faster)
+    console.log(`Inserting ${chunks.length} chunks into database...`);
+    const BATCH_SIZE = 50;
+    let insertedCount = 0;
 
-        await supabase
-          .from('document_chunks')
-          .insert([{
+    for (let batchStart = 0; batchStart < chunks.length; batchStart += BATCH_SIZE) {
+      const batch = chunks.slice(batchStart, batchStart + BATCH_SIZE);
+      const chunkRecords = [];
+
+      for (let i = 0; i < batch.length; i++) {
+        const chunk = batch[i];
+        const chunkIndex = batchStart + i;
+        try {
+          const chunkEmbedding = await generateEmbedding(chunk.text);
+          chunkRecords.push({
             document_id: documentId,
-            chunk_index: i,
+            chunk_index: chunkIndex,
             content: chunk.text,
             start_index: chunk.startIndex,
             end_index: chunk.endIndex,
             embedding: JSON.stringify(chunkEmbedding)
-          }]);
-      } catch (chunkError) {
-        console.error(`Error processing chunk ${i} of Google Doc ${documentId}:`, chunkError);
+          });
+        } catch (chunkError) {
+          console.error(`Error generating embedding for chunk ${chunkIndex}:`, chunkError.message);
+        }
+      }
+
+      // Insert batch
+      if (chunkRecords.length > 0) {
+        const { error: batchError } = await supabase
+          .from('document_chunks')
+          .insert(chunkRecords);
+
+        if (batchError) {
+          console.error(`Error inserting batch at ${batchStart}:`, batchError.message);
+        } else {
+          insertedCount += chunkRecords.length;
+        }
+      }
+
+      // Log progress every 200 chunks
+      if ((batchStart + BATCH_SIZE) % 200 === 0 || batchStart + BATCH_SIZE >= chunks.length) {
+        console.log(`Progress: ${Math.min(batchStart + BATCH_SIZE, chunks.length)}/${chunks.length} chunks processed`);
       }
     }
 
+    console.log(`Finished inserting ${insertedCount} chunks for ${documentId}`);
+
     // Update document record
+    console.log(`Updating document ${documentId} with processed=true, ${chunks.length} chunks...`);
     const { error: updateError } = await supabase
       .from('documents')
       .update({
@@ -650,12 +755,15 @@ async function processGoogleDocAsync(documentId, content, title, sourceType) {
       })
       .eq('id', documentId);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error(`Error updating document ${documentId}:`, updateError);
+      throw updateError;
+    }
 
     console.log(`Google Doc ${documentId} processed successfully with ${chunks.length} chunks`);
 
   } catch (error) {
-    console.error(`Error processing Google Doc ${documentId}:`, error);
+    console.error(`Error processing Google Doc ${documentId}:`, error.message || error);
 
     await supabase
       .from('documents')

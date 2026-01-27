@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Upload, Loader2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { X, Upload, Loader2, Crown } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 
 export default function CreateClientModal({ isOpen, onClose }) {
@@ -8,7 +8,15 @@ export default function CreateClientModal({ isOpen, onClose }) {
   const [description, setDescription] = useState('');
   const [thumbnail, setThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [isSuperclient, setIsSuperclient] = useState(false);
   const queryClient = useQueryClient();
+
+  // Check if a superclient already exists
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: clientsApi.getAll,
+  });
+  const superclientExists = clients.some(c => c.is_superclient);
 
   const createMutation = useMutation({
     mutationFn: clientsApi.create,
@@ -23,6 +31,7 @@ export default function CreateClientModal({ isOpen, onClose }) {
     setDescription('');
     setThumbnail(null);
     setThumbnailPreview(null);
+    setIsSuperclient(false);
     onClose();
   };
 
@@ -44,6 +53,7 @@ export default function CreateClientModal({ isOpen, onClose }) {
     const formData = new FormData();
     formData.append('name', name);
     formData.append('description', description);
+    formData.append('is_superclient', isSuperclient);
     if (thumbnail) {
       formData.append('thumbnail', thumbnail);
     }
@@ -139,6 +149,28 @@ export default function CreateClientModal({ isOpen, onClose }) {
                 </label>
               </div>
             </div>
+
+            {/* Superclient Option */}
+            {!superclientExists && (
+              <div className="flex items-center gap-3 p-3 bg-pastel-coral/5 rounded-lg border border-pastel-coral/20">
+                <input
+                  type="checkbox"
+                  id="isSuperclient"
+                  checked={isSuperclient}
+                  onChange={(e) => setIsSuperclient(e.target.checked)}
+                  className="w-4 h-4 rounded border-neutral-600 bg-neutral-800 text-pastel-coral focus:ring-pastel-coral/50"
+                />
+                <label htmlFor="isSuperclient" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-4 h-4 text-pastel-coral" />
+                    <span className="text-sm font-medium text-neutral-200">Make Superclient</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    Superclient has access to Leads verification and global tools
+                  </p>
+                </label>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex justify-end space-x-3 pt-4 border-t border-neutral-700">

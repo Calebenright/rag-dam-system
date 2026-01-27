@@ -1,13 +1,14 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Upload, File, X, CheckCircle, AlertCircle, Loader2, Link, FileText } from 'lucide-react';
+import { Upload, File, X, CheckCircle, AlertCircle, Loader2, Link, FileText, FileSpreadsheet } from 'lucide-react';
 import { documentsApi } from '../api/documents';
 
 export default function DocumentUpload({ clientId }) {
   const [uploadingFiles, setUploadingFiles] = useState([]);
   const [googleUrl, setGoogleUrl] = useState('');
   const [googleError, setGoogleError] = useState('');
+  const [addedDoc, setAddedDoc] = useState(null); // Track successfully added doc with name
   const [activeTab, setActiveTab] = useState('file'); // 'file' or 'google'
   const queryClient = useQueryClient();
 
@@ -48,10 +49,18 @@ export default function DocumentUpload({ clientId }) {
 
   const googleMutation = useMutation({
     mutationFn: (url) => documentsApi.addGoogleDoc(clientId, url),
-    onSuccess: () => {
+    onSuccess: (data) => {
       setGoogleUrl('');
       setGoogleError('');
+      // Store the added document info to show the name
+      setAddedDoc({
+        name: data.file_name,
+        type: data.file_type,
+        url: data.file_url,
+      });
       queryClient.invalidateQueries(['documents', clientId]);
+      // Clear the success message after 5 seconds
+      setTimeout(() => setAddedDoc(null), 5000);
     },
     onError: (error) => {
       setGoogleError(error.response?.data?.error || error.message);
@@ -100,15 +109,25 @@ export default function DocumentUpload({ clientId }) {
     e.preventDefault();
     if (!googleUrl.trim()) return;
 
-    // Basic validation
+    // Validate URL - accept both Docs and Sheets
     if (!googleUrl.includes('docs.google.com')) {
       setGoogleError('Please enter a valid Google Docs or Google Sheets URL');
       return;
     }
 
     setGoogleError('');
+    setAddedDoc(null);
     googleMutation.mutate(googleUrl.trim());
   };
+
+  // Determine if URL is a Sheet or Doc
+  const getUrlType = (url) => {
+    if (url.includes('/spreadsheets/')) return 'sheet';
+    if (url.includes('/document/')) return 'doc';
+    return null;
+  };
+
+  const urlType = getUrlType(googleUrl);
 
   return (
     <div className="space-y-4">
@@ -134,7 +153,7 @@ export default function DocumentUpload({ clientId }) {
           }`}
         >
           <Link className="w-4 h-4" />
-          Google Docs
+          Google Link
         </button>
       </div>
 
@@ -238,15 +257,19 @@ export default function DocumentUpload({ clientId }) {
           )}
         </>
       ) : (
-        /* Google Docs input */
+        /* Google Docs/Sheets input */
         <div className="bg-dark-800/50 backdrop-blur-sm rounded-2xl border border-dark-700 p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-accent-cyan/20 rounded-lg">
-              <svg className="w-6 h-6" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                <path fill="#A1C2FA" d="M14 2v6h6"/>
-                <path fill="#fff" d="M8 13h8v1H8zm0 3h8v1H8zm0-6h4v1H8z"/>
-              </svg>
+              {urlType === 'sheet' ? (
+                <FileSpreadsheet className="w-6 h-6 text-green-400" />
+              ) : (
+                <svg className="w-6 h-6" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                  <path fill="#A1C2FA" d="M14 2v6h6"/>
+                  <path fill="#fff" d="M8 13h8v1H8zm0 3h8v1H8zm0-6h4v1H8z"/>
+                </svg>
+              )}
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-100">Add Google Doc or Sheet</h3>
@@ -262,11 +285,16 @@ export default function DocumentUpload({ clientId }) {
                 type="url"
                 value={googleUrl}
                 onChange={(e) => setGoogleUrl(e.target.value)}
-                placeholder="https://docs.google.com/document/d/..."
+                placeholder="https://docs.google.com/document/d/... or /spreadsheets/d/..."
                 className="w-full px-4 py-3 bg-dark-900/50 border border-dark-700 rounded-lg text-gray-100 placeholder-gray-500 focus:border-accent-cyan focus:outline-none"
               />
               {googleError && (
                 <p className="mt-2 text-xs text-red-400">{googleError}</p>
+              )}
+              {urlType && (
+                <p className="mt-2 text-xs text-accent-cyan">
+                  Detected: Google {urlType === 'sheet' ? 'Sheets' : 'Docs'}
+                </p>
               )}
             </div>
 
@@ -278,12 +306,12 @@ export default function DocumentUpload({ clientId }) {
               {googleMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Adding...
+                  Adding & fetching name...
                 </>
               ) : (
                 <>
                   <Link className="w-4 h-4" />
-                  Add Google Doc
+                  Add Google {urlType === 'sheet' ? 'Sheet' : 'Doc'}
                 </>
               )}
             </button>
@@ -297,10 +325,23 @@ export default function DocumentUpload({ clientId }) {
             </p>
           </div>
 
-          {googleMutation.isSuccess && (
-            <div className="mt-4 flex items-center gap-2 text-accent-green">
-              <CheckCircle className="w-4 h-4" />
-              <span className="text-sm">Google Doc added successfully!</span>
+          {/* Success message with document name */}
+          {addedDoc && (
+            <div className="mt-4 p-4 bg-accent-green/10 border border-accent-green/20 rounded-lg">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-accent-green flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-accent-green">Added successfully!</p>
+                  <p className="text-sm text-gray-300 truncate flex items-center gap-2 mt-1">
+                    {addedDoc.type === 'google_sheet' ? (
+                      <FileSpreadsheet className="w-4 h-4 text-green-400 flex-shrink-0" />
+                    ) : (
+                      <FileText className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                    )}
+                    <span className="truncate">{addedDoc.name}</span>
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>

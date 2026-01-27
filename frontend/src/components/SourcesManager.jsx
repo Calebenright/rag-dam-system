@@ -1,21 +1,17 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDropzone } from 'react-dropzone';
 import {
-  FileText, Trash2, Loader2, Search, FolderPlus,
-  Grid, List, Folder, FolderOpen,
-  X, Plus, Filter, SortAsc, SortDesc, ExternalLink,
-  Calendar, Tag, FileType, Sparkles, RefreshCw, File
+  FileText, Trash2, Loader2, Search,
+  Grid, List, X, ExternalLink,
+  Calendar, Tag, FileType, Sparkles, RefreshCw, File,
+  Upload, Link, CheckCircle, AlertCircle, FileSpreadsheet,
+  ChevronDown
 } from 'lucide-react';
 import { documentsApi } from '../api/documents';
 import clsx from 'clsx';
 
-// Default folders that always exist
-const DEFAULT_FOLDERS = [
-  { id: 'all', name: 'All Sources', icon: 'folder', color: 'lavender' },
-  { id: 'new', name: 'New', icon: 'folder', color: 'mint' },
-];
-
-// Color style mappings - explicit classes for Tailwind to detect
+// Color style mappings
 const colorStyles = {
   mint: {
     bg: 'bg-pastel-mint',
@@ -23,7 +19,6 @@ const colorStyles = {
     bgLighter: 'bg-pastel-mint/15',
     text: 'text-pastel-mint',
     border: 'border-pastel-mint/20',
-    borderLeft: 'border-l-pastel-mint',
   },
   lavender: {
     bg: 'bg-pastel-lavender',
@@ -31,7 +26,6 @@ const colorStyles = {
     bgLighter: 'bg-pastel-lavender/15',
     text: 'text-pastel-lavender',
     border: 'border-pastel-lavender/20',
-    borderLeft: 'border-l-pastel-lavender',
   },
   sky: {
     bg: 'bg-pastel-sky',
@@ -39,7 +33,6 @@ const colorStyles = {
     bgLighter: 'bg-pastel-sky/15',
     text: 'text-pastel-sky',
     border: 'border-pastel-sky/20',
-    borderLeft: 'border-l-pastel-sky',
   },
   peach: {
     bg: 'bg-pastel-peach',
@@ -47,7 +40,6 @@ const colorStyles = {
     bgLighter: 'bg-pastel-peach/15',
     text: 'text-pastel-peach',
     border: 'border-pastel-peach/20',
-    borderLeft: 'border-l-pastel-peach',
   },
   coral: {
     bg: 'bg-pastel-coral',
@@ -55,7 +47,6 @@ const colorStyles = {
     bgLighter: 'bg-pastel-coral/15',
     text: 'text-pastel-coral',
     border: 'border-pastel-coral/20',
-    borderLeft: 'border-l-pastel-coral',
   },
   lemon: {
     bg: 'bg-pastel-lemon',
@@ -63,7 +54,6 @@ const colorStyles = {
     bgLighter: 'bg-pastel-lemon/15',
     text: 'text-pastel-lemon',
     border: 'border-pastel-lemon/20',
-    borderLeft: 'border-l-pastel-lemon',
   },
 };
 
@@ -78,69 +68,61 @@ const FILE_COLORS = {
   xls: 'mint',
   json: 'lemon',
   md: 'lavender',
-  google: 'sky',
+  google_doc: 'sky',
+  google_sheet: 'mint',
 };
 
-const getFileColor = (fileName, sourceType) => {
-  if (sourceType === 'google') return 'sky';
+const getFileColor = (fileName, fileType) => {
+  if (fileType === 'google_sheet') return 'mint';
+  if (fileType === 'google_doc') return 'sky';
   const ext = fileName?.split('.').pop()?.toLowerCase();
   return FILE_COLORS[ext] || 'lavender';
+};
+
+const getFileExtension = (fileName, fileType) => {
+  if (fileType === 'google_sheet') return 'SHEET';
+  if (fileType === 'google_doc') return 'DOC';
+  return fileName?.split('.').pop()?.toUpperCase() || 'FILE';
+};
+
+const getTypeCategory = (doc) => {
+  if (doc.file_type === 'google_sheet') return 'Google Sheets';
+  if (doc.file_type === 'google_doc') return 'Google Docs';
+  const ext = doc.file_name?.split('.').pop()?.toLowerCase();
+  if (['pdf'].includes(ext)) return 'PDFs';
+  if (['doc', 'docx'].includes(ext)) return 'Documents';
+  if (['xlsx', 'xls', 'csv'].includes(ext)) return 'Spreadsheets';
+  if (['txt', 'md'].includes(ext)) return 'Text Files';
+  if (['png', 'jpg', 'jpeg', 'gif'].includes(ext)) return 'Images';
+  return 'Other';
 };
 
 export default function SourcesManager({ documents, clientId, isLoading }) {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [viewMode, setViewMode] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFolder, setSelectedFolder] = useState('all');
-
-  const [folders, setFolders] = useState(() => {
-    const saved = localStorage.getItem(`folders-${clientId}`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        const hasAll = parsed.some(f => f.id === 'all');
-        const hasNew = parsed.some(f => f.id === 'new');
-        if (!hasAll) parsed.unshift(DEFAULT_FOLDERS[0]);
-        if (!hasNew) parsed.splice(1, 0, DEFAULT_FOLDERS[1]);
-        return parsed;
-      } catch {
-        return DEFAULT_FOLDERS;
-      }
-    }
-    return DEFAULT_FOLDERS;
-  });
-
-  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
-  const [sortBy, setSortBy] = useState('date');
-  const [sortOrder, setSortOrder] = useState('desc');
   const [filterType, setFilterType] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
-
-  const [docFolders, setDocFolders] = useState(() => {
-    const saved = localStorage.getItem(`docFolders-${clientId}`);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  });
-
-  const [draggedDoc, setDraggedDoc] = useState(null);
-  const [dragOverFolder, setDragOverFolder] = useState(null);
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadTab, setUploadTab] = useState('file');
+  const [googleUrl, setGoogleUrl] = useState('');
+  const [googleError, setGoogleError] = useState('');
+  const [addedDoc, setAddedDoc] = useState(null);
+  const [uploadingFiles, setUploadingFiles] = useState([]);
 
   const queryClient = useQueryClient();
 
+  // Poll for updates when there are unprocessed documents (reduced frequency)
   useEffect(() => {
-    localStorage.setItem(`folders-${clientId}`, JSON.stringify(folders));
-  }, [folders, clientId]);
+    const hasUnprocessed = documents?.some(doc => !doc.processed);
+    if (!hasUnprocessed) return;
 
-  useEffect(() => {
-    localStorage.setItem(`docFolders-${clientId}`, JSON.stringify(docFolders));
-  }, [docFolders, clientId]);
+    // Poll every 10 seconds instead of 3 - processing takes time anyway
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['documents', clientId], exact: true });
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [documents, clientId, queryClient]);
 
   const deleteMutation = useMutation({
     mutationFn: documentsApi.delete,
@@ -167,6 +149,90 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
     },
   });
 
+  const uploadMutation = useMutation({
+    mutationFn: ({ file }) => {
+      return documentsApi.upload(clientId, file, (progressEvent) => {
+        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        setUploadingFiles((prev) =>
+          prev.map((f) => f.name === file.name ? { ...f, progress } : f)
+        );
+      });
+    },
+    onSuccess: (data, { file }) => {
+      setUploadingFiles((prev) =>
+        prev.map((f) => f.name === file.name ? { ...f, status: 'success' } : f)
+      );
+      queryClient.invalidateQueries(['documents', clientId]);
+      setTimeout(() => {
+        setUploadingFiles((prev) => prev.filter((f) => f.name !== file.name));
+      }, 2000);
+    },
+    onError: (error, { file }) => {
+      setUploadingFiles((prev) =>
+        prev.map((f) => f.name === file.name ? { ...f, status: 'error', error: error.message } : f)
+      );
+    },
+  });
+
+  const googleMutation = useMutation({
+    mutationFn: (url) => documentsApi.addGoogleDoc(clientId, url),
+    onSuccess: (data) => {
+      setGoogleUrl('');
+      setGoogleError('');
+      setAddedDoc({ name: data.file_name, type: data.file_type });
+      queryClient.invalidateQueries(['documents', clientId]);
+      setTimeout(() => setAddedDoc(null), 5000);
+    },
+    onError: (error) => {
+      setGoogleError(error.response?.data?.error || error.message);
+    },
+  });
+
+  const onDrop = useCallback((acceptedFiles) => {
+    acceptedFiles.forEach((file) => {
+      setUploadingFiles((prev) => [...prev, {
+        name: file.name,
+        size: file.size,
+        status: 'uploading',
+        progress: 0,
+      }]);
+      uploadMutation.mutate({ file });
+    });
+  }, [uploadMutation]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt'],
+      'image/*': ['.png', '.jpg', '.jpeg'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'text/csv': ['.csv'],
+    },
+    maxSize: 10485760,
+  });
+
+  const handleGoogleSubmit = (e) => {
+    e.preventDefault();
+    if (!googleUrl.trim()) return;
+    if (!googleUrl.includes('docs.google.com')) {
+      setGoogleError('Please enter a valid Google Docs or Google Sheets URL');
+      return;
+    }
+    setGoogleError('');
+    setAddedDoc(null);
+    googleMutation.mutate(googleUrl.trim());
+  };
+
+  const getUrlType = (url) => {
+    if (url.includes('/spreadsheets/')) return 'sheet';
+    if (url.includes('/document/')) return 'doc';
+    return null;
+  };
+
+  const urlType = getUrlType(googleUrl);
+
   const googleSourceCount = useMemo(() => {
     return documents?.filter(d => d.source_type === 'google').length || 0;
   }, [documents]);
@@ -178,159 +244,47 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
     }
   };
 
-  const createFolder = () => {
-    if (newFolderName.trim()) {
-      const colors = ['mint', 'sky', 'lavender', 'peach', 'coral', 'lemon'];
-      const newFolder = {
-        id: `folder-${Date.now()}`,
-        name: newFolderName.trim(),
-        icon: 'folder',
-        color: colors[Math.floor(Math.random() * colors.length)]
-      };
-      setFolders([...folders, newFolder]);
-      setNewFolderName('');
-      setIsCreatingFolder(false);
-    }
-  };
-
-  const deleteFolder = (folderId) => {
-    if (folderId === 'all' || folderId === 'new') return;
-    setFolders(folders.filter(f => f.id !== folderId));
-    const updatedDocFolders = { ...docFolders };
-    Object.keys(updatedDocFolders).forEach(docId => {
-      if (updatedDocFolders[docId] === folderId) {
-        delete updatedDocFolders[docId];
-      }
-    });
-    setDocFolders(updatedDocFolders);
-    if (selectedFolder === folderId) {
-      setSelectedFolder('all');
-    }
-  };
-
-  const moveToFolder = (docId, folderId) => {
-    if (folderId === 'new') {
-      const newDocFolders = { ...docFolders };
-      delete newDocFolders[docId];
-      setDocFolders(newDocFolders);
-    } else {
-      setDocFolders({ ...docFolders, [docId]: folderId });
-    }
-  };
-
-  const handleDragStart = (e, doc) => {
-    setDraggedDoc(doc);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragEnd = () => {
-    setDraggedDoc(null);
-    setDragOverFolder(null);
-  };
-
-  const handleFolderDragOver = (e, folderId) => {
-    e.preventDefault();
-    if (folderId !== 'all') {
-      setDragOverFolder(folderId);
-    }
-  };
-
-  const handleFolderDragLeave = () => {
-    setDragOverFolder(null);
-  };
-
-  const handleFolderDrop = (e, folderId) => {
-    e.preventDefault();
-    if (draggedDoc && folderId !== 'all') {
-      moveToFolder(draggedDoc.id, folderId);
-    }
-    setDraggedDoc(null);
-    setDragOverFolder(null);
-  };
-
-  const getFileExtension = (fileName) => {
-    return fileName?.split('.').pop()?.toUpperCase() || 'FILE';
-  };
-
-  const filteredDocs = useMemo(() => {
-    let result = [...(documents || [])];
+  // Group documents by type
+  const groupedDocs = useMemo(() => {
+    let filtered = [...(documents || [])];
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(doc =>
+      filtered = filtered.filter(doc =>
         doc.title?.toLowerCase().includes(query) ||
         doc.file_name?.toLowerCase().includes(query) ||
         doc.topic?.toLowerCase().includes(query) ||
-        doc.tags?.some(tag => tag.toLowerCase().includes(query)) ||
-        doc.keywords?.some(kw => kw.toLowerCase().includes(query))
+        doc.tags?.some(tag => tag.toLowerCase().includes(query))
       );
     }
 
-    if (selectedFolder !== 'all') {
-      if (selectedFolder === 'new') {
-        result = result.filter(doc => !docFolders[doc.id]);
-      } else {
-        result = result.filter(doc => docFolders[doc.id] === selectedFolder);
-      }
-    }
-
     if (filterType !== 'all') {
-      result = result.filter(doc => {
-        const type = doc.file_type?.toLowerCase() || doc.file_name?.toLowerCase() || '';
-        return type.includes(filterType);
-      });
+      filtered = filtered.filter(doc => getTypeCategory(doc) === filterType);
     }
 
-    result.sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy) {
-        case 'name':
-          comparison = (a.title || a.file_name || '').localeCompare(b.title || b.file_name || '');
-          break;
-        case 'type':
-          comparison = (a.file_type || '').localeCompare(b.file_type || '');
-          break;
-        case 'date':
-        default:
-          comparison = new Date(b.created_at) - new Date(a.created_at);
-          break;
-      }
-      return sortOrder === 'asc' ? comparison : -comparison;
+    // Group by type category
+    const groups = {};
+    filtered.forEach(doc => {
+      const category = getTypeCategory(doc);
+      if (!groups[category]) groups[category] = [];
+      groups[category].push(doc);
     });
 
-    return result;
-  }, [documents, searchQuery, selectedFolder, filterType, sortBy, sortOrder, docFolders]);
+    // Sort each group by date
+    Object.keys(groups).forEach(key => {
+      groups[key].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    });
 
-  const folderCounts = useMemo(() => {
-    const counts = { all: documents?.length || 0, new: 0 };
-    folders.forEach(f => {
-      if (f.id !== 'all' && f.id !== 'new') {
-        counts[f.id] = 0;
-      }
-    });
-    documents?.forEach(doc => {
-      const folderId = docFolders[doc.id];
-      if (folderId && counts[folderId] !== undefined) {
-        counts[folderId]++;
-      } else {
-        counts.new++;
-      }
-    });
-    return counts;
-  }, [documents, folders, docFolders]);
+    return groups;
+  }, [documents, searchQuery, filterType]);
 
-  const fileTypes = useMemo(() => {
-    const types = new Set();
-    documents?.forEach(doc => {
-      const ext = doc.file_name?.split('.').pop()?.toLowerCase();
-      if (ext) types.add(ext);
-    });
-    return Array.from(types);
+  const typeCategories = useMemo(() => {
+    const cats = new Set();
+    documents?.forEach(doc => cats.add(getTypeCategory(doc)));
+    return Array.from(cats).sort();
   }, [documents]);
 
-  const getFolderColor = (folder) => {
-    return folder.color || 'lavender';
-  };
+  const totalFiltered = Object.values(groupedDocs).flat().length;
 
   if (isLoading) {
     return (
@@ -342,564 +296,478 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
 
   return (
     <div className="flex h-full bg-neutral-950">
-      {/* Sidebar - Folders */}
-      <div className="w-56 border-r border-neutral-800 flex flex-col bg-neutral-900/50 texture-dots">
-        <div className="p-3 border-b border-neutral-800">
-          <button
-            onClick={() => setIsCreatingFolder(true)}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-pastel-lavender/10 text-pastel-lavender rounded-lg hover:bg-pastel-lavender/20 transition-all text-sm font-medium border border-pastel-lavender/20"
-          >
-            <FolderPlus className="w-4 h-4" />
-            New Folder
-          </button>
-        </div>
-
-        {isCreatingFolder && (
-          <div className="p-2 border-b border-neutral-800 bg-neutral-900/50">
-            <div className="flex items-center gap-2">
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Toolbar */}
+        <div className="p-3 border-b border-neutral-800 space-y-2 bg-neutral-900/30">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
               <input
                 type="text"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && createFolder()}
-                placeholder="Folder name"
-                className="flex-1 px-2 py-1.5 text-sm bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:border-pastel-sky focus:outline-none"
-                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search sources..."
+                className="w-full pl-9 pr-4 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-pastel-sky focus:outline-none"
               />
-              <button onClick={createFolder} className="p-1.5 text-pastel-mint hover:bg-neutral-800 rounded-lg">
-                <Plus className="w-4 h-4" />
-              </button>
-              <button onClick={() => setIsCreatingFolder(false)} className="p-1.5 text-neutral-400 hover:bg-neutral-800 rounded-lg">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto p-2 scrollbar-dark">
-          {folders.map((folder) => {
-            const colorName = getFolderColor(folder);
-            const styles = colorStyles[colorName] || colorStyles.lavender;
-            const isSelected = selectedFolder === folder.id;
-
-            return (
-              <div
-                key={folder.id}
-                onClick={() => setSelectedFolder(folder.id)}
-                onDragOver={(e) => handleFolderDragOver(e, folder.id)}
-                onDragLeave={handleFolderDragLeave}
-                onDrop={(e) => handleFolderDrop(e, folder.id)}
-                className={clsx(
-                  'group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all mb-1',
-                  isSelected
-                    ? `${styles.bgLighter} ${styles.text} border-l-2 ${styles.borderLeft}`
-                    : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200',
-                  dragOverFolder === folder.id && folder.id !== 'all' && 'bg-pastel-lavender/20 border-2 border-dashed border-pastel-lavender'
-                )}
-              >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className={clsx(
-                    'w-2 h-2 rounded-full flex-shrink-0',
-                    isSelected ? styles.bg : 'bg-neutral-600'
-                  )} />
-                  {isSelected ? (
-                    <FolderOpen className="w-4 h-4 flex-shrink-0" />
-                  ) : (
-                    <Folder className="w-4 h-4 flex-shrink-0" />
-                  )}
-                  <span className="text-sm truncate">{folder.name}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs opacity-60 bg-neutral-800/50 px-1.5 py-0.5 rounded">
-                    {folderCounts[folder.id] || 0}
-                  </span>
-                  {folder.id !== 'all' && folder.id !== 'new' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteFolder(folder.id);
-                      }}
-                      className="p-1 opacity-0 group-hover:opacity-100 hover:text-pastel-coral transition-all"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Stats footer */}
-        <div className="p-3 border-t border-neutral-800 bg-neutral-900/30">
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-neutral-800/50 rounded-lg p-2 text-center">
-              <div className="text-pastel-sky font-semibold">{documents?.length || 0}</div>
-              <div className="text-neutral-500">Total</div>
-            </div>
-            <div className="bg-neutral-800/50 rounded-lg p-2 text-center">
-              <div className="text-pastel-mint font-semibold">{folderCounts.new || 0}</div>
-              <div className="text-neutral-500">New</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sources list */}
-        <div className={clsx(
-          "flex flex-col overflow-hidden transition-all",
-          selectedDoc ? "w-1/2" : "flex-1"
-        )}>
-          {/* Toolbar */}
-          <div className="p-3 border-b border-neutral-800 space-y-2 bg-neutral-900/30">
-            <div className="flex items-center gap-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search sources..."
-                  className="w-full pl-9 pr-4 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-pastel-sky focus:outline-none transition-colors"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-
-              {googleSourceCount > 0 && (
-                <button
-                  onClick={() => syncAllMutation.mutate()}
-                  disabled={syncAllMutation.isPending}
-                  className={clsx(
-                    'flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all text-sm font-medium',
-                    syncAllMutation.isPending
-                      ? 'bg-pastel-sky/15 text-pastel-sky'
-                      : 'bg-pastel-mint/15 text-pastel-mint hover:bg-pastel-mint/25'
-                  )}
-                  title={`Sync ${googleSourceCount} Google source${googleSourceCount > 1 ? 's' : ''}`}
-                >
-                  <RefreshCw className={`w-4 h-4 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">
-                    {syncAllMutation.isPending ? 'Syncing...' : 'Sync'}
-                  </span>
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300">
+                  <X className="w-4 h-4" />
                 </button>
               )}
-
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={clsx(
-                  'p-2 rounded-lg transition-all',
-                  showFilters
-                    ? 'bg-pastel-lavender/15 text-pastel-lavender'
-                    : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-300'
-                )}
-              >
-                <Filter className="w-4 h-4" />
-              </button>
-
-              <div className="flex items-center bg-neutral-800/50 rounded-lg p-1 border border-neutral-700">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={clsx(
-                    'p-1.5 rounded transition-all',
-                    viewMode === 'list'
-                      ? 'bg-pastel-sky/20 text-pastel-sky'
-                      : 'text-neutral-400 hover:text-neutral-300'
-                  )}
-                >
-                  <List className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={clsx(
-                    'p-1.5 rounded transition-all',
-                    viewMode === 'grid'
-                      ? 'bg-pastel-sky/20 text-pastel-sky'
-                      : 'text-neutral-400 hover:text-neutral-300'
-                  )}
-                >
-                  <Grid className="w-4 h-4" />
-                </button>
-              </div>
             </div>
 
-            {syncAllResult && (
-              <div className={clsx(
-                'flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
-                syncAllResult.synced > 0
-                  ? 'bg-pastel-mint/15 text-pastel-mint border border-pastel-mint/20'
-                  : 'bg-pastel-sky/15 text-pastel-sky border border-pastel-sky/20'
-              )}>
-                <RefreshCw className="w-4 h-4" />
-                <span>
-                  {syncAllResult.synced > 0
-                    ? `${syncAllResult.synced} source${syncAllResult.synced > 1 ? 's' : ''} updated`
-                    : 'All sources up to date'
-                  }
-                </span>
-                <button
-                  onClick={() => setSyncAllResult(null)}
-                  className="ml-auto p-1 hover:bg-neutral-800 rounded"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
+            {/* Type filter dropdown */}
+            <div className="relative">
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="appearance-none pl-3 pr-8 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 focus:border-pastel-sky focus:outline-none cursor-pointer"
+              >
+                <option value="all">All Types</option>
+                {typeCategories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
+            </div>
+
+            {googleSourceCount > 0 && (
+              <button
+                onClick={() => syncAllMutation.mutate()}
+                disabled={syncAllMutation.isPending}
+                className={clsx(
+                  'flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all text-sm font-medium',
+                  syncAllMutation.isPending
+                    ? 'bg-pastel-sky/15 text-pastel-sky'
+                    : 'bg-pastel-mint/15 text-pastel-mint hover:bg-pastel-mint/25'
+                )}
+              >
+                <RefreshCw className={`w-4 h-4 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{syncAllMutation.isPending ? 'Syncing...' : 'Sync'}</span>
+              </button>
             )}
 
-            {showFilters && (
-              <div className="flex items-center gap-4 text-sm p-2 bg-neutral-800/30 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-neutral-500">Type:</span>
-                  <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1 text-neutral-300 text-sm focus:border-pastel-sky focus:outline-none"
-                  >
-                    <option value="all">All</option>
-                    {fileTypes.map(type => (
-                      <option key={type} value={type}>{type.toUpperCase()}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-neutral-500">Sort:</span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-neutral-800 border border-neutral-700 rounded-lg px-2 py-1 text-neutral-300 text-sm focus:border-pastel-sky focus:outline-none"
-                  >
-                    <option value="date">Date</option>
-                    <option value="name">Name</option>
-                    <option value="type">Type</option>
-                  </select>
-                  <button
-                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                    className="p-1 text-neutral-400 hover:text-neutral-300 hover:bg-neutral-700 rounded"
-                  >
-                    {sortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />}
-                  </button>
-                </div>
-                <span className="text-neutral-500 ml-auto">
-                  <span className="text-pastel-lavender font-medium">{filteredDocs.length}</span> sources
-                </span>
-              </div>
-            )}
+            <div className="flex items-center bg-neutral-800/50 rounded-lg p-1 border border-neutral-700">
+              <button
+                onClick={() => setViewMode('list')}
+                className={clsx('p-1.5 rounded transition-all', viewMode === 'list' ? 'bg-pastel-sky/20 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-300')}
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={clsx('p-1.5 rounded transition-all', viewMode === 'grid' ? 'bg-pastel-sky/20 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-300')}
+              >
+                <Grid className="w-4 h-4" />
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowUpload(!showUpload)}
+              className={clsx(
+                'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
+                showUpload
+                  ? 'bg-pastel-peach/20 text-pastel-peach'
+                  : 'bg-pastel-lavender/15 text-pastel-lavender hover:bg-pastel-lavender/25'
+              )}
+            >
+              <Upload className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Source</span>
+            </button>
           </div>
 
-          {/* Sources display */}
-          <div className="flex-1 overflow-y-auto p-3 scrollbar-dark texture-grid">
-            {filteredDocs.length === 0 ? (
+          {syncAllResult && (
+            <div className={clsx(
+              'flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
+              syncAllResult.synced > 0 ? 'bg-pastel-mint/15 text-pastel-mint' : 'bg-pastel-sky/15 text-pastel-sky'
+            )}>
+              <RefreshCw className="w-4 h-4" />
+              <span>{syncAllResult.synced > 0 ? `${syncAllResult.synced} source${syncAllResult.synced > 1 ? 's' : ''} updated` : 'All sources up to date'}</span>
+              <button onClick={() => setSyncAllResult(null)} className="ml-auto p-1 hover:bg-neutral-800 rounded">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
+          {/* Upload section */}
+          {showUpload && (
+            <div className="bg-neutral-800/30 rounded-xl border border-neutral-700 p-4">
+              {/* Tab switcher */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={() => setUploadTab('file')}
+                  className={clsx('flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                    uploadTab === 'file' ? 'bg-pastel-lavender/20 text-pastel-lavender' : 'text-neutral-400 hover:text-neutral-200'
+                  )}
+                >
+                  <FileText className="w-4 h-4" />
+                  Upload File
+                </button>
+                <button
+                  onClick={() => setUploadTab('google')}
+                  className={clsx('flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                    uploadTab === 'google' ? 'bg-pastel-sky/20 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-200'
+                  )}
+                >
+                  <Link className="w-4 h-4" />
+                  Google Link
+                </button>
+              </div>
+
+              {uploadTab === 'file' ? (
+                <div>
+                  <div
+                    {...getRootProps()}
+                    className={clsx(
+                      'border-2 border-dashed rounded-xl p-6 transition-all cursor-pointer text-center',
+                      isDragActive ? 'border-pastel-sky bg-pastel-sky/10' : 'border-neutral-700 hover:border-pastel-lavender'
+                    )}
+                  >
+                    <input {...getInputProps()} />
+                    <Upload className={clsx('mx-auto h-8 w-8 mb-2', isDragActive ? 'text-pastel-sky' : 'text-neutral-500')} />
+                    <p className="text-sm text-neutral-300">{isDragActive ? 'Drop files here' : 'Drag & drop or click to browse'}</p>
+                    <p className="text-xs text-neutral-500 mt-1">PDF, DOCX, TXT, XLSX, CSV, Images (max 10MB)</p>
+                  </div>
+
+                  {uploadingFiles.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {uploadingFiles.map((file) => (
+                        <div key={file.name} className="flex items-center gap-3 p-2 bg-neutral-900/50 rounded-lg">
+                          <File className="w-5 h-5 text-pastel-lavender" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-neutral-200 truncate">{file.name}</p>
+                            {file.status === 'uploading' && (
+                              <div className="mt-1 bg-neutral-700 rounded-full h-1 overflow-hidden">
+                                <div className="bg-pastel-sky h-full transition-all" style={{ width: `${file.progress}%` }} />
+                              </div>
+                            )}
+                          </div>
+                          {file.status === 'uploading' && <Loader2 className="w-4 h-4 animate-spin text-pastel-sky" />}
+                          {file.status === 'success' && <CheckCircle className="w-4 h-4 text-pastel-mint" />}
+                          {file.status === 'error' && <AlertCircle className="w-4 h-4 text-pastel-coral" />}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <form onSubmit={handleGoogleSubmit} className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <input
+                        type="url"
+                        value={googleUrl}
+                        onChange={(e) => setGoogleUrl(e.target.value)}
+                        placeholder="https://docs.google.com/..."
+                        className="w-full px-3 py-2 bg-neutral-900/50 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-pastel-sky focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={!googleUrl.trim() || googleMutation.isPending}
+                      className="flex items-center gap-2 px-4 py-2 bg-pastel-sky/20 text-pastel-sky rounded-lg hover:bg-pastel-sky/30 transition-all disabled:opacity-50 text-sm font-medium"
+                    >
+                      {googleMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link className="w-4 h-4" />}
+                      Add
+                    </button>
+                  </form>
+                  {urlType && <p className="mt-2 text-xs text-pastel-sky">Detected: Google {urlType === 'sheet' ? 'Sheets' : 'Docs'}</p>}
+                  {googleError && <p className="mt-2 text-xs text-pastel-coral">{googleError}</p>}
+                  {addedDoc && (
+                    <div className="mt-2 flex items-center gap-2 text-pastel-mint text-sm">
+                      <CheckCircle className="w-4 h-4" />
+                      Added: {addedDoc.name}
+                    </div>
+                  )}
+                  <p className="mt-2 text-xs text-neutral-500">Document must be set to "Anyone with the link can view"</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Sources display */}
+        <div className={clsx("flex-1 flex overflow-hidden", selectedDoc && "")}>
+          <div className={clsx("flex-1 overflow-y-auto p-3 scrollbar-dark texture-grid", selectedDoc && "w-1/2")}>
+            {totalFiltered === 0 ? (
               <div className="text-center py-12">
                 <div className="p-4 bg-neutral-900/50 rounded-2xl inline-block mb-4 border border-neutral-800">
                   <FileText className="h-12 w-12 text-pastel-lavender" />
                 </div>
                 <h3 className="text-sm font-medium text-neutral-100">
-                  {searchQuery ? 'No sources found' : 'No sources yet'}
+                  {searchQuery || filterType !== 'all' ? 'No sources found' : 'No sources yet'}
                 </h3>
                 <p className="mt-1 text-sm text-neutral-500">
-                  {searchQuery ? 'Try a different search term' : 'Upload sources to get started'}
+                  {searchQuery || filterType !== 'all' ? 'Try a different search or filter' : 'Click "Add Source" to get started'}
                 </p>
               </div>
             ) : viewMode === 'list' ? (
-              <div className="space-y-2">
-                {filteredDocs.map((doc) => {
-                  const colorName = getFileColor(doc.file_name, doc.source_type);
-                  const styles = colorStyles[colorName] || colorStyles.lavender;
-
-                  return (
-                    <div
-                      key={doc.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, doc)}
-                      onDragEnd={handleDragEnd}
-                      onClick={() => setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
-                      className={clsx(
-                        'bg-neutral-900/50 rounded-lg border p-3 cursor-pointer transition-all group',
-                        selectedDoc?.id === doc.id
-                          ? 'border-pastel-sky bg-pastel-sky/5'
-                          : 'border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900/80',
-                        draggedDoc?.id === doc.id && 'opacity-50'
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* Colored indicator */}
-                        <div className={clsx('w-1 h-10 rounded-full', styles.bg)} />
-
-                        <div className={clsx('w-10 h-10 rounded-lg flex items-center justify-center border', styles.bgLight, styles.border)}>
-                          <File className={clsx('w-5 h-5', styles.text)} />
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-medium text-neutral-100 truncate">
-                              {doc.processed ? doc.title : doc.file_name}
-                            </h3>
-                            {!doc.processed && (
-                              <Loader2 className="w-4 h-4 animate-spin text-pastel-sky flex-shrink-0" />
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className={clsx('text-xs px-1.5 py-0.5 rounded', styles.bgLight, styles.text)}>
-                              {getFileExtension(doc.file_name)}
-                            </span>
-                            <span className="text-xs text-neutral-500">
-                              {new Date(doc.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={(e) => handleDelete(doc.id, e)}
-                          className="p-2 text-neutral-500 opacity-0 group-hover:opacity-100 hover:text-pastel-coral hover:bg-pastel-coral/10 rounded-lg transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+              <div className="space-y-4">
+                {Object.entries(groupedDocs).map(([category, docs]) => (
+                  <div key={category}>
+                    <div className="flex items-center gap-2 mb-2 px-1">
+                      <h3 className="text-sm font-medium text-neutral-400">{category}</h3>
+                      <span className="text-xs text-neutral-600 bg-neutral-800 px-2 py-0.5 rounded-full">{docs.length}</span>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {filteredDocs.map((doc) => {
-                  const colorName = getFileColor(doc.file_name, doc.source_type);
-                  const styles = colorStyles[colorName] || colorStyles.lavender;
+                    <div className="space-y-2">
+                      {docs.map((doc) => {
+                        const colorName = getFileColor(doc.file_name, doc.file_type);
+                        const styles = colorStyles[colorName] || colorStyles.lavender;
 
-                  return (
-                    <div
-                      key={doc.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, doc)}
-                      onDragEnd={handleDragEnd}
-                      onClick={() => setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
-                      className={clsx(
-                        'bg-neutral-900/50 rounded-xl border p-4 cursor-pointer transition-all group relative overflow-hidden',
-                        selectedDoc?.id === doc.id
-                          ? 'border-pastel-sky bg-pastel-sky/5'
-                          : 'border-neutral-800 hover:border-neutral-700',
-                        draggedDoc?.id === doc.id && 'opacity-50'
-                      )}
-                    >
-                      {/* Top color bar */}
-                      <div className={clsx('absolute top-0 left-0 right-0 h-1', styles.bg)} />
-
-                      <div className="text-center pt-2">
-                        <div className={clsx('w-14 h-14 mx-auto rounded-xl flex items-center justify-center border mb-3', styles.bgLight, styles.border)}>
-                          <File className={clsx('w-7 h-7', styles.text)} />
-                        </div>
-                        <h3 className="text-sm font-medium text-neutral-100 truncate">
-                          {doc.processed ? doc.title : doc.file_name}
-                        </h3>
-                        <div className="flex items-center justify-center gap-2 mt-2">
-                          <span className={clsx('text-xs px-2 py-0.5 rounded-full', styles.bgLighter, styles.text)}>
-                            {getFileExtension(doc.file_name)}
-                          </span>
-                          {!doc.processed && (
-                            <Loader2 className="w-3 h-3 animate-spin text-pastel-sky" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Source details panel */}
-        {selectedDoc && (() => {
-          const colorName = getFileColor(selectedDoc.file_name, selectedDoc.source_type);
-          const styles = colorStyles[colorName] || colorStyles.lavender;
-
-          return (
-            <div className="w-1/2 border-l border-neutral-800 flex flex-col overflow-hidden bg-neutral-900/30">
-              {/* Colored top bar */}
-              <div className={clsx('h-1', styles.bg)} />
-
-              <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-neutral-100 truncate">Source Details</h2>
-                <button
-                  onClick={() => setSelectedDoc(null)}
-                  className="p-1.5 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded-lg"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-dark">
-                <div className="flex items-start gap-4">
-                  <div className={clsx('w-16 h-16 rounded-xl flex items-center justify-center border', styles.bgLighter, styles.border)}>
-                    <File className={clsx('w-8 h-8', styles.text)} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold text-neutral-100">
-                      {selectedDoc.processed ? selectedDoc.title : selectedDoc.file_name}
-                    </h3>
-                    <p className="text-sm text-neutral-500 mt-1">{selectedDoc.file_name}</p>
-                    {!selectedDoc.processed && (
-                      <div className="flex items-center gap-2 mt-2 text-pastel-sky">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Processing...</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800">
-                    <div className="flex items-center gap-2 text-neutral-500 mb-1">
-                      <FileType className="w-4 h-4" />
-                      <span className="text-xs">Type</span>
-                    </div>
-                    <p className={clsx('text-sm font-medium', styles.text)}>
-                      {getFileExtension(selectedDoc.file_name)}
-                    </p>
-                  </div>
-                  <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800">
-                    <div className="flex items-center gap-2 text-neutral-500 mb-1">
-                      <Calendar className="w-4 h-4" />
-                      <span className="text-xs">Added</span>
-                    </div>
-                    <p className="text-sm text-neutral-200">
-                      {new Date(selectedDoc.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800">
-                    <div className="flex items-center gap-2 text-neutral-500 mb-1">
-                      <Folder className="w-4 h-4" />
-                      <span className="text-xs">Folder</span>
-                    </div>
-                    <select
-                      value={docFolders[selectedDoc.id] || 'new'}
-                      onChange={(e) => moveToFolder(selectedDoc.id, e.target.value)}
-                      className="text-sm bg-transparent text-neutral-200 focus:outline-none cursor-pointer"
-                    >
-                      {folders.filter(f => f.id !== 'all').map(folder => (
-                        <option key={folder.id} value={folder.id} className="bg-neutral-800">{folder.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {selectedDoc.topic && (
-                    <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800">
-                      <div className="flex items-center gap-2 text-neutral-500 mb-1">
-                        <Sparkles className="w-4 h-4" />
-                        <span className="text-xs">Topic</span>
-                      </div>
-                      <p className="text-sm text-neutral-200">{selectedDoc.topic}</p>
-                    </div>
-                  )}
-                </div>
-
-                {selectedDoc.summary && (
-                  <div className="bg-neutral-800/30 rounded-lg p-4 border border-neutral-800">
-                    <h4 className="text-sm font-medium text-neutral-400 mb-2">Summary</h4>
-                    <p className="text-sm text-neutral-200 leading-relaxed">{selectedDoc.summary}</p>
-                  </div>
-                )}
-
-                {selectedDoc.tags && selectedDoc.tags.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 text-neutral-500 mb-2">
-                      <Tag className="w-4 h-4" />
-                      <span className="text-sm">Tags</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedDoc.tags.map((tag, idx) => {
-                        const tagColors = [colorStyles.mint, colorStyles.sky, colorStyles.lavender, colorStyles.peach];
-                        const tagStyle = tagColors[idx % tagColors.length];
                         return (
-                          <span
-                            key={idx}
-                            className={clsx('px-3 py-1 text-sm rounded-full border', tagStyle.bgLight, tagStyle.text, tagStyle.border)}
+                          <div
+                            key={doc.id}
+                            onClick={() => setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
+                            className={clsx(
+                              'bg-neutral-900/50 rounded-lg border p-3 cursor-pointer transition-all group',
+                              selectedDoc?.id === doc.id ? 'border-pastel-sky bg-pastel-sky/5' : 'border-neutral-800 hover:border-neutral-700'
+                            )}
                           >
-                            {tag}
-                          </span>
+                            <div className="flex items-center gap-3">
+                              <div className={clsx('w-1 h-10 rounded-full', styles.bg)} />
+                              <div className={clsx('w-10 h-10 rounded-lg flex items-center justify-center border', styles.bgLight, styles.border)}>
+                                {doc.file_type === 'google_sheet' ? (
+                                  <FileSpreadsheet className={clsx('w-5 h-5', styles.text)} />
+                                ) : (
+                                  <File className={clsx('w-5 h-5', styles.text)} />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="text-sm font-medium text-neutral-100 truncate">
+                                    {doc.processed ? doc.title : doc.file_name}
+                                  </h3>
+                                  {!doc.processed && <Loader2 className="w-4 h-4 animate-spin text-pastel-sky flex-shrink-0" />}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className={clsx('text-xs px-1.5 py-0.5 rounded', styles.bgLight, styles.text)}>
+                                    {getFileExtension(doc.file_name, doc.file_type)}
+                                  </span>
+                                  <span className="text-xs text-neutral-500">{new Date(doc.created_at).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={(e) => handleDelete(doc.id, e)}
+                                className="p-2 text-neutral-500 opacity-0 group-hover:opacity-100 hover:text-pastel-coral hover:bg-pastel-coral/10 rounded-lg transition-all"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
                   </div>
-                )}
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {Object.entries(groupedDocs).map(([category, docs]) => (
+                  <div key={category}>
+                    <div className="flex items-center gap-2 mb-2 px-1">
+                      <h3 className="text-sm font-medium text-neutral-400">{category}</h3>
+                      <span className="text-xs text-neutral-600 bg-neutral-800 px-2 py-0.5 rounded-full">{docs.length}</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {docs.map((doc) => {
+                        const colorName = getFileColor(doc.file_name, doc.file_type);
+                        const styles = colorStyles[colorName] || colorStyles.lavender;
 
-                {selectedDoc.keywords && selectedDoc.keywords.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-neutral-400 mb-2">Keywords</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedDoc.keywords.map((kw, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 text-xs bg-neutral-800 text-neutral-300 rounded border border-neutral-700"
-                        >
-                          {kw}
-                        </span>
-                      ))}
+                        return (
+                          <div
+                            key={doc.id}
+                            onClick={() => setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
+                            className={clsx(
+                              'bg-neutral-900/50 rounded-xl border p-4 cursor-pointer transition-all group relative overflow-hidden',
+                              selectedDoc?.id === doc.id ? 'border-pastel-sky bg-pastel-sky/5' : 'border-neutral-800 hover:border-neutral-700'
+                            )}
+                          >
+                            <div className={clsx('absolute top-0 left-0 right-0 h-1', styles.bg)} />
+                            <div className="text-center pt-2">
+                              <div className={clsx('w-14 h-14 mx-auto rounded-xl flex items-center justify-center border mb-3', styles.bgLight, styles.border)}>
+                                {doc.file_type === 'google_sheet' ? (
+                                  <FileSpreadsheet className={clsx('w-7 h-7', styles.text)} />
+                                ) : (
+                                  <File className={clsx('w-7 h-7', styles.text)} />
+                                )}
+                              </div>
+                              <h3 className="text-sm font-medium text-neutral-100 truncate">
+                                {doc.processed ? doc.title : doc.file_name}
+                              </h3>
+                              <div className="flex items-center justify-center gap-2 mt-2">
+                                <span className={clsx('text-xs px-2 py-0.5 rounded-full', styles.bgLighter, styles.text)}>
+                                  {getFileExtension(doc.file_name, doc.file_type)}
+                                </span>
+                                {!doc.processed && <Loader2 className="w-3 h-3 animate-spin text-pastel-sky" />}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                )}
+                ))}
+              </div>
+            )}
+          </div>
 
-                {selectedDoc.source_type === 'google' && selectedDoc.last_synced && (
-                  <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-neutral-500">Last synced</p>
-                        <p className="text-sm text-neutral-200">
-                          {new Date(selectedDoc.last_synced).toLocaleString()}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => syncMutation.mutate(selectedDoc.id)}
-                        disabled={syncMutation.isPending}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-pastel-sky/15 text-pastel-sky rounded-lg hover:bg-pastel-sky/25 transition-all disabled:opacity-50"
-                      >
-                        <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-                        <span className="text-xs">Sync</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+          {/* Source details panel */}
+          {selectedDoc && (() => {
+            const colorName = getFileColor(selectedDoc.file_name, selectedDoc.file_type);
+            const styles = colorStyles[colorName] || colorStyles.lavender;
 
-                <div className="pt-4 border-t border-neutral-700 space-y-2">
-                  {selectedDoc.source_type === 'google' && (
-                    <button
-                      onClick={() => syncMutation.mutate(selectedDoc.id)}
-                      disabled={syncMutation.isPending}
-                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-pastel-lavender/15 text-pastel-lavender rounded-lg hover:bg-pastel-lavender/25 transition-all disabled:opacity-50 font-medium"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-                      {syncMutation.isPending ? 'Syncing...' : 'Sync Now'}
-                    </button>
-                  )}
-                  {selectedDoc.file_url && (
-                    <a
-                      href={selectedDoc.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-pastel-sky/15 text-pastel-sky rounded-lg hover:bg-pastel-sky/25 transition-all font-medium"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      {selectedDoc.source_type === 'google' ? 'Open in Google Docs' : 'View Original'}
-                    </a>
-                  )}
-                  <button
-                    onClick={(e) => handleDelete(selectedDoc.id, e)}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-pastel-coral/10 text-pastel-coral rounded-lg hover:bg-pastel-coral/20 transition-all font-medium"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete Source
+            return (
+              <div className="w-1/2 border-l border-neutral-800 flex flex-col overflow-hidden bg-neutral-900/30">
+                <div className={clsx('h-1', styles.bg)} />
+                <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-neutral-100 truncate">Source Details</h2>
+                  <button onClick={() => setSelectedDoc(null)} className="p-1.5 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded-lg">
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-dark">
+                  <div className="flex items-start gap-4">
+                    <div className={clsx('w-16 h-16 rounded-xl flex items-center justify-center border', styles.bgLighter, styles.border)}>
+                      {selectedDoc.file_type === 'google_sheet' ? (
+                        <FileSpreadsheet className={clsx('w-8 h-8', styles.text)} />
+                      ) : (
+                        <File className={clsx('w-8 h-8', styles.text)} />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl font-bold text-neutral-100">
+                        {selectedDoc.processed ? selectedDoc.title : selectedDoc.file_name}
+                      </h3>
+                      <p className="text-sm text-neutral-500 mt-1">{selectedDoc.file_name}</p>
+                      {!selectedDoc.processed && (
+                        <div className="flex items-center gap-2 mt-2 text-pastel-sky">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm">Processing...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800">
+                      <div className="flex items-center gap-2 text-neutral-500 mb-1">
+                        <FileType className="w-4 h-4" />
+                        <span className="text-xs">Type</span>
+                      </div>
+                      <p className={clsx('text-sm font-medium', styles.text)}>
+                        {getFileExtension(selectedDoc.file_name, selectedDoc.file_type)}
+                      </p>
+                    </div>
+                    <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800">
+                      <div className="flex items-center gap-2 text-neutral-500 mb-1">
+                        <Calendar className="w-4 h-4" />
+                        <span className="text-xs">Added</span>
+                      </div>
+                      <p className="text-sm text-neutral-200">{new Date(selectedDoc.created_at).toLocaleDateString()}</p>
+                    </div>
+                    {selectedDoc.topic && (
+                      <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800 col-span-2">
+                        <div className="flex items-center gap-2 text-neutral-500 mb-1">
+                          <Sparkles className="w-4 h-4" />
+                          <span className="text-xs">Topic</span>
+                        </div>
+                        <p className="text-sm text-neutral-200">{selectedDoc.topic}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedDoc.summary && (
+                    <div className="bg-neutral-800/30 rounded-lg p-4 border border-neutral-800">
+                      <h4 className="text-sm font-medium text-neutral-400 mb-2">Summary</h4>
+                      <p className="text-sm text-neutral-200 leading-relaxed">{selectedDoc.summary}</p>
+                    </div>
+                  )}
+
+                  {selectedDoc.tags && selectedDoc.tags.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 text-neutral-500 mb-2">
+                        <Tag className="w-4 h-4" />
+                        <span className="text-sm">Tags</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedDoc.tags.map((tag, idx) => {
+                          const tagColors = [colorStyles.mint, colorStyles.sky, colorStyles.lavender, colorStyles.peach];
+                          const tagStyle = tagColors[idx % tagColors.length];
+                          return (
+                            <span key={idx} className={clsx('px-3 py-1 text-sm rounded-full border', tagStyle.bgLight, tagStyle.text, tagStyle.border)}>
+                              {tag}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedDoc.file_type === 'google_sheet' && selectedDoc.sheet_tabs && selectedDoc.sheet_tabs.length > 0 && (
+                    <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800">
+                      <div className="flex items-center gap-2 text-neutral-500 mb-2">
+                        <FileSpreadsheet className="w-4 h-4" />
+                        <span className="text-xs">Tabs ({selectedDoc.sheet_tabs.length})</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedDoc.sheet_tabs.map((tab, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 text-xs bg-pastel-mint/10 text-pastel-mint rounded border border-pastel-mint/20"
+                          >
+                            {tab.title || tab}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedDoc.source_type === 'google' && selectedDoc.last_synced && (
+                    <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-neutral-500">Last synced</p>
+                          <p className="text-sm text-neutral-200">{new Date(selectedDoc.last_synced).toLocaleString()}</p>
+                        </div>
+                        <button
+                          onClick={() => syncMutation.mutate(selectedDoc.id)}
+                          disabled={syncMutation.isPending}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-pastel-sky/15 text-pastel-sky rounded-lg hover:bg-pastel-sky/25 transition-all disabled:opacity-50"
+                        >
+                          <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+                          <span className="text-xs">Sync</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-neutral-700 space-y-2">
+                    {selectedDoc.file_url && (
+                      <a
+                        href={selectedDoc.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-pastel-sky/15 text-pastel-sky rounded-lg hover:bg-pastel-sky/25 transition-all font-medium"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        {selectedDoc.source_type === 'google' ? 'Open in Google' : 'View Original'}
+                      </a>
+                    )}
+                    <button
+                      onClick={(e) => handleDelete(selectedDoc.id, e)}
+                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-pastel-coral/10 text-pastel-coral rounded-lg hover:bg-pastel-coral/20 transition-all font-medium"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete Source
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
+        </div>
       </div>
     </div>
   );
