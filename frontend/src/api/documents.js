@@ -57,4 +57,10 @@ export const documentsApi = {
     const { data } = await api.post(`/api/documents/${clientId}/sync-all`);
     return data;
   },
+
+  // Upload source via API (URL-based: Google Docs, Google Sheets, or web URLs)
+  apiUpload: async (clientId, url) => {
+    const { data } = await api.post(`/api/documents/${clientId}/api-upload`, { url });
+    return data.data;
+  },
 };

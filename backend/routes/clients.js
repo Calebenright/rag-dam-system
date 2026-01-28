@@ -2,6 +2,7 @@ import express from 'express';
 import { supabase } from '../config/supabase.js';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import path from 'path';
 
 const router = express.Router();
@@ -173,11 +174,19 @@ router.post('/', upload.single('thumbnail'), async (req, res) => {
 router.put('/:id', upload.single('thumbnail'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, is_superclient } = req.body;
+    const { name, description, is_superclient, pod_number } = req.body;
 
     const updates = {};
     if (name) updates.name = name;
     if (description !== undefined) updates.description = description;
+
+    // Handle pod_number (1-4)
+    if (pod_number !== undefined) {
+      const podNum = parseInt(pod_number);
+      if (podNum >= 1 && podNum <= 4) {
+        updates.pod_number = podNum;
+      }
+    }
 
     // Handle superclient flag
     if (is_superclient !== undefined) {
@@ -249,6 +258,49 @@ router.put('/:id', upload.single('thumbnail'), async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating client:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/clients/:id/api-key
+ * Generate or regenerate API key for a client
+ */
+router.post('/:id/api-key', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Generate a secure API key
+    const apiKey = `dk_${crypto.randomBytes(32).toString('hex')}`;
+
+    const { data, error } = await supabase
+      .from('clients')
+      .update({
+        api_key: apiKey,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (error) {
+    console.error('Error generating API key:', error);
     res.status(500).json({
       success: false,
       error: error.message

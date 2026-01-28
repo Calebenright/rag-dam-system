@@ -10,12 +10,14 @@ import SourcesManager from '../components/SourcesManager';
 import EnhancedChatInterface from '../components/EnhancedChatInterface';
 import DataboardManager from '../components/DataboardManager';
 import LeadsManager from '../components/LeadsManager';
+import SettingsModal, { getPodColor } from '../components/SettingsModal';
 import clsx from 'clsx';
 
 export default function ClientDetail() {
   const { clientId } = useParams();
   const navigate = useNavigate();
   const [agentTab, setAgentTab] = useState('chat'); // 'chat', 'sources', 'databoards', or 'leads'
+  const [showSettings, setShowSettings] = useState(false);
 
   // Check if this is the Dodeka superclient (case-insensitive name check)
 
@@ -59,6 +61,7 @@ export default function ClientDetail() {
 
   // Only show Leads tab for superclient
   const isSuperclient = client.is_superclient === true;
+  const podColor = getPodColor(client);
 
   return (
     <div className="h-screen bg-neutral-950 flex flex-col">
@@ -82,11 +85,11 @@ export default function ClientDetail() {
                 <img
                   src={client.thumbnail_url}
                   alt={client.name}
-                  className="w-9 h-9 rounded-lg object-cover border-2 border-pastel-lavender/30"
+                  className={clsx("w-9 h-9 rounded-lg object-cover border-2", `${podColor.border}/30`)}
                 />
               ) : (
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-pastel-mint/20 to-pastel-lavender/20 border border-neutral-700 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-pastel-lavender">
+                <div className={clsx("w-9 h-9 rounded-lg border border-neutral-700 flex items-center justify-center", podColor.bgLight)}>
+                  <span className={clsx("text-sm font-semibold", podColor.text)}>
                     {client.name?.charAt(0)?.toUpperCase()}
                   </span>
                 </div>
@@ -94,7 +97,7 @@ export default function ClientDetail() {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-base font-semibold text-neutral-100">{client.name}</h1>
-                  <span className="w-2 h-2 rounded-full bg-pastel-mint" />
+                  <span className={clsx("w-2 h-2 rounded-full", podColor.bg)} />
                 </div>
                 {client.description && (
                   <p className="text-xs text-neutral-500 truncate max-w-xs">{client.description}</p>
@@ -104,7 +107,10 @@ export default function ClientDetail() {
           </div>
 
           {/* Right: Settings */}
-          <button className="p-2 text-neutral-500 hover:text-pastel-peach hover:bg-neutral-800 rounded-lg transition-all">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 text-neutral-500 hover:text-pastel-peach hover:bg-neutral-800 rounded-lg transition-all"
+          >
             <Settings className="w-5 h-5" />
           </button>
         </div>
@@ -224,6 +230,13 @@ export default function ClientDetail() {
           ) : null}
         </main>
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        client={client}
+      />
     </div>
   );
 }

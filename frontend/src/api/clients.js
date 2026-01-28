@@ -35,4 +35,10 @@ export const clientsApi = {
     const { data } = await api.delete(`/api/clients/${id}`);
     return data;
   },
+
+  // Generate or regenerate API key
+  generateApiKey: async (id) => {
+    const { data } = await api.post(`/api/clients/${id}/api-key`);
+    return data.data;
+  },
 };

@@ -880,6 +880,318 @@ router.post('/search/:clientId', async (req, res) => {
 });
 
 /**
+ * POST /api/documents/api-upload
+ * Upload a source via API (global API key with client identifier in body)
+ *
+ * Headers:
+ * - X-API-Key: Global API key (set via DODEKA_API_KEY env variable)
+ *
+ * Request body:
+ * - { url: 'https://docs.google.com/...', client: 'Client Name or ID' }
+ */
+router.post('/api-upload', async (req, res) => {
+  let tempFilePath = null;
+
+  try {
+    const { url, client: clientIdentifier } = req.body;
+    const apiKey = req.headers['x-api-key'];
+
+    // Validate API key against global key
+    const globalApiKey = process.env.DODEKA_API_KEY;
+    if (!globalApiKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'API not configured. Set DODEKA_API_KEY environment variable.'
+      });
+    }
+
+    if (!apiKey) {
+      return res.status(401).json({
+        success: false,
+        error: 'Missing API key. Include X-API-Key header.'
+      });
+    }
+
+    if (apiKey !== globalApiKey) {
+      return res.status(403).json({
+        success: false,
+        error: 'Invalid API key'
+      });
+    }
+
+    // Validate request
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: url'
+      });
+    }
+
+    if (!clientIdentifier) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: client (name or ID)'
+      });
+    }
+
+    // Find client by name or ID
+    let client;
+
+    // First try to find by ID (UUID format)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(clientIdentifier)) {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name')
+        .eq('id', clientIdentifier)
+        .single();
+
+      if (!error && data) {
+        client = data;
+      }
+    }
+
+    // If not found by ID, try by name (case-insensitive)
+    if (!client) {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name')
+        .ilike('name', clientIdentifier)
+        .single();
+
+      if (!error && data) {
+        client = data;
+      }
+    }
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        error: `Client not found: ${clientIdentifier}`
+      });
+    }
+
+    const clientId = client.id;
+
+    // Check if it's a Google Docs/Sheets URL
+    const sourceType = getGoogleSourceType(url);
+
+    if (sourceType) {
+      // Handle Google Docs/Sheets
+      let content, title, docId, sheetTabs = [];
+
+      if (sourceType === 'google_doc') {
+        docId = extractDocId(url);
+        if (!docId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Could not extract document ID from URL'
+          });
+        }
+
+        const docData = await fetchPublicGoogleDoc(docId);
+        content = docData.content;
+        title = docData.title;
+      } else if (sourceType === 'google_sheet') {
+        docId = extractSheetId(url);
+        if (!docId) {
+          return res.status(400).json({
+            success: false,
+            error: 'Could not extract spreadsheet ID from URL'
+          });
+        }
+
+        const sheetData = await fetchPublicGoogleSheet(docId);
+        content = sheetData.content;
+        title = sheetData.title;
+        sheetTabs = sheetData.tabs || [];
+
+        // Also add to connected_sheets for the chat agent to use
+        try {
+          await supabase
+            .from('connected_sheets')
+            .upsert({
+              client_id: clientId,
+              spreadsheet_id: docId,
+              sheet_url: url,
+              name: title,
+              sheet_tabs: sheetTabs,
+              last_synced: new Date().toISOString(),
+            }, {
+              onConflict: 'client_id,spreadsheet_id',
+            });
+        } catch (sheetConnectError) {
+          console.error('Error adding to connected_sheets:', sheetConnectError);
+        }
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: 'Google Slides not yet supported'
+        });
+      }
+
+      // Generate content hash for change detection
+      const contentHash = hashContent(content);
+
+      // Create document record
+      const { data: document, error: insertError } = await supabase
+        .from('documents')
+        .insert([{
+          client_id: clientId,
+          file_name: title,
+          file_type: sourceType,
+          file_url: url,
+          file_size: content ? content.length : 0,
+          google_doc_id: docId,
+          source_type: 'google',
+          last_synced: new Date().toISOString(),
+          content_hash: contentHash,
+          processed: false,
+          sheet_tabs: sheetTabs.length > 0 ? sheetTabs : null
+        }])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Process document asynchronously
+      processGoogleDocAsync(document.id, content, title, sourceType);
+
+      return res.status(201).json({
+        success: true,
+        data: {
+          ...document,
+          tabs: sheetTabs
+        },
+        message: sourceType === 'google_sheet'
+          ? `Google Sheet added with ${sheetTabs.length} tab(s). Processing in background...`
+          : 'Google Doc added. Processing in background...'
+      });
+    }
+
+    // Handle regular web URLs
+    let fileBuffer;
+    let fileName;
+    let fileType;
+    let fileSize;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type') || 'application/octet-stream';
+      const arrayBuffer = await response.arrayBuffer();
+      fileBuffer = Buffer.from(arrayBuffer);
+      fileSize = fileBuffer.length;
+
+      // Extract filename from URL or content-disposition header
+      const contentDisposition = response.headers.get('content-disposition');
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (match) {
+          fileName = match[1].replace(/['"]/g, '');
+        }
+      }
+      if (!fileName) {
+        const urlPath = new URL(url).pathname;
+        fileName = path.basename(urlPath) || 'downloaded-file';
+      }
+
+      fileType = contentType.split(';')[0].trim();
+    } catch (e) {
+      return res.status(400).json({
+        success: false,
+        error: `Failed to fetch URL: ${e.message}`
+      });
+    }
+
+    // Validate file type
+    if (!isValidFileType(fileType)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid file type: ${fileType}. Allowed types: PDF, DOCX, TXT, PNG, JPG, XLSX, CSV`
+      });
+    }
+
+    // Validate file size
+    if (!isValidFileSize(fileSize)) {
+      const maxSize = parseInt(process.env.MAX_FILE_SIZE) || 10485760;
+      return res.status(400).json({
+        success: false,
+        error: `File too large. Maximum size: ${Math.round(maxSize / 1024 / 1024)}MB`
+      });
+    }
+
+    // Write to temp file for processing
+    tempFilePath = path.join(os.tmpdir(), `${uuidv4()}${path.extname(fileName)}`);
+    await fs.writeFile(tempFilePath, fileBuffer);
+
+    // Upload file to Supabase Storage
+    const fileExt = path.extname(fileName);
+    const storagePath = `documents/${clientId}/${uuidv4()}${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('client-assets')
+      .upload(storagePath, fileBuffer, {
+        contentType: fileType,
+        upsert: false
+      });
+
+    if (uploadError) throw uploadError;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('client-assets')
+      .getPublicUrl(storagePath);
+
+    // Create initial document record
+    const { data: document, error: insertError } = await supabase
+      .from('documents')
+      .insert([{
+        client_id: clientId,
+        file_name: fileName,
+        file_type: fileType,
+        file_url: publicUrl,
+        file_size: fileSize,
+        source_type: 'url',
+        processed: false
+      }])
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+
+    // Process document asynchronously
+    processDocumentAsync(document.id, tempFilePath, fileName, fileType);
+
+    res.status(201).json({
+      success: true,
+      data: document,
+      message: 'Source uploaded via API. Processing in background...'
+    });
+
+  } catch (error) {
+    console.error('Error in API upload:', error);
+
+    // Cleanup temp file
+    if (tempFilePath) {
+      try {
+        await fs.unlink(tempFilePath);
+      } catch (e) {
+        console.error('Error deleting temp file:', e);
+      }
+    }
+
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * DELETE /api/documents/:documentId
  * Delete document and its chunks
  */

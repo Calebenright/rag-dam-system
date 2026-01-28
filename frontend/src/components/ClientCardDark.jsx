@@ -1,4 +1,4 @@
-import { FolderOpen, Trash2, FileText, MessageSquare, Crown } from 'lucide-react';
+import { FolderOpen, Trash2, FileText, MessageSquare, Crown, Settings } from 'lucide-react';
 
 // Pastel accent colors for cards
 const accents = [
@@ -9,7 +9,7 @@ const accents = [
   { bg: 'bg-pastel-coral', bgLight: 'bg-pastel-coral/10', border: 'border-pastel-coral/30', text: 'text-pastel-coral' },
 ];
 
-export default function ClientCard({ client, index = 0, onClick, onDelete, onMakeSuperclient, superclientExists }) {
+export default function ClientCard({ client, index = 0, onClick, onDelete, onMakeSuperclient, onEdit, superclientExists }) {
   // Use index for consistent accent color assignment, but superclient always gets coral
   const accent = client.is_superclient
     ? accents[4] // coral for superclient
@@ -53,6 +53,15 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
 
         {/* Action buttons */}
         <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="p-1.5 bg-neutral-900/80 backdrop-blur-sm text-neutral-400 rounded-lg hover:text-pastel-sky hover:bg-pastel-sky/10"
+              title="Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
           {!client.is_superclient && !superclientExists && onMakeSuperclient && (
             <button
               onClick={onMakeSuperclient}

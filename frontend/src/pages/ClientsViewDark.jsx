@@ -5,10 +5,12 @@ import { Plus, FolderOpen, Search, Loader2, Sparkles } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import CreateClientModal from '../components/CreateClientModal';
 import ClientCard from '../components/ClientCardDark';
+import SettingsModal from '../components/SettingsModal';
 
 export default function ClientsView() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingClient, setEditingClient] = useState(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -55,6 +57,11 @@ export default function ClientsView() {
     if (window.confirm('Make this client the Superclient? Superclients have access to Leads verification and other global tools.')) {
       await makeSuperclientMutation.mutateAsync(clientId);
     }
+  };
+
+  const handleEditClient = (client, e) => {
+    e.stopPropagation();
+    setEditingClient(client);
   };
 
   // Check if superclient exists
@@ -168,6 +175,7 @@ export default function ClientsView() {
                 onClick={() => handleClientClick(client.id)}
                 onDelete={(e) => handleDeleteClient(client.id, e)}
                 onMakeSuperclient={(e) => handleMakeSuperclient(client.id, e)}
+                onEdit={(e) => handleEditClient(client, e)}
                 superclientExists={superclientExists}
               />
             ))}
@@ -179,6 +187,13 @@ export default function ClientsView() {
       <CreateClientModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Settings/Edit Modal */}
+      <SettingsModal
+        isOpen={!!editingClient}
+        onClose={() => setEditingClient(null)}
+        client={editingClient}
       />
     </div>
   );
