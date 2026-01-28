@@ -1245,4 +1245,124 @@ router.delete('/:documentId', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/documents/api-create-client
+ * Create a new client via API
+ *
+ * Headers:
+ * - X-API-Key: Global API key (set via DODEKA_API_KEY env variable)
+ *
+ * Request body:
+ * - { name: 'Client Name', description: 'Optional description' }
+ *
+ * Optional fields:
+ * - pod_number: 1-4 (default: 1)
+ * - is_superclient: boolean (default: false)
+ */
+router.post('/api-create-client', async (req, res) => {
+  try {
+    const { name, description, pod_number, is_superclient } = req.body;
+    const apiKey = req.headers['x-api-key'];
+
+    // Validate API key against global key
+    const globalApiKey = process.env.DODEKA_API_KEY;
+    if (!globalApiKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'API not configured. Set DODEKA_API_KEY environment variable.'
+      });
+    }
+
+    if (!apiKey) {
+      return res.status(401).json({
+        success: false,
+        error: 'Missing API key. Include X-API-Key header.'
+      });
+    }
+
+    if (apiKey !== globalApiKey) {
+      return res.status(403).json({
+        success: false,
+        error: 'Invalid API key'
+      });
+    }
+
+    // Validate required fields
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: name'
+      });
+    }
+
+    // Check if client with this name already exists
+    const { data: existingClient } = await supabase
+      .from('clients')
+      .select('id, name')
+      .ilike('name', name.trim())
+      .single();
+
+    if (existingClient) {
+      return res.status(409).json({
+        success: false,
+        error: `Client with name "${name}" already exists`,
+        data: { existing_client_id: existingClient.id }
+      });
+    }
+
+    // Check superclient constraint
+    if (is_superclient === true || is_superclient === 'true') {
+      const { data: existingSuper } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('is_superclient', true)
+        .single();
+
+      if (existingSuper) {
+        return res.status(400).json({
+          success: false,
+          error: 'A superclient already exists. Only one superclient is allowed.'
+        });
+      }
+    }
+
+    // Parse pod_number (1-4, default to 1)
+    let parsedPodNumber = 1;
+    if (pod_number !== undefined) {
+      const podNum = parseInt(pod_number);
+      if (podNum >= 1 && podNum <= 4) {
+        parsedPodNumber = podNum;
+      }
+    }
+
+    // Create the client
+    const { data: client, error: insertError } = await supabase
+      .from('clients')
+      .insert([{
+        name: name.trim(),
+        description: description?.trim() || '',
+        pod_number: parsedPodNumber,
+        is_superclient: is_superclient === true || is_superclient === 'true',
+        thumbnail_bg_color: '#000000'
+      }])
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+
+    res.status(201).json({
+      success: true,
+      data: client,
+      message: `Client "${client.name}" created successfully`
+    });
+
+  } catch (error) {
+    console.error('Error creating client via API:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 export default router;

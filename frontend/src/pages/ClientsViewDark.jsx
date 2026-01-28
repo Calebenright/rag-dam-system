@@ -1,15 +1,26 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FolderOpen, Search, Loader2, Sparkles } from 'lucide-react';
+import { Plus, FolderOpen, Search, Loader2, Sparkles, Crown } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import CreateClientModal from '../components/CreateClientModal';
 import ClientCard from '../components/ClientCardDark';
 import SettingsModal from '../components/SettingsModal';
 
+// Pod filter options
+const POD_FILTERS = [
+  { value: 'all', label: 'All', color: null },
+  { value: 'superclient', label: 'Superclient', color: 'bg-pastel-coral', textColor: 'text-pastel-coral' },
+  { value: '1', label: 'Pod 1', color: 'bg-pastel-mint', textColor: 'text-pastel-mint' },
+  { value: '2', label: 'Pod 2', color: 'bg-pastel-sky', textColor: 'text-pastel-sky' },
+  { value: '3', label: 'Pod 3', color: 'bg-pastel-lemon', textColor: 'text-pastel-lemon' },
+  { value: '4', label: 'Pod 4', color: 'bg-pastel-lavender', textColor: 'text-pastel-lavender' },
+];
+
 export default function ClientsView() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [podFilter, setPodFilter] = useState('all');
   const [editingClient, setEditingClient] = useState(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -28,10 +39,25 @@ export default function ClientsView() {
     },
   });
 
-  // Filter clients based on search
-  const filteredClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter clients based on search, pod filter, and sort with superclients first
+  const filteredClients = clients
+    .filter((client) => {
+      // Search filter
+      if (!client.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      // Pod filter
+      if (podFilter === 'all') return true;
+      if (podFilter === 'superclient') return client.is_superclient;
+      return !client.is_superclient && client.pod_number === parseInt(podFilter);
+    })
+    .sort((a, b) => {
+      // Superclients always first
+      if (a.is_superclient && !b.is_superclient) return -1;
+      if (!a.is_superclient && b.is_superclient) return 1;
+      // Then sort by name
+      return a.name.localeCompare(b.name);
+    });
 
   const handleClientClick = (clientId) => {
     navigate(`/client/${clientId}`);
@@ -113,6 +139,32 @@ export default function ClientsView() {
             </div>
           </div>
 
+          {/* Pod Filter */}
+          <div className="mt-4 flex items-center gap-2">
+            {POD_FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => setPodFilter(filter.value)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  podFilter === filter.value
+                    ? filter.color
+                      ? `${filter.color}/20 ${filter.textColor} border border-current`
+                      : 'bg-neutral-700 text-neutral-100 border border-neutral-600'
+                    : 'bg-neutral-800/50 text-neutral-400 border border-neutral-700 hover:bg-neutral-800 hover:text-neutral-300'
+                }`}
+              >
+                {filter.color ? (
+                  filter.value === 'superclient' ? (
+                    <Crown className="w-3 h-3" />
+                  ) : (
+                    <span className={`w-2.5 h-2.5 rounded-full ${filter.color}`} />
+                  )
+                ) : null}
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
           {/* Stats bar */}
           <div className="mt-4 flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800/50 rounded-lg border border-neutral-700">
@@ -120,7 +172,7 @@ export default function ClientsView() {
               <span className="text-neutral-400">Total:</span>
               <span className="text-pastel-sky font-medium">{clients.length}</span>
             </div>
-            {searchQuery && (
+            {(searchQuery || podFilter !== 'all') && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800/50 rounded-lg border border-neutral-700">
                 <span className="w-2 h-2 rounded-full bg-pastel-lavender" />
                 <span className="text-neutral-400">Showing:</span>
@@ -147,14 +199,14 @@ export default function ClientsView() {
                 <FolderOpen className="h-8 w-8 text-pastel-lavender" />
               </div>
               <h3 className="text-lg font-medium text-neutral-200">
-                {searchQuery ? 'No clients found' : 'No clients yet'}
+                {searchQuery || podFilter !== 'all' ? 'No clients found' : 'No clients yet'}
               </h3>
               <p className="mt-2 text-sm text-neutral-500 max-w-xs mx-auto">
-                {searchQuery
-                  ? 'Try adjusting your search query'
+                {searchQuery || podFilter !== 'all'
+                  ? 'Try adjusting your search or filter'
                   : 'Get started by creating your first client'}
               </p>
-              {!searchQuery && (
+              {!searchQuery && podFilter === 'all' && (
                 <button
                   onClick={() => setIsCreateModalOpen(true)}
                   className="mt-6 inline-flex items-center px-5 py-2.5 bg-pastel-mint/15 hover:bg-pastel-mint/25 text-pastel-mint font-medium rounded-lg transition-all border border-pastel-mint/20"

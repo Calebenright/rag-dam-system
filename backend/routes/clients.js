@@ -90,7 +90,7 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', upload.single('thumbnail'), async (req, res) => {
   try {
-    const { name, description, is_superclient } = req.body;
+    const { name, description, is_superclient, pod_number, thumbnail_bg_color } = req.body;
 
     if (!name) {
       return res.status(400).json({
@@ -140,6 +140,21 @@ router.post('/', upload.single('thumbnail'), async (req, res) => {
       thumbnailUrl = publicUrl;
     }
 
+    // Parse pod_number (1-4, default to 1)
+    let parsedPodNumber = 1;
+    if (pod_number !== undefined) {
+      const podNum = parseInt(pod_number);
+      if (podNum >= 1 && podNum <= 4) {
+        parsedPodNumber = podNum;
+      }
+    }
+
+    // Validate thumbnail_bg_color (default to #000000)
+    let parsedBgColor = '#000000';
+    if (thumbnail_bg_color && /^#[0-9A-Fa-f]{6}$/.test(thumbnail_bg_color)) {
+      parsedBgColor = thumbnail_bg_color;
+    }
+
     // Create client record
     const { data, error } = await supabase
       .from('clients')
@@ -147,7 +162,9 @@ router.post('/', upload.single('thumbnail'), async (req, res) => {
         name,
         description: description || '',
         thumbnail_url: thumbnailUrl,
-        is_superclient: is_superclient === 'true' || is_superclient === true
+        is_superclient: is_superclient === 'true' || is_superclient === true,
+        pod_number: parsedPodNumber,
+        thumbnail_bg_color: parsedBgColor
       }])
       .select()
       .single();
@@ -185,6 +202,15 @@ router.put('/:id', upload.single('thumbnail'), async (req, res) => {
       const podNum = parseInt(pod_number);
       if (podNum >= 1 && podNum <= 4) {
         updates.pod_number = podNum;
+      }
+    }
+
+    // Handle thumbnail_bg_color
+    const { thumbnail_bg_color } = req.body;
+    if (thumbnail_bg_color !== undefined) {
+      // Validate hex color format
+      if (/^#[0-9A-Fa-f]{6}$/.test(thumbnail_bg_color)) {
+        updates.thumbnail_bg_color = thumbnail_bg_color;
       }
     }
 

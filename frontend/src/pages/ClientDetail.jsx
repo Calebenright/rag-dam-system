@@ -82,11 +82,19 @@ export default function ClientDetail() {
 
             <div className="flex items-center gap-3">
               {client.thumbnail_url ? (
-                <img
-                  src={client.thumbnail_url}
-                  alt={client.name}
-                  className={clsx("w-9 h-9 rounded-lg object-cover border-2", `${podColor.border}/30`)}
-                />
+                <div
+                  className={clsx(
+                    "w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center border-2",
+                    `${podColor.border}/30`
+                  )}
+                  style={{ backgroundColor: client.thumbnail_bg_color || '#000000' }}
+                >
+                  <img
+                    src={client.thumbnail_url}
+                    alt={client.name}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
               ) : (
                 <div className={clsx("w-9 h-9 rounded-lg border border-neutral-700 flex items-center justify-center", podColor.bgLight)}>
                   <span className={clsx("text-sm font-semibold", podColor.text)}>
@@ -236,6 +244,7 @@ export default function ClientDetail() {
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         client={client}
+        showApiTab={true}
       />
     </div>
   );

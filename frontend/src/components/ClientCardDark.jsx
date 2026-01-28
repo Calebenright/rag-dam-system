@@ -1,19 +1,15 @@
 import { FolderOpen, Trash2, FileText, MessageSquare, Crown, Settings } from 'lucide-react';
-
-// Pastel accent colors for cards
-const accents = [
-  { bg: 'bg-pastel-mint', bgLight: 'bg-pastel-mint/10', border: 'border-pastel-mint/30', text: 'text-pastel-mint' },
-  { bg: 'bg-pastel-lavender', bgLight: 'bg-pastel-lavender/10', border: 'border-pastel-lavender/30', text: 'text-pastel-lavender' },
-  { bg: 'bg-pastel-sky', bgLight: 'bg-pastel-sky/10', border: 'border-pastel-sky/30', text: 'text-pastel-sky' },
-  { bg: 'bg-pastel-peach', bgLight: 'bg-pastel-peach/10', border: 'border-pastel-peach/30', text: 'text-pastel-peach' },
-  { bg: 'bg-pastel-coral', bgLight: 'bg-pastel-coral/10', border: 'border-pastel-coral/30', text: 'text-pastel-coral' },
-];
+import { getPodColor } from './SettingsModal';
 
 export default function ClientCard({ client, index = 0, onClick, onDelete, onMakeSuperclient, onEdit, superclientExists }) {
-  // Use index for consistent accent color assignment, but superclient always gets coral
-  const accent = client.is_superclient
-    ? accents[4] // coral for superclient
-    : accents[index % accents.length];
+  // Use pod color from client settings
+  const podColor = getPodColor(client);
+  const accent = {
+    bg: podColor.bg,
+    bgLight: podColor.bgLight,
+    border: podColor.border,
+    text: podColor.text,
+  };
 
   return (
     <div
@@ -24,13 +20,18 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
       <div className={`h-1 ${accent.bg}`} />
 
       {/* Thumbnail */}
-      <div className="aspect-video relative overflow-hidden bg-neutral-800/50">
+      <div
+        className="aspect-video relative overflow-hidden"
+        style={{ backgroundColor: client.thumbnail_bg_color || '#000000' }}
+      >
         {client.thumbnail_url ? (
-          <img
-            src={client.thumbnail_url}
-            alt={client.name}
-            className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-          />
+          <div className="w-full h-full flex items-center justify-center p-2">
+            <img
+              src={client.thumbnail_url}
+              alt={client.name}
+              className="max-w-full max-h-full object-contain opacity-90 group-hover:opacity-100 transition-opacity"
+            />
+          </div>
         ) : (
           <div className={`flex items-center justify-center h-full ${accent.bgLight} texture-grid`}>
             <div className={`w-16 h-16 rounded-2xl ${accent.bgLight} flex items-center justify-center border ${accent.border}`}>
@@ -97,13 +98,9 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
 
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-neutral-50 truncate">{client.name}</h3>
-            {client.description ? (
+            {client.description && (
               <p className="mt-1 text-sm text-neutral-400 line-clamp-2">
                 {client.description}
-              </p>
-            ) : (
-              <p className="mt-1 text-sm text-neutral-500 italic">
-                No description
               </p>
             )}
           </div>
