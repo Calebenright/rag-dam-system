@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { testConnection } from './config/supabase.js';
+import { requireAuth } from './middleware/auth.js';
 import clientsRouter from './routes/clients.js';
 import documentsRouter from './routes/documents.js';
 import chatRouter from './routes/chat.js';
@@ -37,13 +38,13 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Routes
-app.use('/api/clients', clientsRouter);
-app.use('/api/documents', documentsRouter);
-app.use('/api/chat', chatRouter);
-app.use('/api/sheets', sheetsRouter);
-app.use('/api/dashboards', dashboardsRouter);
-app.use('/api/leads', leadsRouter);
+// Protected Routes - require authentication
+app.use('/api/clients', requireAuth, clientsRouter);
+app.use('/api/documents', requireAuth, documentsRouter);
+app.use('/api/chat', requireAuth, chatRouter);
+app.use('/api/sheets', requireAuth, sheetsRouter);
+app.use('/api/dashboards', requireAuth, dashboardsRouter);
+app.use('/api/leads', requireAuth, leadsRouter);
 
 // Health check
 app.get('/health', (req, res) => {
