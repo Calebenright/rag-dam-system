@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Copy, RefreshCw, Check, Code, Settings, Upload, User, Pipette } from 'lucide-react';
+import { X, Copy, RefreshCw, Check, Code, Settings, Upload, User, Pipette, Bot } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -565,6 +565,99 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
   "data": { "id": "uuid", "name": "...", ... },
   "message": "Client created successfully"
 }`}</pre>
+                  </div>
+                </div>
+              </section>
+
+              {/* Divider */}
+              <div className="border-t border-neutral-800" />
+
+              {/* Agent API */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-pastel-coral" />
+                  <h3 className="text-sm font-medium text-neutral-200">AI Agent Query</h3>
+                </div>
+
+                {/* Endpoint */}
+                <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-pastel-mint/20 text-pastel-mint rounded text-xs font-medium">POST</span>
+                    <code className="text-sm text-neutral-300">{baseUrl}/api/agent/query</code>
+                  </div>
+                </div>
+
+                {/* Request Body */}
+                <div className="space-y-2">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wide font-medium">Request Body</p>
+                  <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300">
+                    <pre>{`{
+  "prompt": "Your question here",
+  "clientId": "${client?.id || 'client-uuid'}",
+  "saveHistory": false  // optional
+}`}</pre>
+                  </div>
+                </div>
+
+                {/* Example */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-neutral-500 uppercase tracking-wide font-medium">Example (cURL)</span>
+                    <button
+                      onClick={() => copyToClipboard(`curl -X POST "${baseUrl}/api/agent/query" \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c" \\
+  -d '{"prompt": "What documents do we have?", "clientId": "${client?.id || 'client-uuid'}"}'`)}
+                      className="text-xs text-neutral-500 hover:text-pastel-mint transition-colors flex items-center gap-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      Copy
+                    </button>
+                  </div>
+                  <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300 overflow-x-auto">
+                    <pre>{`curl -X POST "${baseUrl}/api/agent/query" \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: dk_global_a7f3e9c2b8d1..." \\
+  -d '{
+    "prompt": "What documents do we have?",
+    "clientId": "${client?.id || 'client-uuid'}"
+  }'`}</pre>
+                  </div>
+                </div>
+
+                {/* Response */}
+                <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 space-y-2">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wide font-medium mb-3">Response</p>
+                  <div className="font-mono text-xs text-neutral-300">
+                    <pre>{`{
+  "success": true,
+  "data": {
+    "response": "AI response text...",
+    "client": { "id": "...", "name": "..." },
+    "context": {
+      "documentsUsed": 3,
+      "chunksUsed": 5,
+      "sheetsAvailable": 1
+    }
+  }
+}`}</pre>
+                  </div>
+                </div>
+
+                {/* Additional Endpoints */}
+                <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 space-y-3">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wide font-medium">Other Agent Endpoints</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-pastel-sky/20 text-pastel-sky rounded text-xs font-medium">GET</span>
+                      <code className="text-neutral-300">/api/agent/clients</code>
+                      <span className="text-neutral-500 text-xs ml-auto">List all clients</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-pastel-sky/20 text-pastel-sky rounded text-xs font-medium">GET</span>
+                      <code className="text-neutral-300">/api/agent/clients/:id/context</code>
+                      <span className="text-neutral-500 text-xs ml-auto">Get client context</span>
+                    </div>
                   </div>
                 </div>
               </section>

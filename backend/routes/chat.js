@@ -170,8 +170,11 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
   const tempFilePaths = [];
   try {
     const { clientId } = req.params;
-    const { message, includeSourceImages, sourceDocumentIds } = req.body;
+    const { message, includeSourceImages, sourceDocumentIds, conversationId } = req.body;
     const imageFiles = req.files || [];
+
+    // Use provided conversationId or generate a new one
+    const activeConversationId = conversationId || crypto.randomUUID();
 
     // Track temp files for cleanup
     imageFiles.forEach(f => tempFilePaths.push(f.path));
@@ -197,11 +200,18 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
       });
     }
 
-    // Get recent conversation history (last 10 messages)
-    const { data: history, error: historyError } = await supabase
+    // Get recent conversation history (last 10 messages from this conversation)
+    let historyQuery = supabase
       .from('chat_messages')
       .select('role, content')
-      .eq('client_id', clientId)
+      .eq('client_id', clientId);
+
+    // If we have an existing conversation, get its history
+    if (conversationId) {
+      historyQuery = historyQuery.eq('conversation_id', conversationId);
+    }
+
+    const { data: history, error: historyError } = await historyQuery
       .order('created_at', { ascending: false })
       .limit(10);
 
@@ -385,6 +395,7 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
       .from('chat_messages')
       .insert([{
         client_id: clientId,
+        conversation_id: activeConversationId,
         role: 'user',
         content: userMessageContent,
         context_docs: relevantDocs.map(d => d.id)
@@ -397,6 +408,7 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
       .from('chat_messages')
       .insert([{
         client_id: clientId,
+        conversation_id: activeConversationId,
         role: 'assistant',
         content: aiResponse,
         context_docs: relevantDocs.map(d => d.id),
@@ -411,6 +423,7 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
       success: true,
       data: {
         message: assistantMsg,
+        conversationId: activeConversationId,
         contextDocuments: sourceRefs,
         imagesProcessed: {
           uploaded: uploadedImages.length,
@@ -762,6 +775,161 @@ router.post('/:clientId/sheets', async (req, res) => {
 
   } catch (error) {
     console.error('Error in sheets chat:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/chat/:clientId/conversations
+ * Get list of conversations (grouped by conversation_id) for a client
+ */
+router.get('/:clientId/conversations', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    // Get distinct conversations with their first message and metadata
+    const { data: messages, error } = await supabase
+      .from('chat_messages')
+      .select('conversation_id, content, role, created_at')
+      .eq('client_id', clientId)
+      .not('conversation_id', 'is', null)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Group by conversation_id and get metadata
+    const conversationsMap = new Map();
+    for (const msg of messages || []) {
+      if (!msg.conversation_id) continue;
+
+      if (!conversationsMap.has(msg.conversation_id)) {
+        conversationsMap.set(msg.conversation_id, {
+          id: msg.conversation_id,
+          firstMessage: msg.role === 'user' ? msg.content : null,
+          lastActivity: msg.created_at,
+          messageCount: 1
+        });
+      } else {
+        const conv = conversationsMap.get(msg.conversation_id);
+        conv.messageCount++;
+        if (!conv.firstMessage && msg.role === 'user') {
+          conv.firstMessage = msg.content;
+        }
+      }
+    }
+
+    // Convert to array and format
+    const conversations = Array.from(conversationsMap.values())
+      .map(conv => ({
+        id: conv.id,
+        title: conv.firstMessage
+          ? conv.firstMessage.substring(0, 50) + (conv.firstMessage.length > 50 ? '...' : '')
+          : 'New conversation',
+        lastActivity: conv.lastActivity,
+        messageCount: conv.messageCount
+      }))
+      .sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+
+    res.json({
+      success: true,
+      data: conversations
+    });
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/chat/:clientId/conversations/:conversationId
+ * Get messages for a specific conversation
+ */
+router.get('/:clientId/conversations/:conversationId', async (req, res) => {
+  try {
+    const { clientId, conversationId } = req.params;
+
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('Error fetching conversation:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/chat/:clientId/conversations/:conversationId
+ * Delete a specific conversation
+ */
+router.delete('/:clientId/conversations/:conversationId', async (req, res) => {
+  try {
+    const { clientId, conversationId } = req.params;
+
+    const { error } = await supabase
+      .from('chat_messages')
+      .delete()
+      .eq('client_id', clientId)
+      .eq('conversation_id', conversationId);
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: 'Conversation deleted'
+    });
+  } catch (error) {
+    console.error('Error deleting conversation:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/chat/:clientId/cleanup
+ * Delete conversations older than 30 days
+ */
+router.post('/:clientId/cleanup', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .delete()
+      .eq('client_id', clientId)
+      .lt('created_at', thirtyDaysAgo.toISOString())
+      .select('id');
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: `Deleted ${data?.length || 0} old messages`
+    });
+  } catch (error) {
+    console.error('Error cleaning up old messages:', error);
     res.status(500).json({
       success: false,
       error: error.message

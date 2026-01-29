@@ -5,13 +5,14 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { testConnection } from './config/supabase.js';
-import { requireAuth } from './middleware/auth.js';
+import { requireAuth, requireApiKey } from './middleware/auth.js';
 import clientsRouter from './routes/clients.js';
 import documentsRouter from './routes/documents.js';
 import chatRouter from './routes/chat.js';
 import sheetsRouter from './routes/sheets.js';
 import dashboardsRouter from './routes/dashboards.js';
 import leadsRouter from './routes/leads.js';
+import agentRouter from './routes/agent.js';
 
 dotenv.config({ override: true });
 
@@ -46,6 +47,9 @@ app.use('/api/sheets', requireAuth, sheetsRouter);
 app.use('/api/dashboards', requireAuth, dashboardsRouter);
 app.use('/api/leads', requireAuth, leadsRouter);
 
+// Agent API - requires API key (for external services/tools)
+app.use('/api/agent', requireApiKey, agentRouter);
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({
@@ -65,6 +69,7 @@ app.get('/', (req, res) => {
       documents: '/api/documents',
       chat: '/api/chat',
       sheets: '/api/sheets',
+      agent: '/api/agent',
       health: '/health'
     }
   });
@@ -122,6 +127,10 @@ async function startServer() {
       console.log(`   - GET    /api/chat/:clientId`);
       console.log(`   - POST   /api/chat/:clientId`);
       console.log(`   - DELETE /api/chat/:clientId`);
+      console.log(`\n🤖 Agent API (requires X-API-Key):`);
+      console.log(`   - POST   /api/agent/query`);
+      console.log(`   - GET    /api/agent/clients`);
+      console.log(`   - GET    /api/agent/clients/:clientId/context`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

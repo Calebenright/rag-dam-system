@@ -1,22 +1,47 @@
 import api from './axios';
 
 export const chatApi = {
-  // Get chat history
-  getHistory: async (clientId, limit = 50) => {
+  // Get chat history for a specific conversation
+  getHistory: async (clientId, conversationId = null, limit = 50) => {
+    if (conversationId) {
+      const { data } = await api.get(`/api/chat/${clientId}/conversations/${conversationId}`);
+      return data.data;
+    }
     const { data } = await api.get(`/api/chat/${clientId}`, {
       params: { limit },
     });
     return data.data;
   },
 
+  // Get list of conversations
+  getConversations: async (clientId) => {
+    const { data } = await api.get(`/api/chat/${clientId}/conversations`);
+    return data.data;
+  },
+
+  // Delete a specific conversation
+  deleteConversation: async (clientId, conversationId) => {
+    const { data } = await api.delete(`/api/chat/${clientId}/conversations/${conversationId}`);
+    return data;
+  },
+
+  // Cleanup old messages (30+ days)
+  cleanupOldMessages: async (clientId) => {
+    const { data } = await api.post(`/api/chat/${clientId}/cleanup`);
+    return data;
+  },
+
   // Send message (with optional images and source image options)
   sendMessage: async (clientId, message, options = {}) => {
-    const { images = [], includeSourceImages = false, sourceDocumentIds = [] } = options;
+    const { images = [], includeSourceImages = false, sourceDocumentIds = [], conversationId = null } = options;
 
     if (images.length > 0 || includeSourceImages || sourceDocumentIds.length > 0) {
       const formData = new FormData();
       formData.append('message', message);
       formData.append('includeSourceImages', includeSourceImages);
+      if (conversationId) {
+        formData.append('conversationId', conversationId);
+      }
 
       if (sourceDocumentIds.length > 0) {
         formData.append('sourceDocumentIds', JSON.stringify(sourceDocumentIds));
@@ -32,7 +57,7 @@ export const chatApi = {
       });
       return data.data;
     } else {
-      const { data } = await api.post(`/api/chat/${clientId}`, { message });
+      const { data } = await api.post(`/api/chat/${clientId}`, { message, conversationId });
       return data.data;
     }
   },

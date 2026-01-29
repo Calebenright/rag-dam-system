@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ArrowLeft, MessageSquare, Database, Loader2, Settings, BarChart3, Users
+  ArrowLeft, MessageSquare, Database, Loader2, Settings, BarChart3, Users, PanelLeftClose, PanelLeft
 } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import { documentsApi } from '../api/documents';
@@ -10,6 +10,7 @@ import SourcesManager from '../components/SourcesManager';
 import EnhancedChatInterface from '../components/EnhancedChatInterface';
 import DataboardManager from '../components/DataboardManager';
 import LeadsManager from '../components/LeadsManager';
+import ChatHistory from '../components/ChatHistory';
 import SettingsModal, { getPodColor } from '../components/SettingsModal';
 import clsx from 'clsx';
 
@@ -18,6 +19,9 @@ export default function ClientDetail() {
   const navigate = useNavigate();
   const [agentTab, setAgentTab] = useState('chat'); // 'chat', 'sources', 'databoards', or 'leads'
   const [showSettings, setShowSettings] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [chatHistoryExpanded, setChatHistoryExpanded] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState(null);
 
   // Check if this is the Dodeka superclient (case-insensitive name check)
 
@@ -127,59 +131,80 @@ export default function ClientDetail() {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-52 bg-neutral-900/50 border-r border-neutral-800 flex flex-col flex-shrink-0 texture-dots">
-          <nav className="p-3 flex-1">
+        <aside className={clsx(
+          "bg-neutral-900/50 border-r border-neutral-800 flex flex-col flex-shrink-0 texture-dots transition-all duration-200",
+          sidebarCollapsed ? "w-14" : "w-52"
+        )}>
+          <nav className={clsx("flex-1", sidebarCollapsed ? "p-2" : "p-3")}>
             <div className="space-y-1">
               <button
                 onClick={() => setAgentTab('chat')}
                 className={clsx(
-                  'w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                  'w-full flex items-center rounded-lg text-sm font-medium transition-all',
+                  sidebarCollapsed ? 'px-2.5 py-2.5 justify-center' : 'px-3 py-2.5',
                   agentTab === 'chat'
                     ? 'bg-pastel-lavender/15 text-pastel-lavender border-l-2 border-l-pastel-lavender'
                     : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                 )}
+                title={sidebarCollapsed ? `${client?.name || ''} Agent` : undefined}
               >
-                <MessageSquare className="w-4 h-4 mr-3" />
-                AI Chat
-                {agentTab === 'chat' && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-lavender" />
+                <MessageSquare className={clsx("w-4 h-4", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && (
+                  <>
+                    {client?.name ? `${client.name} Agent` : 'Agent'}
+                    {agentTab === 'chat' && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-lavender" />
+                    )}
+                  </>
                 )}
               </button>
 
               <button
                 onClick={() => setAgentTab('sources')}
                 className={clsx(
-                  'w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                  'w-full flex items-center rounded-lg text-sm font-medium transition-all',
+                  sidebarCollapsed ? 'px-2.5 py-2.5 justify-center' : 'px-3 py-2.5',
                   agentTab === 'sources'
                     ? 'bg-pastel-sky/15 text-pastel-sky border-l-2 border-l-pastel-sky'
                     : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                 )}
+                title={sidebarCollapsed ? `Sources (${documents.length})` : undefined}
               >
-                <Database className="w-4 h-4 mr-3" />
-                Sources
-                <span className={clsx(
-                  "ml-auto text-xs px-2 py-0.5 rounded-full font-medium",
-                  agentTab === 'sources'
-                    ? 'bg-pastel-sky/25 text-pastel-sky'
-                    : 'bg-neutral-800 text-neutral-500'
-                )}>
-                  {documents.length}
-                </span>
+                <Database className={clsx("w-4 h-4", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && (
+                  <>
+                    Sources
+                    <span className={clsx(
+                      "ml-auto text-xs px-2 py-0.5 rounded-full font-medium",
+                      agentTab === 'sources'
+                        ? 'bg-pastel-sky/25 text-pastel-sky'
+                        : 'bg-neutral-800 text-neutral-500'
+                    )}>
+                      {documents.length}
+                    </span>
+                  </>
+                )}
               </button>
 
               <button
                 onClick={() => setAgentTab('databoards')}
                 className={clsx(
-                  'w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                  'w-full flex items-center rounded-lg text-sm font-medium transition-all',
+                  sidebarCollapsed ? 'px-2.5 py-2.5 justify-center' : 'px-3 py-2.5',
                   agentTab === 'databoards'
                     ? 'bg-pastel-mint/15 text-pastel-mint border-l-2 border-l-pastel-mint'
                     : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                 )}
+                title={sidebarCollapsed ? 'Databoards' : undefined}
               >
-                <BarChart3 className="w-4 h-4 mr-3" />
-                Databoards
-                {agentTab === 'databoards' && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-mint" />
+                <BarChart3 className={clsx("w-4 h-4", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && (
+                  <>
+                    Databoards
+                    {agentTab === 'databoards' && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-mint" />
+                    )}
+                  </>
                 )}
               </button>
 
@@ -187,16 +212,25 @@ export default function ClientDetail() {
                 <button
                   onClick={() => setAgentTab('leads')}
                   className={clsx(
-                    'w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                    'w-full flex items-center rounded-lg text-sm font-medium transition-all',
+                    sidebarCollapsed ? 'px-2.5 py-2.5 justify-center' : 'px-3 py-2.5',
                     agentTab === 'leads'
                       ? 'bg-pastel-coral/15 text-pastel-coral border-l-2 border-l-pastel-coral'
                       : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                   )}
+                  title={sidebarCollapsed ? 'Leads (Local only)' : 'Leads feature requires local environment'}
                 >
-                  <Users className="w-4 h-4 mr-3" />
-                  Leads
-                  {agentTab === 'leads' && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-coral" />
+                  <Users className={clsx("w-4 h-4", !sidebarCollapsed && "mr-3")} />
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex flex-col items-start">
+                        <span>Leads</span>
+                        <span className="text-[10px] text-neutral-500 font-normal">Local only</span>
+                      </span>
+                      {agentTab === 'leads' && (
+                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-coral" />
+                      )}
+                    </>
                   )}
                 </button>
               )}
@@ -204,27 +238,59 @@ export default function ClientDetail() {
             </div>
           </nav>
 
-          {/* Sidebar footer with color accent */}
-          <div className="p-3 border-t border-neutral-800">
-            <div className="flex items-center gap-2 text-xs text-neutral-500">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 rounded-full bg-pastel-mint" />
-                <span className="w-2 h-2 rounded-full bg-pastel-sky" />
-                <span className="w-2 h-2 rounded-full bg-pastel-lavender" />
-                <span className="w-2 h-2 rounded-full bg-pastel-coral" />
-              </div>
-              <span>RAG System</span>
+          {/* Sidebar footer */}
+          <div className={clsx("border-t border-neutral-800", sidebarCollapsed ? "p-2" : "p-3")}>
+            <div className="flex items-center justify-between">
+              {!sidebarCollapsed && (
+                <div className="flex items-center gap-2 text-xs text-neutral-500">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 rounded-full bg-pastel-mint" />
+                    <span className="w-2 h-2 rounded-full bg-pastel-sky" />
+                    <span className="w-2 h-2 rounded-full bg-pastel-lavender" />
+                    <span className="w-2 h-2 rounded-full bg-pastel-coral" />
+                  </div>
+                  <span>RAG System</span>
+                </div>
+              )}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className={clsx(
+                  "p-1.5 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800 rounded-lg transition-all",
+                  sidebarCollapsed && "mx-auto"
+                )}
+                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {sidebarCollapsed ? (
+                  <PanelLeft className="w-4 h-4" />
+                ) : (
+                  <PanelLeftClose className="w-4 h-4" />
+                )}
+              </button>
             </div>
           </div>
         </aside>
 
         {/* Content */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-neutral-950 texture-grid">
+        <main className="flex-1 flex overflow-hidden bg-neutral-950 texture-grid">
           {agentTab === 'chat' ? (
-            <EnhancedChatInterface
-              clientId={clientId}
-              client={client}
-            />
+            <>
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <EnhancedChatInterface
+                  clientId={clientId}
+                  client={client}
+                  conversationId={currentConversationId}
+                  onConversationChange={setCurrentConversationId}
+                />
+              </div>
+              <ChatHistory
+                clientId={clientId}
+                currentConversationId={currentConversationId}
+                onSelectConversation={setCurrentConversationId}
+                onNewConversation={() => setCurrentConversationId(null)}
+                isExpanded={chatHistoryExpanded}
+                onToggle={() => setChatHistoryExpanded(!chatHistoryExpanded)}
+              />
+            </>
           ) : agentTab === 'sources' ? (
             <SourcesManager
               documents={documents}

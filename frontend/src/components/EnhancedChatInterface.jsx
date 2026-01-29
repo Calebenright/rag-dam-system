@@ -319,22 +319,29 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
   );
 }
 
-export default function EnhancedChatInterface({ clientId, client, selectedSheetId = null }) {
+export default function EnhancedChatInterface({ clientId, client, selectedSheetId = null, conversationId = null, onConversationChange = null }) {
   const [message, setMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [copiedCode, setCopiedCode] = useState(null);
   const [pendingMessage, setPendingMessage] = useState(null); // For optimistic UI
+  const [activeConversationId, setActiveConversationId] = useState(conversationId);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
-  // Fetch chat history
+  // Sync conversationId prop with state
+  useEffect(() => {
+    setActiveConversationId(conversationId);
+    setPendingMessage(null);
+  }, [conversationId]);
+
+  // Fetch chat history for the active conversation
   const { data: messages = [], isLoading } = useQuery({
-    queryKey: ['chat', clientId],
-    queryFn: () => chatApi.getHistory(clientId),
+    queryKey: ['chat', clientId, activeConversationId],
+    queryFn: () => chatApi.getHistory(clientId, activeConversationId),
   });
 
   // Send message mutation - uses sheets endpoint if a sheet is selected
@@ -354,14 +361,23 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
         if (!result.success) throw new Error(result.error);
         return result.data;
       } else {
-        // Regular chat
+        // Regular chat with conversation tracking
         return chatApi.sendMessage(clientId, data.message, {
           images: data.image ? [data.image] : [],
+          conversationId: activeConversationId,
         });
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chat', clientId] });
+    onSuccess: (data) => {
+      // Update conversation ID if we got a new one
+      if (data?.conversationId && data.conversationId !== activeConversationId) {
+        setActiveConversationId(data.conversationId);
+        if (onConversationChange) {
+          onConversationChange(data.conversationId);
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ['chat', clientId, activeConversationId] });
+      queryClient.invalidateQueries({ queryKey: ['conversations', clientId] });
       setPendingMessage(null);
     },
     onError: (error) => {
