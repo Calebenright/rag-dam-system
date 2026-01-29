@@ -295,7 +295,7 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
   }
 
   return (
-    <div className="flex h-full bg-neutral-950">
+    <div className="flex h-full w-full bg-neutral-950">
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toolbar */}

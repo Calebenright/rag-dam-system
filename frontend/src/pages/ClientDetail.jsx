@@ -146,12 +146,12 @@ export default function ClientDetail() {
                     ? 'bg-pastel-lavender/15 text-pastel-lavender border-l-2 border-l-pastel-lavender'
                     : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                 )}
-                title={sidebarCollapsed ? `${client?.name || ''} Agent` : undefined}
+                title={sidebarCollapsed ? 'Client Agent' : undefined}
               >
                 <MessageSquare className={clsx("w-4 h-4", !sidebarCollapsed && "mr-3")} />
                 {!sidebarCollapsed && (
                   <>
-                    {client?.name ? `${client.name} Agent` : 'Agent'}
+                    Client Agent
                     {agentTab === 'chat' && (
                       <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-lavender" />
                     )}

@@ -33,7 +33,9 @@ export default function ChatHistory({
   const { data: conversations = [], isLoading } = useQuery({
     queryKey: ['conversations', clientId],
     queryFn: () => chatApi.getConversations(clientId),
-    staleTime: 10000,
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 60000, // Keep in cache for 1 minute
+    refetchOnWindowFocus: false,
     enabled: isExpanded
   });
 

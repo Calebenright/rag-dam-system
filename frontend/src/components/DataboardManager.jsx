@@ -278,7 +278,7 @@ export default function DataboardManager({ clientId }) {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full w-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-neutral-800 flex-shrink-0 bg-neutral-900/30">
         <div className="flex items-center justify-between mb-3">

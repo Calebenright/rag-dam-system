@@ -339,9 +339,12 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
   }, [conversationId]);
 
   // Fetch chat history for the active conversation
+  // When activeConversationId is null, we're starting a new chat - return empty array
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['chat', clientId, activeConversationId],
-    queryFn: () => chatApi.getHistory(clientId, activeConversationId),
+    queryFn: () => activeConversationId ? chatApi.getHistory(clientId, activeConversationId) : Promise.resolve([]),
+    staleTime: 30000, // Cache for 30 seconds - updates come via optimistic updates
+    refetchOnWindowFocus: false,
   });
 
   // Send message mutation - uses sheets endpoint if a sheet is selected
@@ -370,14 +373,36 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
     },
     onSuccess: (data) => {
       // Update conversation ID if we got a new one
-      if (data?.conversationId && data.conversationId !== activeConversationId) {
-        setActiveConversationId(data.conversationId);
+      const newConversationId = data?.conversationId;
+      if (newConversationId && newConversationId !== activeConversationId) {
+        setActiveConversationId(newConversationId);
         if (onConversationChange) {
-          onConversationChange(data.conversationId);
+          onConversationChange(newConversationId);
         }
+        // Only invalidate conversations list when a new conversation is created
+        queryClient.invalidateQueries({ queryKey: ['conversations', clientId] });
       }
-      queryClient.invalidateQueries({ queryKey: ['chat', clientId, activeConversationId] });
-      queryClient.invalidateQueries({ queryKey: ['conversations', clientId] });
+
+      // Optimistically update chat messages with the response
+      const targetConvoId = newConversationId || activeConversationId;
+      queryClient.setQueryData(['chat', clientId, targetConvoId], (old = []) => {
+        // Add the pending user message and assistant response
+        const newMessages = [...old];
+        // Add user message from pending state
+        if (pendingMessage) {
+          newMessages.push({
+            role: 'user',
+            content: pendingMessage.content,
+            created_at: new Date().toISOString()
+          });
+        }
+        // Add assistant message from response
+        if (data?.message) {
+          newMessages.push(data.message);
+        }
+        return newMessages;
+      });
+
       setPendingMessage(null);
     },
     onError: (error) => {

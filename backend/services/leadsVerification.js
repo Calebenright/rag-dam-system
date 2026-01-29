@@ -82,8 +82,8 @@ export async function verifyEmail(email) {
 
     let status, statusCode;
     if (isReachable === 'safe' && isDeliverable) {
-      status = '✅ Safe';
-      statusCode = 'safe';
+      status = '✅ Verified';
+      statusCode = 'verified';
     } else if (isReachable === 'risky' && isCatchAll) {
       status = '⚠️ Catch-all';
       statusCode = 'catch_all';

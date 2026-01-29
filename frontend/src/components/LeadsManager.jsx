@@ -177,7 +177,7 @@ function ProgressBar({ current, total, label, color = 'lavender' }) {
 // Verification log item
 function LogItem({ type, value, status, statusCode }) {
   const getStatusColor = () => {
-    if (statusCode === 'safe' || statusCode === 'valid' || statusCode === 'mobile') return 'text-pastel-mint';
+    if (statusCode === 'verified' || statusCode === 'valid' || statusCode === 'mobile') return 'text-pastel-mint';
     if (statusCode === 'risky' || statusCode === 'catch_all' || statusCode === 'voip') return 'text-pastel-peach';
     if (statusCode === 'invalid' || statusCode === 'error' || statusCode === 'not_in_service') return 'text-pastel-coral';
     return 'text-neutral-400';
@@ -441,7 +441,7 @@ export default function LeadsManager() {
   const selectedSheetData = sheets.find(s => s.spreadsheet_id === selectedSheet);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full w-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-neutral-800 bg-neutral-900/30">
         <div className="flex items-center justify-between mb-3">
