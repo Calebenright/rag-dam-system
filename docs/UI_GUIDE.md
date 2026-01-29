@@ -1,6 +1,6 @@
 # User Interface Guide
 
-A visual guide to understanding the RAG + DAM system interface.
+A visual guide to understanding the Internal Client Application interface.
 
 ## Dashboard View (Home Page)
 

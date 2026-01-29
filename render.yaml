@@ -4,7 +4,7 @@
 services:
   # Backend API Service
   - type: web
-    name: rag-dam-api
+    name: internal-client-app-api
     env: node
     region: oregon
     plan: free
@@ -28,7 +28,7 @@ services:
 
   # Frontend Static Site
   - type: web
-    name: rag-dam-frontend
+    name: internal-client-app-frontend
     runtime: static
     region: oregon
     plan: free
@@ -47,5 +47,5 @@ services:
       - key: VITE_API_URL
         fromService:
           type: web
-          name: rag-dam-api
+          name: internal-client-app-api
           property: host

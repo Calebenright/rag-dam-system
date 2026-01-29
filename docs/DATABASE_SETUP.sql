@@ -1,4 +1,4 @@
--- RAG + DAM System Database Schema
+-- Internal Client Application Database Schema
 -- Run this SQL in your Supabase SQL Editor
 
 -- Enable pgvector extension for vector similarity search

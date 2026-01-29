@@ -259,7 +259,7 @@ npm run dev
 
 ## 🎉 Summary
 
-The enhanced chat transforms your RAG+DAM system from a document Q&A tool into a **full-featured AI assistant** capable of:
+The enhanced chat transforms your Internal Client Application system from a document Q&A tool into a **full-featured AI assistant** capable of:
 
 ✅ Writing production code
 ✅ Generating structured data
@@ -271,4 +271,4 @@ All while maintaining the powerful document context awareness you already have!
 
 ---
 
-**Welcome to the next generation of your RAG+DAM system!** 🚀
+**Welcome to the next generation of your Internal Client Application system!** 🚀

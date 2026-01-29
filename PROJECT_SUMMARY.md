@@ -1,8 +1,8 @@
-# Project Summary: RAG + DAM System
+# Project Summary: Internal Client Application
 
 ## Overview
 
-A production-ready, full-stack Retrieval-Augmented Generation (RAG) and Document Asset Management (DAM) system built with React, Node.js, Claude AI, and Supabase.
+A production-ready, full-stack Internal Client Application built with React, Node.js, Claude AI, and Supabase.
 
 ## What You've Got
 
@@ -34,7 +34,7 @@ A production-ready, full-stack Retrieval-Augmented Generation (RAG) and Document
 ## Project Structure
 
 ```
-rag-dam-system/
+internal-client-app/
 ├── backend/                     # Node.js API server
 │   ├── config/
 │   │   └── supabase.js         # Database connection

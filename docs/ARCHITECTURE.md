@@ -1,7 +1,7 @@
-# RAG + DAM System Architecture
+# Internal Client Application Architecture
 
 ## Overview
-A sophisticated Document Asset Management (DAM) and Retrieval-Augmented Generation (RAG) system for managing client documents with AI-powered analysis and chat.
+A sophisticated client management system with AI-powered document analysis and chat capabilities.
 
 ## System Components
 

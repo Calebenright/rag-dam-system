@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get your RAG + DAM system up and running in 15 minutes!
+Get your Internal Client Application up and running in 15 minutes!
 
 ## ⚡ Fast Track Setup
 
@@ -80,7 +80,7 @@ You should see: `Local: http://localhost:3000`
 
 ## 🎉 That's It!
 
-Your RAG + DAM system is now running locally.
+Your Internal Client Application is now running locally.
 
 ## Next Steps
 

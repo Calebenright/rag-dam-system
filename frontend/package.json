@@ -1,5 +1,5 @@
 {
-  "name": "rag-dam-frontend",
+  "name": "internal-client-app-frontend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "start": "serve dist -s -l ${PORT:-3000}",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -22,7 +23,8 @@
     "react-markdown": "^9.1.0",
     "react-router-dom": "^6.20.1",
     "react-syntax-highlighter": "^15.6.6",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "serve": "^14.2.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",

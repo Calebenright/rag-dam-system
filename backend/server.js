@@ -57,7 +57,7 @@ app.get('/health', (req, res) => {
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    name: 'RAG + DAM API',
+    name: 'Internal Client Application API',
     version: '1.0.0',
     endpoints: {
       clients: '/api/clients',

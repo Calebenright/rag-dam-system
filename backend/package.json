@@ -1,7 +1,7 @@
 {
-  "name": "rag-dam-backend",
+  "name": "internal-client-app-backend",
   "version": "1.0.0",
-  "description": "Backend API for RAG + DAM system",
+  "description": "Backend API for Internal Client Application",
   "main": "server.js",
   "type": "module",
   "scripts": {

@@ -1,6 +1,6 @@
-# RAG + DAM System
+# Internal Client Application
 
-A sophisticated **Retrieval-Augmented Generation (RAG)** and **Document Asset Management (DAM)** system that combines AI-powered document analysis with intelligent chat capabilities.
+A sophisticated client management system that combines AI-powered document analysis with intelligent chat capabilities.
 
 ## Features
 
@@ -60,7 +60,7 @@ A sophisticated **Retrieval-Augmented Generation (RAG)** and **Document Asset Ma
 ## Project Structure
 
 ```
-rag-dam-system/
+internal-client-app/
 ├── backend/
 │   ├── config/
 │   │   └── supabase.js          # Database connection
@@ -100,7 +100,7 @@ rag-dam-system/
 
 ```bash
 git clone <your-repo-url>
-cd rag-dam-system
+cd internal-client-app
 ```
 
 ### Step 2: Set Up Supabase

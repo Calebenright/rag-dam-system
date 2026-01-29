@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+
+[build.nixpacksPlan]
+node_modules = "./node_modules"
+
+[deploy]
+startCommand = "npx serve dist -s -l $PORT"

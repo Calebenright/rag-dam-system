@@ -7,7 +7,7 @@
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin https://github.com/YOUR_USERNAME/rag-dam-system.git
+git remote add origin https://github.com/YOUR_USERNAME/internal-client-app.git
 git push -u origin main
 ```
 
@@ -20,21 +20,21 @@ git push -u origin main
 
 ### Step 3: Add Environment Variables
 
-In the Render dashboard, add these environment variables to **rag-dam-api**:
+In the Render dashboard, add these environment variables to **internal-client-app-api**:
 
 | Variable | Value |
 |----------|-------|
 | `SUPABASE_URL` | Your Supabase project URL |
 | `SUPABASE_SERVICE_KEY` | Your Supabase service role key |
 | `OPENAI_API_KEY` | Your OpenAI API key |
-| `FRONTEND_URL` | `https://rag-dam-frontend.onrender.com` (or your custom domain) |
+| `FRONTEND_URL` | `https://internal-client-app-frontend.onrender.com` (or your custom domain) |
 | `GOOGLE_SHEETS_CREDENTIALS` | Your Google service account JSON (base64 encoded) |
 
-For the frontend **rag-dam-frontend**, add:
+For the frontend **internal-client-app-frontend**, add:
 
 | Variable | Value |
 |----------|-------|
-| `VITE_API_URL` | `https://rag-dam-api.onrender.com` |
+| `VITE_API_URL` | `https://internal-client-app-api.onrender.com` |
 
 ---
 
@@ -82,8 +82,8 @@ Run the migration in your Supabase SQL editor:
 
 ## Post-Deploy Checklist
 
-- [ ] Backend health check responds: `https://rag-dam-api.onrender.com/health`
-- [ ] Frontend loads: `https://rag-dam-frontend.onrender.com`
+- [ ] Backend health check responds: `https://internal-client-app-api.onrender.com/health`
+- [ ] Frontend loads: `https://internal-client-app-frontend.onrender.com`
 - [ ] Create a test client
 - [ ] Upload a test document
 - [ ] Test chat functionality

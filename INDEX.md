@@ -1,4 +1,4 @@
-# RAG + DAM System - Complete File Index
+# Internal Client Application - Complete File Index
 
 ## 📁 Project Overview
 
@@ -174,7 +174,7 @@
 ## 🗂️ File Organization
 
 ```
-rag-dam-system/
+internal-client-app/
 │
 ├── 📄 README.md                    # Main documentation
 ├── 📄 QUICKSTART.md                # Fast setup guide
