@@ -274,11 +274,11 @@ async function processDocumentAsync(documentId, filePath, fileName, fileType) {
       }
     }
 
-    // Update document record
+    // Update document record - keep original filename as title
     const { error: updateError } = await supabase
       .from('documents')
       .update({
-        title: analysis.title,
+        title: fileName, // Use original filename, not AI-generated title
         summary: analysis.summary,
         tags: analysis.tags,
         keywords: analysis.keywords,
@@ -298,12 +298,11 @@ async function processDocumentAsync(documentId, filePath, fileName, fileType) {
   } catch (error) {
     console.error(`Error processing document ${documentId}:`, error);
 
-    // Mark as failed
+    // Mark as failed - keep original filename
     await supabase
       .from('documents')
       .update({
         processed: false,
-        title: 'Processing Failed',
         summary: `Error: ${error.message}`
       })
       .eq('id', documentId);
@@ -737,12 +736,12 @@ async function processGoogleDocAsync(documentId, content, title, sourceType) {
 
     console.log(`Finished inserting ${insertedCount} chunks for ${documentId}`);
 
-    // Update document record
+    // Update document record - keep original Google title, don't overwrite with AI title
     console.log(`Updating document ${documentId} with processed=true, ${chunks.length} chunks...`);
     const { error: updateError } = await supabase
       .from('documents')
       .update({
-        title: analysis.title,
+        // Keep the original Google Doc/Sheet title (passed as 'title' param), don't use analysis.title
         summary: analysis.summary,
         tags: analysis.tags,
         keywords: analysis.keywords,
@@ -765,11 +764,11 @@ async function processGoogleDocAsync(documentId, content, title, sourceType) {
   } catch (error) {
     console.error(`Error processing Google Doc ${documentId}:`, error.message || error);
 
+    // Mark as failed - keep original title, only update summary with error
     await supabase
       .from('documents')
       .update({
         processed: false,
-        title: 'Processing Failed',
         summary: `Error: ${error.message}`
       })
       .eq('id', documentId);
