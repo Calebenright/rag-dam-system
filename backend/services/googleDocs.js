@@ -58,12 +58,43 @@ export async function fetchGoogleDocContent(docId, accessToken = null) {
   }
 }
 
-// Fetch Google Doc content using public export (no auth needed for public docs)
+// Fetch Google Doc content using Docs API (preferred) or public export (fallback)
 export async function fetchPublicGoogleDoc(docId) {
+  console.log(`[fetchPublicGoogleDoc] Fetching doc ID: ${docId}`);
   try {
-    // Export as plain text (works for public docs)
-    const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`;
+    const auth = getDocsAuthClient();
+    console.log(`[fetchPublicGoogleDoc] Auth client available: ${!!auth}`);
 
+    if (auth) {
+      // Use Google Docs API for proper title and content
+      const docs = google.docs({ version: 'v1', auth });
+
+      const response = await docs.documents.get({
+        documentId: docId,
+      });
+
+      const doc = response.data;
+      const title = doc.title || 'Untitled Google Doc';
+
+      // Extract text content from the document structure
+      let content = '';
+      if (doc.body && doc.body.content) {
+        content = extractTextFromContent(doc.body.content);
+      }
+
+      console.log(`[fetchPublicGoogleDoc] Got title via API: "${title}", content length: ${content.length}`);
+
+      return {
+        title,
+        content,
+        docId,
+      };
+    }
+
+    // Fallback to public export if no credentials
+    console.warn('No Google Docs credentials configured, falling back to public export');
+
+    const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=txt`;
     const response = await fetch(exportUrl);
 
     if (!response.ok) {
@@ -100,36 +131,64 @@ export async function fetchPublicGoogleDoc(docId) {
       docId,
     };
   } catch (error) {
-    console.error('Error fetching public Google Doc:', error.message);
+    console.error('Error fetching Google Doc:', error.message);
     throw error;
   }
 }
 
-// Get Google Sheets auth client
-function getSheetsAuthClient() {
+// Get Google auth client with specified scopes
+// Supports domain-wide delegation when GOOGLE_IMPERSONATE_USER is set
+function getGoogleAuthClient(scopes) {
+  const impersonateUser = process.env.GOOGLE_IMPERSONATE_USER; // e.g., "admin@dodekadigital.com"
+
   // Check for service account key file
   if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    return new google.auth.GoogleAuth({
+    const auth = new google.auth.GoogleAuth({
       keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      scopes,
+      clientOptions: impersonateUser ? { subject: impersonateUser } : undefined,
     });
+    return auth;
   }
 
-  // Check for base64-encoded credentials (for Render.com deployment)
+  // Check for base64-encoded credentials (for Railway/Render deployment)
   if (process.env.GOOGLE_SHEETS_CREDENTIALS) {
     try {
       const decoded = Buffer.from(process.env.GOOGLE_SHEETS_CREDENTIALS, 'base64').toString('utf-8');
       const credentials = JSON.parse(decoded);
+
+      if (impersonateUser) {
+        // Use JWT for domain-wide delegation
+        const jwt = new google.auth.JWT({
+          email: credentials.client_email,
+          key: credentials.private_key,
+          scopes,
+          subject: impersonateUser,
+        });
+        return jwt;
+      }
+
       return new google.auth.GoogleAuth({
         credentials,
-        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+        scopes,
       });
     } catch (e) {
       // If not base64, try parsing as raw JSON
       const credentials = JSON.parse(process.env.GOOGLE_SHEETS_CREDENTIALS);
+
+      if (impersonateUser) {
+        const jwt = new google.auth.JWT({
+          email: credentials.client_email,
+          key: credentials.private_key,
+          scopes,
+          subject: impersonateUser,
+        });
+        return jwt;
+      }
+
       return new google.auth.GoogleAuth({
         credentials,
-        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+        scopes,
       });
     }
   }
@@ -137,13 +196,34 @@ function getSheetsAuthClient() {
   // Check for inline credentials JSON
   if (process.env.GOOGLE_CREDENTIALS_JSON) {
     const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+
+    if (impersonateUser) {
+      const jwt = new google.auth.JWT({
+        email: credentials.client_email,
+        key: credentials.private_key,
+        scopes,
+        subject: impersonateUser,
+      });
+      return jwt;
+    }
+
     return new google.auth.GoogleAuth({
       credentials,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      scopes,
     });
   }
 
   return null;
+}
+
+// Get Google Sheets auth client
+function getSheetsAuthClient() {
+  return getGoogleAuthClient(['https://www.googleapis.com/auth/spreadsheets.readonly']);
+}
+
+// Get Google Docs auth client
+function getDocsAuthClient() {
+  return getGoogleAuthClient(['https://www.googleapis.com/auth/documents.readonly']);
 }
 
 // Fetch Google Sheet content using Sheets API (gets ALL tabs and proper title)

@@ -25,11 +25,11 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
         style={{ backgroundColor: client.thumbnail_bg_color || '#000000' }}
       >
         {client.thumbnail_url ? (
-          <div className="w-full h-full flex items-center justify-center p-2">
+          <div className="w-full h-full">
             <img
               src={client.thumbnail_url}
               alt={client.name}
-              className="max-w-full max-h-full object-contain opacity-90 group-hover:opacity-100 transition-opacity"
+              className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
             />
           </div>
         ) : (

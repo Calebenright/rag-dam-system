@@ -195,7 +195,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
             <div className="space-y-6">
               {/* Thumbnail */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-neutral-200">Photo</label>
+                <label className="text-sm font-medium text-neutral-200">Thumbnail</label>
                 <div className="flex items-center gap-4">
                   <div
                     onClick={() => fileInputRef.current?.click()}
@@ -205,7 +205,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
                     )}
                   >
                     {thumbnailPreview ? (
-                      <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
+                      <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-contain" />
                     ) : (
                       <Upload className="w-6 h-6 text-neutral-500" />
                     )}

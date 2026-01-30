@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { testConnection } from './config/supabase.js';
-import { requireAuth, requireApiKey } from './middleware/auth.js';
+import { requireAuth, requireApiKey, requireAuthOrApiKey } from './middleware/auth.js';
 import clientsRouter from './routes/clients.js';
 import documentsRouter from './routes/documents.js';
 import chatRouter from './routes/chat.js';
@@ -41,7 +41,7 @@ app.use('/api/', limiter);
 
 // Protected Routes - require authentication
 app.use('/api/clients', requireAuth, clientsRouter);
-app.use('/api/documents', requireAuth, documentsRouter);
+app.use('/api/documents', requireAuthOrApiKey, documentsRouter);
 app.use('/api/chat', requireAuth, chatRouter);
 app.use('/api/sheets', requireAuth, sheetsRouter);
 app.use('/api/dashboards', requireAuth, dashboardsRouter);
