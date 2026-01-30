@@ -536,7 +536,7 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <h3 className="text-sm font-medium text-neutral-100 truncate">
-                                    {doc.processed ? doc.title : doc.file_name}
+                                    {doc.file_name}
                                   </h3>
                                   {!doc.processed && <Loader2 className="w-4 h-4 animate-spin text-pastel-sky flex-shrink-0" />}
                                 </div>
@@ -593,7 +593,7 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                                 )}
                               </div>
                               <h3 className="text-sm font-medium text-neutral-100 truncate">
-                                {doc.processed ? doc.title : doc.file_name}
+                                {doc.file_name}
                               </h3>
                               <div className="flex items-center justify-center gap-2 mt-2">
                                 <span className={clsx('text-xs px-2 py-0.5 rounded-full', styles.bgLighter, styles.text)}>
@@ -638,9 +638,11 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xl font-bold text-neutral-100">
-                        {selectedDoc.processed ? selectedDoc.title : selectedDoc.file_name}
+                        {selectedDoc.file_name}
                       </h3>
-                      <p className="text-sm text-neutral-500 mt-1">{selectedDoc.file_name}</p>
+                      {selectedDoc.title && selectedDoc.title !== selectedDoc.file_name && (
+                        <p className="text-sm text-neutral-500 mt-1">AI Title: {selectedDoc.title}</p>
+                      )}
                       {!selectedDoc.processed && (
                         <div className="flex items-center gap-2 mt-2 text-pastel-sky">
                           <Loader2 className="w-4 h-4 animate-spin" />
