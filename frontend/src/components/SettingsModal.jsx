@@ -130,7 +130,20 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
 
   if (!isOpen) return null;
 
-  const baseUrl = window.location.origin.replace('5173', '3001').replace('3000', '3001');
+  // Determine API base URL - use env var for production, or derive from localhost
+  const getApiBaseUrl = () => {
+    // Check for environment variable first (set in production builds)
+    if (import.meta.env.VITE_API_URL) {
+      return import.meta.env.VITE_API_URL;
+    }
+    // Railway production - frontend is at dodeka.up.railway.app, backend is different domain
+    if (window.location.hostname === 'dodeka.up.railway.app') {
+      return 'https://backend-production-3304.up.railway.app';
+    }
+    // Local development - replace frontend port with backend port
+    return window.location.origin.replace('5173', '3001').replace('3000', '3001');
+  };
+  const baseUrl = getApiBaseUrl();
   const currentPodColor = client?.is_superclient ? SUPERCLIENT_COLOR : POD_COLORS[podNumber] || POD_COLORS[1];
 
   return (
