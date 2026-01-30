@@ -425,6 +425,34 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
                 </div>
               </section>
 
+              {/* Client ID */}
+              <section className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-pastel-sky" />
+                  <h3 className="text-sm font-medium text-neutral-200">Client ID</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-neutral-950 border border-neutral-700 rounded-lg px-4 py-3 font-mono text-xs text-neutral-300 overflow-x-auto">
+                    {client?.id || 'No client selected'}
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(client?.id || '')}
+                    disabled={!client?.id}
+                    className={clsx(
+                      "px-3 py-3 rounded-lg transition-all",
+                      client?.id
+                        ? "text-neutral-400 hover:text-pastel-mint hover:bg-neutral-800"
+                        : "text-neutral-600 cursor-not-allowed"
+                    )}
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-neutral-500">
+                  Use this ID with the <code className="text-pastel-sky">clientId</code> parameter in API requests
+                </p>
+              </section>
+
               {/* Divider */}
               <div className="border-t border-neutral-800" />
 
@@ -448,7 +476,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
                   <p className="text-xs text-neutral-500 uppercase tracking-wide font-medium">Headers</p>
                   <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300">
                     <pre>{`Content-Type: application/json
-X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
+X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c`}</pre>
                   </div>
                 </div>
 
@@ -481,7 +509,7 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
                   <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300 overflow-x-auto">
                     <pre>{`curl -X POST "${baseUrl}/api/sources/upload" \\
   -H "Content-Type: application/json" \\
-  -H "X-API-Key: dk_global_a7f3e9c2b8d1..." \\
+  -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c" \\
   -d '{
     "url": "https://docs.google.com/...",
     "client": "${client?.name || 'Client Name'}"
@@ -560,7 +588,7 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
                   <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300 overflow-x-auto">
                     <pre>{`curl -X POST "${baseUrl}/api/sources/create-client" \\
   -H "Content-Type: application/json" \\
-  -H "X-API-Key: dk_global_a7f3e9c2b8d1..." \\
+  -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c" \\
   -d '{
     "name": "New Client",
     "description": "Client description",
@@ -624,7 +652,7 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
                   </div>
                   <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300 overflow-x-auto">
                     <pre>{`curl -X GET "${baseUrl}/api/sources/${client?.id || 'client-uuid'}" \\
-  -H "X-API-Key: dk_global_a7f3e9c2b8d1..."`}</pre>
+  -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c"`}</pre>
                   </div>
                 </div>
 
@@ -698,7 +726,7 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
                   <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300 overflow-x-auto">
                     <pre>{`curl -X POST "${baseUrl}/api/agent/query" \\
   -H "Content-Type: application/json" \\
-  -H "X-API-Key: dk_global_a7f3e9c2b8d1..." \\
+  -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c" \\
   -d '{
     "prompt": "What documents do we have?",
     "clientId": "${client?.id || 'client-uuid'}"
