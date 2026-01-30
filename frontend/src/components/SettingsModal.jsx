@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Copy, RefreshCw, Check, Code, Settings, Upload, User, Pipette, Bot } from 'lucide-react';
+import { X, Copy, RefreshCw, Check, Code, Settings, Upload, User, Pipette, Bot, FileText } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -577,6 +577,74 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
   "success": true,
   "data": { "id": "uuid", "name": "...", ... },
   "message": "Client created successfully"
+}`}</pre>
+                  </div>
+                </div>
+              </section>
+
+              {/* Divider */}
+              <div className="border-t border-neutral-800" />
+
+              {/* List Sources API */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-pastel-peach" />
+                  <h3 className="text-sm font-medium text-neutral-200">List Sources</h3>
+                </div>
+
+                {/* Endpoints */}
+                <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-pastel-sky/20 text-pastel-sky rounded text-xs font-medium">GET</span>
+                    <code className="text-sm text-neutral-300">{baseUrl}/api/sources/clients</code>
+                  </div>
+                  <p className="text-xs text-neutral-500">List all clients</p>
+                </div>
+
+                <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-pastel-sky/20 text-pastel-sky rounded text-xs font-medium">GET</span>
+                    <code className="text-sm text-neutral-300">{baseUrl}/api/sources/{'{clientId}'}</code>
+                  </div>
+                  <p className="text-xs text-neutral-500">List all sources for a client</p>
+                </div>
+
+                {/* Example */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-neutral-500 uppercase tracking-wide font-medium">Example (cURL)</span>
+                    <button
+                      onClick={() => copyToClipboard(`curl -X GET "${baseUrl}/api/sources/${client?.id || 'client-uuid'}" \\
+  -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c"`)}
+                      className="text-xs text-neutral-500 hover:text-pastel-mint transition-colors flex items-center gap-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      Copy
+                    </button>
+                  </div>
+                  <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300 overflow-x-auto">
+                    <pre>{`curl -X GET "${baseUrl}/api/sources/${client?.id || 'client-uuid'}" \\
+  -H "X-API-Key: dk_global_a7f3e9c2b8d1..."`}</pre>
+                  </div>
+                </div>
+
+                {/* Response */}
+                <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 space-y-2">
+                  <p className="text-xs text-neutral-500 uppercase tracking-wide font-medium mb-3">Response</p>
+                  <div className="font-mono text-xs text-neutral-300">
+                    <pre>{`{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "file_name": "Document Title",
+      "file_type": "google_doc",
+      "source_type": "google",
+      "processed": true,
+      "created_at": "2024-01-01T..."
+    },
+    ...
+  ]
 }`}</pre>
                   </div>
                 </div>
