@@ -13,6 +13,7 @@ import sheetsRouter from './routes/sheets.js';
 import dashboardsRouter from './routes/dashboards.js';
 import leadsRouter from './routes/leads.js';
 import agentRouter from './routes/agent.js';
+import sourcesRouter from './routes/sources.js';
 
 dotenv.config({ override: true });
 
@@ -50,6 +51,9 @@ app.use('/api/leads', requireAuth, leadsRouter);
 // Agent API - requires API key (for external services/tools)
 app.use('/api/agent', requireApiKey, agentRouter);
 
+// Sources API - cleaner external API for uploading sources (requires API key)
+app.use('/api/sources', requireApiKey, sourcesRouter);
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({
@@ -67,6 +71,7 @@ app.get('/', (req, res) => {
     endpoints: {
       clients: '/api/clients',
       documents: '/api/documents',
+      sources: '/api/sources',
       chat: '/api/chat',
       sheets: '/api/sheets',
       agent: '/api/agent',
@@ -131,6 +136,11 @@ async function startServer() {
       console.log(`   - POST   /api/agent/query`);
       console.log(`   - GET    /api/agent/clients`);
       console.log(`   - GET    /api/agent/clients/:clientId/context`);
+      console.log(`\n📁 Sources API (requires X-API-Key):`);
+      console.log(`   - POST   /api/sources/upload`);
+      console.log(`   - POST   /api/sources/create-client`);
+      console.log(`   - GET    /api/sources/clients`);
+      console.log(`   - GET    /api/sources/:clientId`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

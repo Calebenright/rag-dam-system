@@ -439,7 +439,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-pastel-mint/20 text-pastel-mint rounded text-xs font-medium">POST</span>
-                    <code className="text-sm text-neutral-300">{baseUrl}/api/documents/api-upload</code>
+                    <code className="text-sm text-neutral-300">{baseUrl}/api/sources/upload</code>
                   </div>
                 </div>
 
@@ -468,7 +468,7 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-neutral-500 uppercase tracking-wide font-medium">Example (cURL)</span>
                     <button
-                      onClick={() => copyToClipboard(`curl -X POST "${baseUrl}/api/documents/api-upload" \\
+                      onClick={() => copyToClipboard(`curl -X POST "${baseUrl}/api/sources/upload" \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c" \\
   -d '{"url": "https://docs.google.com/document/d/your-doc-id/edit", "client": "${client?.name || 'Client Name'}"}'`)}
@@ -479,7 +479,7 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
                     </button>
                   </div>
                   <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300 overflow-x-auto">
-                    <pre>{`curl -X POST "${baseUrl}/api/documents/api-upload" \\
+                    <pre>{`curl -X POST "${baseUrl}/api/sources/upload" \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: dk_global_a7f3e9c2b8d1..." \\
   -d '{
@@ -526,7 +526,7 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-pastel-mint/20 text-pastel-mint rounded text-xs font-medium">POST</span>
-                    <code className="text-sm text-neutral-300">{baseUrl}/api/documents/api-create-client</code>
+                    <code className="text-sm text-neutral-300">{baseUrl}/api/sources/create-client</code>
                   </div>
                 </div>
 
@@ -547,7 +547,7 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-neutral-500 uppercase tracking-wide font-medium">Example (cURL)</span>
                     <button
-                      onClick={() => copyToClipboard(`curl -X POST "${baseUrl}/api/documents/api-create-client" \\
+                      onClick={() => copyToClipboard(`curl -X POST "${baseUrl}/api/sources/create-client" \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c" \\
   -d '{"name": "New Client", "description": "Client description", "pod_number": 2}'`)}
@@ -558,7 +558,7 @@ X-API-Key: dk_global_a7f3e9c2b8d1...`}</pre>
                     </button>
                   </div>
                   <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 font-mono text-xs text-neutral-300 overflow-x-auto">
-                    <pre>{`curl -X POST "${baseUrl}/api/documents/api-create-client" \\
+                    <pre>{`curl -X POST "${baseUrl}/api/sources/create-client" \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: dk_global_a7f3e9c2b8d1..." \\
   -d '{
