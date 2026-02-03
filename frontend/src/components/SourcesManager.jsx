@@ -6,7 +6,7 @@ import {
   Grid, List, X, ExternalLink,
   Calendar, Tag, FileType, Sparkles, RefreshCw, File,
   Upload, Link, CheckCircle, AlertCircle, FileSpreadsheet,
-  ChevronDown, Square, CheckSquare
+  ChevronDown, Square, CheckSquare, Layers
 } from 'lucide-react';
 import { documentsApi } from '../api/documents';
 import clsx from 'clsx';
@@ -110,6 +110,7 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
   const [uploadingFiles, setUploadingFiles] = useState([]);
   const [selectedSources, setSelectedSources] = useState(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [groupBy, setGroupBy] = useState('type'); // 'type', 'date', 'none'
 
   const queryClient = useQueryClient();
 
@@ -284,7 +285,21 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
     setSelectedSources(new Set());
   };
 
-  // Group documents by type
+  // Helper to get date group label
+  const getDateGroup = (dateStr) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays <= 7) return 'This Week';
+    if (diffDays <= 30) return 'This Month';
+    if (diffDays <= 90) return 'Last 3 Months';
+    return 'Older';
+  };
+
+  // Group documents based on groupBy setting
   const groupedDocs = useMemo(() => {
     let filtered = [...(documents || [])];
 
@@ -302,21 +317,33 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
       filtered = filtered.filter(doc => getTypeCategory(doc) === filterType);
     }
 
-    // Group by type category
-    const groups = {};
-    filtered.forEach(doc => {
-      const category = getTypeCategory(doc);
-      if (!groups[category]) groups[category] = [];
-      groups[category].push(doc);
-    });
+    // Sort all by date first
+    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    // Sort each group by date
-    Object.keys(groups).forEach(key => {
-      groups[key].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    });
+    // Group based on groupBy setting
+    const groups = {};
+
+    if (groupBy === 'none') {
+      // No grouping - all in one group
+      groups['All Sources'] = filtered;
+    } else if (groupBy === 'date') {
+      // Group by date ranges
+      filtered.forEach(doc => {
+        const dateGroup = getDateGroup(doc.created_at);
+        if (!groups[dateGroup]) groups[dateGroup] = [];
+        groups[dateGroup].push(doc);
+      });
+    } else {
+      // Group by type category (default)
+      filtered.forEach(doc => {
+        const category = getTypeCategory(doc);
+        if (!groups[category]) groups[category] = [];
+        groups[category].push(doc);
+      });
+    }
 
     return groups;
-  }, [documents, searchQuery, filterType]);
+  }, [documents, searchQuery, filterType, groupBy]);
 
   const typeCategories = useMemo(() => {
     const cats = new Set();
@@ -425,6 +452,21 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
+                </div>
+
+                {/* Group by dropdown */}
+                <div className="relative">
+                  <select
+                    value={groupBy}
+                    onChange={(e) => setGroupBy(e.target.value)}
+                    className="appearance-none pl-8 pr-8 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 focus:border-pastel-sky focus:outline-none cursor-pointer"
+                  >
+                    <option value="type">Group by Type</option>
+                    <option value="date">Group by Date</option>
+                    <option value="none">No Grouping</option>
+                  </select>
+                  <Layers className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
                   <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
                 </div>
 
