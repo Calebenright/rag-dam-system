@@ -6,7 +6,7 @@ import {
   Grid, List, X, ExternalLink,
   Calendar, Tag, FileType, Sparkles, RefreshCw, File,
   Upload, Link, CheckCircle, AlertCircle, FileSpreadsheet,
-  ChevronDown
+  ChevronDown, Square, CheckSquare
 } from 'lucide-react';
 import { documentsApi } from '../api/documents';
 import clsx from 'clsx';
@@ -108,6 +108,8 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
   const [googleError, setGoogleError] = useState('');
   const [addedDoc, setAddedDoc] = useState(null);
   const [uploadingFiles, setUploadingFiles] = useState([]);
+  const [selectedSources, setSelectedSources] = useState(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -244,6 +246,44 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedSources.size === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedSources.size} source${selectedSources.size > 1 ? 's' : ''}?`)) {
+      for (const docId of selectedSources) {
+        await deleteMutation.mutateAsync(docId);
+      }
+      setSelectedSources(new Set());
+      setIsSelectionMode(false);
+    }
+  };
+
+  const toggleSourceSelection = (docId, e) => {
+    e?.stopPropagation();
+    setSelectedSources(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(docId)) {
+        newSet.delete(docId);
+      } else {
+        newSet.add(docId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    const allFilteredIds = Object.values(groupedDocs).flat().map(doc => doc.id);
+    if (selectedSources.size === allFilteredIds.length) {
+      setSelectedSources(new Set());
+    } else {
+      setSelectedSources(new Set(allFilteredIds));
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedSources(new Set());
+  };
+
   // Group documents by type
   const groupedDocs = useMemo(() => {
     let filtered = [...(documents || [])];
@@ -301,80 +341,138 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
         {/* Toolbar */}
         <div className="p-3 border-b border-neutral-800 space-y-2 bg-neutral-900/30">
           <div className="flex items-center gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search sources..."
-                className="w-full pl-9 pr-4 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-pastel-sky focus:outline-none"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300">
-                  <X className="w-4 h-4" />
+            {/* Selection mode controls */}
+            {isSelectionMode ? (
+              <>
+                <button
+                  onClick={toggleSelectAll}
+                  className="flex items-center gap-2 px-3 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 hover:bg-neutral-700/50 transition-all"
+                >
+                  {selectedSources.size === totalFiltered && totalFiltered > 0 ? (
+                    <CheckSquare className="w-4 h-4 text-pastel-sky" />
+                  ) : (
+                    <Square className="w-4 h-4" />
+                  )}
+                  <span>{selectedSources.size === totalFiltered && totalFiltered > 0 ? 'Deselect All' : 'Select All'}</span>
                 </button>
-              )}
-            </div>
+                <span className="text-sm text-neutral-400">
+                  {selectedSources.size} selected
+                </span>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={selectedSources.size === 0 || deleteMutation.isPending}
+                  className={clsx(
+                    'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
+                    selectedSources.size > 0
+                      ? 'bg-pastel-coral/15 text-pastel-coral hover:bg-pastel-coral/25'
+                      : 'bg-neutral-800/50 text-neutral-500 cursor-not-allowed'
+                  )}
+                >
+                  {deleteMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                  <span>Delete Selected</span>
+                </button>
+                <div className="flex-1" />
+                <button
+                  onClick={exitSelectionMode}
+                  className="flex items-center gap-2 px-3 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 hover:bg-neutral-700/50 transition-all"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Cancel</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search sources..."
+                    className="w-full pl-9 pr-4 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-pastel-sky focus:outline-none"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300">
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
 
-            {/* Type filter dropdown */}
-            <div className="relative">
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="appearance-none pl-3 pr-8 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 focus:border-pastel-sky focus:outline-none cursor-pointer"
-              >
-                <option value="all">All Types</option>
-                {typeCategories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
-            </div>
+                {/* Type filter dropdown */}
+                <div className="relative">
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="appearance-none pl-3 pr-8 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 focus:border-pastel-sky focus:outline-none cursor-pointer"
+                  >
+                    <option value="all">All Types</option>
+                    {typeCategories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
+                </div>
 
-            {googleSourceCount > 0 && (
-              <button
-                onClick={() => syncAllMutation.mutate()}
-                disabled={syncAllMutation.isPending}
-                className={clsx(
-                  'flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all text-sm font-medium',
-                  syncAllMutation.isPending
-                    ? 'bg-pastel-sky/15 text-pastel-sky'
-                    : 'bg-pastel-mint/15 text-pastel-mint hover:bg-pastel-mint/25'
+                {googleSourceCount > 0 && (
+                  <button
+                    onClick={() => syncAllMutation.mutate()}
+                    disabled={syncAllMutation.isPending}
+                    className={clsx(
+                      'flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all text-sm font-medium',
+                      syncAllMutation.isPending
+                        ? 'bg-pastel-sky/15 text-pastel-sky'
+                        : 'bg-pastel-mint/15 text-pastel-mint hover:bg-pastel-mint/25'
+                    )}
+                  >
+                    <RefreshCw className={`w-4 h-4 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">{syncAllMutation.isPending ? 'Syncing...' : 'Sync'}</span>
+                  </button>
                 )}
-              >
-                <RefreshCw className={`w-4 h-4 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">{syncAllMutation.isPending ? 'Syncing...' : 'Sync'}</span>
-              </button>
+
+                {/* Selection mode toggle */}
+                {totalFiltered > 0 && (
+                  <button
+                    onClick={() => setIsSelectionMode(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 hover:bg-neutral-700/50 transition-all"
+                  >
+                    <Square className="w-4 h-4" />
+                    <span className="hidden sm:inline">Select</span>
+                  </button>
+                )}
+
+                <div className="flex items-center bg-neutral-800/50 rounded-lg p-1 border border-neutral-700">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={clsx('p-1.5 rounded transition-all', viewMode === 'list' ? 'bg-pastel-sky/20 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-300')}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={clsx('p-1.5 rounded transition-all', viewMode === 'grid' ? 'bg-pastel-sky/20 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-300')}
+                  >
+                    <Grid className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setShowUpload(!showUpload)}
+                  className={clsx(
+                    'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
+                    showUpload
+                      ? 'bg-pastel-peach/20 text-pastel-peach'
+                      : 'bg-pastel-lavender/15 text-pastel-lavender hover:bg-pastel-lavender/25'
+                  )}
+                >
+                  <Upload className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add Source</span>
+                </button>
+              </>
             )}
-
-            <div className="flex items-center bg-neutral-800/50 rounded-lg p-1 border border-neutral-700">
-              <button
-                onClick={() => setViewMode('list')}
-                className={clsx('p-1.5 rounded transition-all', viewMode === 'list' ? 'bg-pastel-sky/20 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-300')}
-              >
-                <List className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={clsx('p-1.5 rounded transition-all', viewMode === 'grid' ? 'bg-pastel-sky/20 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-300')}
-              >
-                <Grid className="w-4 h-4" />
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowUpload(!showUpload)}
-              className={clsx(
-                'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
-                showUpload
-                  ? 'bg-pastel-peach/20 text-pastel-peach'
-                  : 'bg-pastel-lavender/15 text-pastel-lavender hover:bg-pastel-lavender/25'
-              )}
-            >
-              <Upload className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Source</span>
-            </button>
           </div>
 
           {syncAllResult && (
@@ -514,17 +612,31 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                       {docs.map((doc) => {
                         const colorName = getFileColor(doc.file_name, doc.file_type);
                         const styles = colorStyles[colorName] || colorStyles.lavender;
+                        const isSelected = selectedSources.has(doc.id);
 
                         return (
                           <div
                             key={doc.id}
-                            onClick={() => setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
+                            onClick={() => isSelectionMode ? toggleSourceSelection(doc.id) : setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
                             className={clsx(
                               'bg-neutral-900/50 rounded-lg border p-3 cursor-pointer transition-all group',
+                              isSelected ? 'border-pastel-sky bg-pastel-sky/10' :
                               selectedDoc?.id === doc.id ? 'border-pastel-sky bg-pastel-sky/5' : 'border-neutral-800 hover:border-neutral-700'
                             )}
                           >
                             <div className="flex items-center gap-3">
+                              {isSelectionMode && (
+                                <button
+                                  onClick={(e) => toggleSourceSelection(doc.id, e)}
+                                  className="flex-shrink-0"
+                                >
+                                  {isSelected ? (
+                                    <CheckSquare className="w-5 h-5 text-pastel-sky" />
+                                  ) : (
+                                    <Square className="w-5 h-5 text-neutral-500 hover:text-neutral-300" />
+                                  )}
+                                </button>
+                              )}
                               <div className={clsx('w-1 h-10 rounded-full', styles.bg)} />
                               <div className={clsx('w-10 h-10 rounded-lg flex items-center justify-center border', styles.bgLight, styles.border)}>
                                 {doc.file_type === 'google_sheet' ? (
@@ -547,12 +659,14 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                                   <span className="text-xs text-neutral-500">{new Date(doc.created_at).toLocaleDateString()}</span>
                                 </div>
                               </div>
-                              <button
-                                onClick={(e) => handleDelete(doc.id, e)}
-                                className="p-2 text-neutral-500 opacity-0 group-hover:opacity-100 hover:text-pastel-coral hover:bg-pastel-coral/10 rounded-lg transition-all"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              {!isSelectionMode && (
+                                <button
+                                  onClick={(e) => handleDelete(doc.id, e)}
+                                  className="p-2 text-neutral-500 opacity-0 group-hover:opacity-100 hover:text-pastel-coral hover:bg-pastel-coral/10 rounded-lg transition-all"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         );
@@ -573,17 +687,31 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                       {docs.map((doc) => {
                         const colorName = getFileColor(doc.file_name, doc.file_type);
                         const styles = colorStyles[colorName] || colorStyles.lavender;
+                        const isSelected = selectedSources.has(doc.id);
 
                         return (
                           <div
                             key={doc.id}
-                            onClick={() => setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
+                            onClick={() => isSelectionMode ? toggleSourceSelection(doc.id) : setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
                             className={clsx(
                               'bg-neutral-900/50 rounded-xl border p-4 cursor-pointer transition-all group relative overflow-hidden',
+                              isSelected ? 'border-pastel-sky bg-pastel-sky/10' :
                               selectedDoc?.id === doc.id ? 'border-pastel-sky bg-pastel-sky/5' : 'border-neutral-800 hover:border-neutral-700'
                             )}
                           >
                             <div className={clsx('absolute top-0 left-0 right-0 h-1', styles.bg)} />
+                            {isSelectionMode && (
+                              <button
+                                onClick={(e) => toggleSourceSelection(doc.id, e)}
+                                className="absolute top-3 right-3 z-10"
+                              >
+                                {isSelected ? (
+                                  <CheckSquare className="w-5 h-5 text-pastel-sky" />
+                                ) : (
+                                  <Square className="w-5 h-5 text-neutral-500 hover:text-neutral-300" />
+                                )}
+                              </button>
+                            )}
                             <div className="text-center pt-2">
                               <div className={clsx('w-14 h-14 mx-auto rounded-xl flex items-center justify-center border mb-3', styles.bgLight, styles.border)}>
                                 {doc.file_type === 'google_sheet' ? (
