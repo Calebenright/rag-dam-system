@@ -386,6 +386,17 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
               </>
             ) : (
               <>
+                {/* Selection mode toggle - on the left */}
+                {totalFiltered > 0 && (
+                  <button
+                    onClick={() => setIsSelectionMode(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 hover:bg-neutral-700/50 transition-all"
+                  >
+                    <Square className="w-4 h-4" />
+                    <span className="hidden sm:inline">Select</span>
+                  </button>
+                )}
+
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
                   <input
@@ -430,17 +441,6 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                   >
                     <RefreshCw className={`w-4 h-4 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
                     <span className="hidden sm:inline">{syncAllMutation.isPending ? 'Syncing...' : 'Sync'}</span>
-                  </button>
-                )}
-
-                {/* Selection mode toggle */}
-                {totalFiltered > 0 && (
-                  <button
-                    onClick={() => setIsSelectionMode(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 hover:bg-neutral-700/50 transition-all"
-                  >
-                    <Square className="w-4 h-4" />
-                    <span className="hidden sm:inline">Select</span>
                   </button>
                 )}
 
