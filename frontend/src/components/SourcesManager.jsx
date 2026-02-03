@@ -6,7 +6,7 @@ import {
   Grid, List, X, ExternalLink,
   Calendar, Tag, FileType, Sparkles, RefreshCw, File,
   Upload, Link, CheckCircle, AlertCircle, FileSpreadsheet,
-  ChevronDown, Square, CheckSquare, Layers
+  ChevronDown, Square, CheckSquare, Layers, FolderPlus, Folder
 } from 'lucide-react';
 import { documentsApi } from '../api/documents';
 import clsx from 'clsx';
@@ -110,9 +110,25 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
   const [uploadingFiles, setUploadingFiles] = useState([]);
   const [selectedSources, setSelectedSources] = useState(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [groupBy, setGroupBy] = useState('type'); // 'type', 'date', 'none'
+  const [groupBy, setGroupBy] = useState('type'); // 'type', 'date', 'none', 'custom'
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [customGroups, setCustomGroups] = useState([]);
 
   const queryClient = useQueryClient();
+
+  // Fetch custom groups
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const groups = await documentsApi.getGroups(clientId);
+        setCustomGroups(groups || []);
+      } catch (error) {
+        console.error('Error fetching groups:', error);
+      }
+    };
+    if (clientId) fetchGroups();
+  }, [clientId, documents]);
 
   // Poll for updates when there are unprocessed documents (reduced frequency)
   useEffect(() => {
@@ -149,6 +165,17 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
       queryClient.invalidateQueries(['documents', clientId]);
       setSyncAllResult(data);
       setTimeout(() => setSyncAllResult(null), 5000);
+    },
+  });
+
+  const bulkGroupMutation = useMutation({
+    mutationFn: ({ documentIds, group }) => documentsApi.bulkUpdateGroup(documentIds, group),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['documents', clientId]);
+      setSelectedSources(new Set());
+      setIsSelectionMode(false);
+      setShowGroupModal(false);
+      setNewGroupName('');
     },
   });
 
@@ -333,6 +360,13 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
         if (!groups[dateGroup]) groups[dateGroup] = [];
         groups[dateGroup].push(doc);
       });
+    } else if (groupBy === 'custom') {
+      // Group by custom groups
+      filtered.forEach(doc => {
+        const customGroup = doc.custom_group || 'Ungrouped';
+        if (!groups[customGroup]) groups[customGroup] = [];
+        groups[customGroup].push(doc);
+      });
     } else {
       // Group by type category (default)
       filtered.forEach(doc => {
@@ -385,6 +419,19 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                 <span className="text-sm text-neutral-400">
                   {selectedSources.size} selected
                 </span>
+                <button
+                  onClick={() => setShowGroupModal(true)}
+                  disabled={selectedSources.size === 0}
+                  className={clsx(
+                    'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
+                    selectedSources.size > 0
+                      ? 'bg-pastel-lavender/15 text-pastel-lavender hover:bg-pastel-lavender/25'
+                      : 'bg-neutral-800/50 text-neutral-500 cursor-not-allowed'
+                  )}
+                >
+                  <FolderPlus className="w-4 h-4" />
+                  <span>Add to Group</span>
+                </button>
                 <button
                   onClick={handleBulkDelete}
                   disabled={selectedSources.size === 0 || deleteMutation.isPending}
@@ -464,6 +511,7 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                   >
                     <option value="type">Group by Type</option>
                     <option value="date">Group by Date</option>
+                    <option value="custom">Custom Groups</option>
                     <option value="none">No Grouping</option>
                   </select>
                   <Layers className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
@@ -848,6 +896,15 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
                         <p className="text-sm text-neutral-200">{selectedDoc.topic}</p>
                       </div>
                     )}
+                    {selectedDoc.custom_group && (
+                      <div className="bg-neutral-800/30 rounded-lg p-3 border border-neutral-800 col-span-2">
+                        <div className="flex items-center gap-2 text-neutral-500 mb-1">
+                          <Folder className="w-4 h-4" />
+                          <span className="text-xs">Group</span>
+                        </div>
+                        <p className="text-sm text-pastel-lavender">{selectedDoc.custom_group}</p>
+                      </div>
+                    )}
                   </div>
 
                   {selectedDoc.summary && (
@@ -941,6 +998,96 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
           })()}
         </div>
       </div>
+
+      {/* Group Assignment Modal */}
+      {showGroupModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-neutral-900 border border-neutral-700 rounded-xl p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-neutral-100">Add to Group</h3>
+              <button
+                onClick={() => {
+                  setShowGroupModal(false);
+                  setNewGroupName('');
+                }}
+                className="p-1.5 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-neutral-400 mb-4">
+              Add {selectedSources.size} source{selectedSources.size > 1 ? 's' : ''} to a group
+            </p>
+
+            {/* Existing groups */}
+            {customGroups.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs text-neutral-500 uppercase tracking-wide mb-2">Existing Groups</p>
+                <div className="flex flex-wrap gap-2">
+                  {customGroups.map(group => (
+                    <button
+                      key={group}
+                      onClick={() => bulkGroupMutation.mutate({ documentIds: Array.from(selectedSources), group })}
+                      disabled={bulkGroupMutation.isPending}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg text-sm text-neutral-300 transition-all"
+                    >
+                      <Folder className="w-4 h-4 text-pastel-lavender" />
+                      {group}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Create new group */}
+            <div>
+              <p className="text-xs text-neutral-500 uppercase tracking-wide mb-2">
+                {customGroups.length > 0 ? 'Or Create New Group' : 'Create Group'}
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="Enter group name..."
+                  className="flex-1 px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-pastel-sky focus:outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newGroupName.trim()) {
+                      bulkGroupMutation.mutate({ documentIds: Array.from(selectedSources), group: newGroupName.trim() });
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => bulkGroupMutation.mutate({ documentIds: Array.from(selectedSources), group: newGroupName.trim() })}
+                  disabled={!newGroupName.trim() || bulkGroupMutation.isPending}
+                  className="flex items-center gap-2 px-4 py-2 bg-pastel-lavender/20 text-pastel-lavender rounded-lg hover:bg-pastel-lavender/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {bulkGroupMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <FolderPlus className="w-4 h-4" />
+                  )}
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Remove from group option */}
+            {customGroups.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-neutral-800">
+                <button
+                  onClick={() => bulkGroupMutation.mutate({ documentIds: Array.from(selectedSources), group: null })}
+                  disabled={bulkGroupMutation.isPending}
+                  className="text-sm text-neutral-500 hover:text-neutral-300 transition-all"
+                >
+                  Remove from all groups
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

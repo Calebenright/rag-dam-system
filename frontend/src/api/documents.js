@@ -63,4 +63,22 @@ export const documentsApi = {
     const { data } = await api.post(`/api/documents/${clientId}/api-upload`, { url });
     return data.data;
   },
+
+  // Update custom group for a document
+  updateGroup: async (documentId, group) => {
+    const { data } = await api.patch(`/api/documents/${documentId}/group`, { group });
+    return data;
+  },
+
+  // Bulk update custom group for multiple documents
+  bulkUpdateGroup: async (documentIds, group) => {
+    const { data } = await api.patch(`/api/documents/bulk-group`, { documentIds, group });
+    return data;
+  },
+
+  // Get all custom groups for a client
+  getGroups: async (clientId) => {
+    const { data } = await api.get(`/api/documents/${clientId}/groups`);
+    return data.data;
+  },
 };

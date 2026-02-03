@@ -1191,6 +1191,115 @@ router.post('/api-upload', async (req, res) => {
 });
 
 /**
+ * PATCH /api/documents/:documentId/group
+ * Update the custom group for a document
+ */
+router.patch('/:documentId/group', async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const { group } = req.body;
+
+    // Group can be null/empty to remove from group, or a string to set group
+    const groupValue = group && typeof group === 'string' && group.trim() ? group.trim() : null;
+
+    const { data, error } = await supabase
+      .from('documents')
+      .update({ custom_group: groupValue })
+      .eq('id', documentId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data,
+      message: groupValue ? `Document added to group "${groupValue}"` : 'Document removed from group'
+    });
+  } catch (error) {
+    console.error('Error updating document group:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PATCH /api/documents/bulk-group
+ * Update the custom group for multiple documents
+ */
+router.patch('/bulk-group', async (req, res) => {
+  try {
+    const { documentIds, group } = req.body;
+
+    if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'documentIds array is required'
+      });
+    }
+
+    // Group can be null/empty to remove from group, or a string to set group
+    const groupValue = group && typeof group === 'string' && group.trim() ? group.trim() : null;
+
+    const { data, error } = await supabase
+      .from('documents')
+      .update({ custom_group: groupValue })
+      .in('id', documentIds)
+      .select();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data,
+      message: groupValue
+        ? `${data.length} document(s) added to group "${groupValue}"`
+        : `${data.length} document(s) removed from group`
+    });
+  } catch (error) {
+    console.error('Error bulk updating document groups:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/documents/:clientId/groups
+ * Get all unique custom groups for a client
+ */
+router.get('/:clientId/groups', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    const { data, error } = await supabase
+      .from('documents')
+      .select('custom_group')
+      .eq('client_id', clientId)
+      .not('custom_group', 'is', null);
+
+    if (error) throw error;
+
+    // Get unique groups
+    const groups = [...new Set(data.map(d => d.custom_group).filter(Boolean))].sort();
+
+    res.json({
+      success: true,
+      data: groups
+    });
+  } catch (error) {
+    console.error('Error fetching document groups:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * DELETE /api/documents/:documentId
  * Delete document and its chunks
  */
