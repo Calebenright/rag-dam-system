@@ -119,13 +119,13 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
       return <h3 className="text-sm font-bold text-neutral-200 mb-2 mt-3 first:mt-0">{children}</h3>;
     },
     ul({ children }) {
-      return <ul className="list-disc list-inside mb-3 space-y-1 text-neutral-300">{children}</ul>;
+      return <ul className="list-disc pl-5 mb-3 space-y-1.5 text-neutral-300 [&_ul]:mt-1.5 [&_ul]:mb-0 [&_ul]:list-[circle] [&_ul_ul]:list-[square]">{children}</ul>;
     },
     ol({ children }) {
-      return <ol className="list-decimal list-inside mb-3 space-y-1 text-neutral-300">{children}</ol>;
+      return <ol className="list-decimal pl-5 mb-3 space-y-1.5 text-neutral-300 [&_ol]:mt-1.5 [&_ol]:mb-0">{children}</ol>;
     },
     li({ children }) {
-      return <li className="text-sm">{children}</li>;
+      return <li className="text-sm pl-1 marker:text-neutral-500">{children}</li>;
     },
     strong({ children }) {
       return <strong className="font-semibold text-neutral-100">{children}</strong>;
@@ -135,7 +135,7 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
     },
     blockquote({ children }) {
       return (
-        <blockquote className="border-l-2 border-pastel-lavender/50 pl-3 my-3 text-neutral-400 italic">
+        <blockquote className="border-l-2 border-pastel-lavender/40 pl-4 my-3 py-2 bg-pastel-lavender/5 rounded-r-lg text-neutral-400 italic">
           {children}
         </blockquote>
       );
@@ -196,7 +196,7 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
       }
 
       return (
-        <code className="bg-pastel-peach/10 text-pastel-peach px-1.5 py-0.5 rounded text-sm font-mono border border-pastel-peach/20" {...props}>
+        <code className="bg-pastel-peach/15 text-pastel-peach px-1.5 py-0.5 rounded text-[13px] font-mono border border-pastel-peach/20" {...props}>
           {children}
         </code>
       );
@@ -211,18 +211,24 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
       );
     },
     thead({ children }) {
-      return <thead className="bg-pastel-sky/5">{children}</thead>;
+      return <thead className="bg-pastel-sky/8">{children}</thead>;
+    },
+    tbody({ children }) {
+      return <tbody className="divide-y divide-neutral-800">{children}</tbody>;
+    },
+    tr({ children }) {
+      return <tr className="hover:bg-neutral-800/40 transition-colors">{children}</tr>;
     },
     th({ children }) {
       return (
-        <th className="px-3 py-2 text-left text-xs font-medium text-pastel-sky uppercase tracking-wider border-b border-neutral-700">
+        <th className="px-3 py-2.5 text-left text-xs font-semibold text-pastel-sky uppercase tracking-wider border-b border-neutral-700">
           {children}
         </th>
       );
     },
     td({ children }) {
       return (
-        <td className="px-3 py-2 text-sm text-neutral-300 border-b border-neutral-800">
+        <td className="px-3 py-2 text-sm text-neutral-300">
           {children}
         </td>
       );
@@ -243,7 +249,11 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
       return <div className="my-2">{children}</div>;
     },
     hr() {
-      return <hr className="my-4 border-neutral-700" />;
+      return (
+        <div className="my-5 flex items-center gap-3">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-neutral-700 to-transparent" />
+        </div>
+      );
     },
   };
 
