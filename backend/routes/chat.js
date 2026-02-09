@@ -1,7 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { analyzeImage, enhancedChat, generateEmbedding, cosineSimilarity, extractFromImage, analyzeMultipleImages, chatWithSheets as chatWithSheetsOpenAI } from '../services/openaiService.js';
-import { enhancedChatWithContext as claudeChatWithSheets } from '../services/claudeService.js';
+import { enhancedChatWithContext as chatWithSheetsFromClaudeService } from '../services/claudeService.js';
 import * as sheetsService from '../services/googleSheets.js';
 import multer from 'multer';
 import os from 'os';
@@ -352,9 +352,9 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
     let sheetOperations = [];
 
     if ((isSheetQuery || mentionsSheet) && !imageFiles.length) {
-      // Use Claude with sheet tools for sheet-related queries
-      console.log('Using Claude with sheet tools for query:', message);
-      const claudeResult = await claudeChatWithSheets(
+      // Use OpenAI with sheet tools for sheet-related queries
+      console.log('Using OpenAI with sheet tools for query:', message);
+      const claudeResult = await chatWithSheetsFromClaudeService(
         message,
         contextDocs,
         connectedSheets,

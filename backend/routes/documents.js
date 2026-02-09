@@ -1191,43 +1191,9 @@ router.post('/api-upload', async (req, res) => {
 });
 
 /**
- * PATCH /api/documents/:documentId/group
- * Update the custom group for a document
- */
-router.patch('/:documentId/group', async (req, res) => {
-  try {
-    const { documentId } = req.params;
-    const { group } = req.body;
-
-    // Group can be null/empty to remove from group, or a string to set group
-    const groupValue = group && typeof group === 'string' && group.trim() ? group.trim() : null;
-
-    const { data, error } = await supabase
-      .from('documents')
-      .update({ custom_group: groupValue })
-      .eq('id', documentId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    res.json({
-      success: true,
-      data,
-      message: groupValue ? `Document added to group "${groupValue}"` : 'Document removed from group'
-    });
-  } catch (error) {
-    console.error('Error updating document group:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
  * PATCH /api/documents/bulk-group
  * Update the custom group for multiple documents
+ * NOTE: This must be defined BEFORE /:documentId/group to avoid Express matching "bulk-group" as :documentId
  */
 router.patch('/bulk-group', async (req, res) => {
   try {
@@ -1260,6 +1226,41 @@ router.patch('/bulk-group', async (req, res) => {
     });
   } catch (error) {
     console.error('Error bulk updating document groups:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PATCH /api/documents/:documentId/group
+ * Update the custom group for a document
+ */
+router.patch('/:documentId/group', async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const { group } = req.body;
+
+    // Group can be null/empty to remove from group, or a string to set group
+    const groupValue = group && typeof group === 'string' && group.trim() ? group.trim() : null;
+
+    const { data, error } = await supabase
+      .from('documents')
+      .update({ custom_group: groupValue })
+      .eq('id', documentId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data,
+      message: groupValue ? `Document added to group "${groupValue}"` : 'Document removed from group'
+    });
+  } catch (error) {
+    console.error('Error updating document group:', error);
     res.status(500).json({
       success: false,
       error: error.message

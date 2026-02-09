@@ -1,132 +1,147 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import * as sheetsService from './googleSheets.js';
 
 // Lazy initialization to ensure env vars are loaded
-let anthropic = null;
+let openai = null;
 
 function getClient() {
-  if (!anthropic) {
-    anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
   }
-  return anthropic;
+  return openai;
 }
 
-// Define tools for Google Sheets operations (Claude tool format)
+// Define tools for Google Sheets operations (OpenAI tool format)
 const sheetTools = [
   {
-    name: "read_sheet",
-    description: "Read data from a Google Sheet tab. Use this to see current contents, answer questions about data, or understand structure before making changes. Returns the actual cell values.",
-    input_schema: {
-      type: "object",
-      properties: {
-        spreadsheet_id: {
-          type: "string",
-          description: "The Google Spreadsheet ID"
-        },
-        range: {
-          type: "string",
-          description: "The A1 notation range to read (e.g., 'Sheet1!A1:D10' or just 'A1:D10'). If omitted, reads the entire sheet."
-        },
-        sheet_name: {
-          type: "string",
-          description: "The name of the sheet/tab to read from (default: first available tab)"
-        }
-      },
-      required: ["spreadsheet_id"]
-    }
-  },
-  {
-    name: "list_sheet_tabs",
-    description: "List all tabs/sheets in a Google Spreadsheet with their names and row/column counts. Use this to understand the structure of a spreadsheet.",
-    input_schema: {
-      type: "object",
-      properties: {
-        spreadsheet_id: {
-          type: "string",
-          description: "The Google Spreadsheet ID"
-        }
-      },
-      required: ["spreadsheet_id"]
-    }
-  },
-  {
-    name: "write_cells",
-    description: "Write data to specific cells in a Google Sheet. Overwrites existing data in the specified range.",
-    input_schema: {
-      type: "object",
-      properties: {
-        spreadsheet_id: {
-          type: "string",
-          description: "The Google Spreadsheet ID"
-        },
-        range: {
-          type: "string",
-          description: "The A1 notation range to write to (e.g., 'Sheet1!A1:C3')"
-        },
-        values: {
-          type: "array",
-          items: {
-            type: "array",
-            items: { type: "string" }
+    type: "function",
+    function: {
+      name: "read_sheet",
+      description: "Read data from a Google Sheet tab. Use this to see current contents, answer questions about data, or understand structure before making changes. Returns the actual cell values.",
+      parameters: {
+        type: "object",
+        properties: {
+          spreadsheet_id: {
+            type: "string",
+            description: "The Google Spreadsheet ID"
           },
-          description: "2D array of values to write, row by row"
-        }
-      },
-      required: ["spreadsheet_id", "range", "values"]
-    }
-  },
-  {
-    name: "append_rows",
-    description: "Append new rows to the end of data in a Google Sheet. Great for adding new entries.",
-    input_schema: {
-      type: "object",
-      properties: {
-        spreadsheet_id: {
-          type: "string",
-          description: "The Google Spreadsheet ID"
-        },
-        sheet_name: {
-          type: "string",
-          description: "The name of the sheet/tab (default: Sheet1)"
-        },
-        values: {
-          type: "array",
-          items: {
-            type: "array",
-            items: { type: "string" }
+          range: {
+            type: "string",
+            description: "The A1 notation range to read (e.g., 'Sheet1!A1:D10' or just 'A1:D10'). If omitted, reads the entire sheet."
           },
-          description: "2D array of rows to append"
-        }
-      },
-      required: ["spreadsheet_id", "values"]
+          sheet_name: {
+            type: "string",
+            description: "The name of the sheet/tab to read from (default: first available tab)"
+          }
+        },
+        required: ["spreadsheet_id"]
+      }
     }
   },
   {
-    name: "update_cell",
-    description: "Update a single cell in a Google Sheet.",
-    input_schema: {
-      type: "object",
-      properties: {
-        spreadsheet_id: {
-          type: "string",
-          description: "The Google Spreadsheet ID"
+    type: "function",
+    function: {
+      name: "list_sheet_tabs",
+      description: "List all tabs/sheets in a Google Spreadsheet with their names and row/column counts. Use this to understand the structure of a spreadsheet.",
+      parameters: {
+        type: "object",
+        properties: {
+          spreadsheet_id: {
+            type: "string",
+            description: "The Google Spreadsheet ID"
+          }
         },
-        cell: {
-          type: "string",
-          description: "The cell reference (e.g., 'A1', 'B5')"
+        required: ["spreadsheet_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "write_cells",
+      description: "Write data to specific cells in a Google Sheet. Overwrites existing data in the specified range.",
+      parameters: {
+        type: "object",
+        properties: {
+          spreadsheet_id: {
+            type: "string",
+            description: "The Google Spreadsheet ID"
+          },
+          range: {
+            type: "string",
+            description: "The A1 notation range to write to (e.g., 'Sheet1!A1:C3')"
+          },
+          values: {
+            type: "array",
+            items: {
+              type: "array",
+              items: { type: "string" }
+            },
+            description: "2D array of values to write, row by row"
+          }
         },
-        value: {
-          type: "string",
-          description: "The value to set (can be text, number, or formula starting with =)"
+        required: ["spreadsheet_id", "range", "values"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "append_rows",
+      description: "Append new rows to the end of data in a Google Sheet. Great for adding new entries.",
+      parameters: {
+        type: "object",
+        properties: {
+          spreadsheet_id: {
+            type: "string",
+            description: "The Google Spreadsheet ID"
+          },
+          sheet_name: {
+            type: "string",
+            description: "The name of the sheet/tab (default: Sheet1)"
+          },
+          values: {
+            type: "array",
+            items: {
+              type: "array",
+              items: { type: "string" }
+            },
+            description: "2D array of rows to append"
+          }
         },
-        sheet_name: {
-          type: "string",
-          description: "The name of the sheet/tab (default: Sheet1)"
-        }
-      },
-      required: ["spreadsheet_id", "cell", "value"]
+        required: ["spreadsheet_id", "values"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_cell",
+      description: "Update a single cell in a Google Sheet.",
+      parameters: {
+        type: "object",
+        properties: {
+          spreadsheet_id: {
+            type: "string",
+            description: "The Google Spreadsheet ID"
+          },
+          cell: {
+            type: "string",
+            description: "The cell reference (e.g., 'A1', 'B5')"
+          },
+          value: {
+            type: "string",
+            description: "The value to set (can be text, number, or formula starting with =)"
+          },
+          sheet_name: {
+            type: "string",
+            description: "The name of the sheet/tab (default: Sheet1)"
+          }
+        },
+        required: ["spreadsheet_id", "cell", "value"]
+      }
     }
   }
 ];
@@ -164,7 +179,7 @@ async function executeSheetTool(toolName, toolInput) {
 }
 
 /**
- * Analyze document content using Claude AI
+ * Analyze document content using OpenAI
  * Generates: title, summary, tags, keywords, topic, sentiment
  */
 export async function analyzeDocument(content, fileName, fileType) {
@@ -187,8 +202,8 @@ Please analyze this document and respond with a JSON object containing:
 
 Respond ONLY with valid JSON, no additional text.`;
 
-    const message = await getClient().messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+    const response = await getClient().chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 4000,
       messages: [{
         role: 'user',
@@ -196,11 +211,11 @@ Respond ONLY with valid JSON, no additional text.`;
       }]
     });
 
-    const responseText = message.content[0].text;
+    const responseText = response.choices[0].message.content;
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {
-      throw new Error('Could not extract JSON from Claude response');
+      throw new Error('Could not extract JSON from OpenAI response');
     }
 
     const analysis = JSON.parse(jsonMatch[0]);
@@ -224,31 +239,25 @@ Respond ONLY with valid JSON, no additional text.`;
 
     return analysis;
   } catch (error) {
-    console.error('Error analyzing document with Claude:', error);
+    console.error('Error analyzing document with OpenAI:', error);
     throw new Error(`Document analysis failed: ${error.message}`);
   }
 }
 
 /**
- * Generate embedding for text using Claude (for vector search)
- * Note: Claude doesn't have native embeddings, so we'll use a simple approach
- * For production, consider using OpenAI embeddings or a dedicated embedding model
+ * Generate embedding for text (placeholder - use openaiService.js for real embeddings)
  */
 export async function generateEmbedding(text) {
   try {
-    // For now, we'll create a simple hash-based embedding
-    // In production, replace this with a proper embedding model (OpenAI, Cohere, etc.)
     const words = text.toLowerCase().split(/\s+/).slice(0, 500);
     const embedding = new Array(1536).fill(0);
 
-    // Simple word-position based embedding (placeholder)
     words.forEach((word, idx) => {
       const hash = hashString(word);
       const position = hash % 1536;
       embedding[position] += 1 / (idx + 1);
     });
 
-    // Normalize
     const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
     return embedding.map(val => val / (magnitude || 1));
   } catch (error) {
@@ -262,7 +271,6 @@ export async function generateEmbedding(text) {
  */
 export async function chatWithContext(userMessage, contextDocuments, conversationHistory = []) {
   try {
-    // Build context from documents
     const contextText = contextDocuments.map((doc, idx) =>
       `[Document ${idx + 1}: ${doc.title}]\n${doc.summary}\n\nKey points: ${doc.keywords.join(', ')}`
     ).join('\n\n---\n\n');
@@ -278,8 +286,8 @@ Guidelines:
 - Cite documents by their titles when referencing them
 - Be concise but comprehensive`;
 
-    // Build conversation history
     const messages = [
+      { role: 'system', content: systemPrompt },
       ...conversationHistory.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -290,14 +298,13 @@ Guidelines:
       }
     ];
 
-    const response = await getClient().messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+    const response = await getClient().chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 2000,
-      system: systemPrompt,
       messages: messages
     });
 
-    return response.content[0].text;
+    return response.choices[0].message.content;
   } catch (error) {
     console.error('Error in chat:', error);
     throw new Error(`Chat failed: ${error.message}`);
@@ -316,12 +323,11 @@ function hashString(str) {
 }
 
 /**
- * Chat with Google Sheets access using Claude tool use
+ * Chat with Google Sheets access using OpenAI tool use
  * Automatically fetches and analyzes sheet data when asked about spreadsheets
  */
 export async function chatWithSheets(userMessage, connectedSheets, contextDocuments = [], conversationHistory = []) {
   try {
-    // Build sheet context for the system prompt
     let sheetContext = '';
     if (connectedSheets && connectedSheets.length > 0) {
       sheetContext = '\n\n## Connected Google Sheets:\n';
@@ -335,7 +341,6 @@ export async function chatWithSheets(userMessage, connectedSheets, contextDocume
       sheetContext += '\nYou can use the sheet tools to read data from these spreadsheets and answer questions about their contents.\n';
     }
 
-    // Build document context
     let docContext = '';
     if (contextDocuments && contextDocuments.length > 0) {
       docContext = '\n\n## Relevant Documents:\n';
@@ -364,8 +369,8 @@ When the user asks about spreadsheet data, tabs, or specific cell contents, use 
 
 Be helpful, accurate, and always fetch real data rather than guessing about sheet contents.`;
 
-    // Build conversation messages
     const messages = [
+      { role: 'system', content: systemPrompt },
       ...conversationHistory.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -377,50 +382,48 @@ Be helpful, accurate, and always fetch real data rather than guessing about shee
     ];
 
     // First call with tools
-    let response = await getClient().messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+    let response = await getClient().chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 4000,
-      system: systemPrompt,
+      messages: messages,
       tools: sheetTools,
-      messages: messages
+      tool_choice: 'auto'
     });
 
     // Handle tool use in a loop (up to 5 iterations to prevent infinite loops)
     const executedOperations = [];
     let iterations = 0;
     const maxIterations = 5;
+    let assistantMessage = response.choices[0].message;
 
-    while (response.stop_reason === 'tool_use' && iterations < maxIterations) {
+    while (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0 && iterations < maxIterations) {
       iterations++;
-      const toolUseBlocks = response.content.filter(block => block.type === 'tool_use');
-
-      if (toolUseBlocks.length === 0) break;
 
       // Execute all tool calls
       const toolResults = [];
-      for (const toolBlock of toolUseBlocks) {
+      for (const toolCall of assistantMessage.tool_calls) {
+        const toolInput = JSON.parse(toolCall.function.arguments);
         try {
-          const result = await executeSheetTool(toolBlock.name, toolBlock.input);
+          const result = await executeSheetTool(toolCall.function.name, toolInput);
           toolResults.push({
-            type: 'tool_result',
-            tool_use_id: toolBlock.id,
+            tool_call_id: toolCall.id,
+            role: 'tool',
             content: JSON.stringify(result, null, 2)
           });
           executedOperations.push({
-            tool: toolBlock.name,
-            input: toolBlock.input,
+            tool: toolCall.function.name,
+            input: toolInput,
             success: true
           });
         } catch (error) {
           toolResults.push({
-            type: 'tool_result',
-            tool_use_id: toolBlock.id,
-            content: JSON.stringify({ error: error.message }),
-            is_error: true
+            tool_call_id: toolCall.id,
+            role: 'tool',
+            content: JSON.stringify({ error: error.message })
           });
           executedOperations.push({
-            tool: toolBlock.name,
-            input: toolBlock.input,
+            tool: toolCall.function.name,
+            input: toolInput,
             success: false,
             error: error.message
           });
@@ -428,22 +431,23 @@ Be helpful, accurate, and always fetch real data rather than guessing about shee
       }
 
       // Continue conversation with tool results
-      response = await getClient().messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+      response = await getClient().chat.completions.create({
+        model: 'gpt-4o',
         max_tokens: 4000,
-        system: systemPrompt,
-        tools: sheetTools,
         messages: [
           ...messages,
-          { role: 'assistant', content: response.content },
-          { role: 'user', content: toolResults }
-        ]
+          assistantMessage,
+          ...toolResults
+        ],
+        tools: sheetTools,
+        tool_choice: 'auto'
       });
+
+      assistantMessage = response.choices[0].message;
     }
 
     // Extract final text response
-    const textBlocks = response.content.filter(block => block.type === 'text');
-    const finalResponse = textBlocks.map(block => block.text).join('\n');
+    const finalResponse = assistantMessage.content || '';
 
     return {
       response: finalResponse,
@@ -469,14 +473,12 @@ export async function enhancedChatWithContext(userMessage, contextDocuments, con
   const lowerMessage = userMessage.toLowerCase();
   const isSheetQuery = connectedSheets.length > 0 && sheetKeywords.some(keyword => lowerMessage.includes(keyword));
 
-  // Also check if user references a sheet by name
   const mentionsSheet = connectedSheets.some(sheet =>
     lowerMessage.includes(sheet.name.toLowerCase()) ||
     (sheet.sheet_tabs || []).some(tab => lowerMessage.includes(tab.title.toLowerCase()))
   );
 
   if (isSheetQuery || mentionsSheet) {
-    // Use sheet-aware chat with tools
     return await chatWithSheets(userMessage, connectedSheets, contextDocuments, conversationHistory);
   }
 
@@ -484,7 +486,6 @@ export async function enhancedChatWithContext(userMessage, contextDocuments, con
   try {
     let contextText = '';
 
-    // Add document chunks for precise context
     if (documentChunks && documentChunks.length > 0) {
       contextText += "## Relevant Document Excerpts:\n\n";
       documentChunks.forEach((chunk, idx) => {
@@ -494,7 +495,6 @@ export async function enhancedChatWithContext(userMessage, contextDocuments, con
       contextText += "---\n\n";
     }
 
-    // Add document summaries
     if (contextDocuments && contextDocuments.length > 0) {
       contextText += "## Document Summaries:\n\n";
       contextDocuments.forEach((doc) => {
@@ -507,7 +507,6 @@ export async function enhancedChatWithContext(userMessage, contextDocuments, con
       });
     }
 
-    // Add sheet context (without tools for non-sheet queries)
     let sheetContext = '';
     if (connectedSheets && connectedSheets.length > 0) {
       sheetContext = '\n## Connected Sheets (available for querying):\n';
@@ -530,6 +529,7 @@ ${sheetContext}
 - Format responses with markdown when helpful`;
 
     const messages = [
+      { role: 'system', content: systemPrompt },
       ...conversationHistory.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -540,15 +540,14 @@ ${sheetContext}
       }
     ];
 
-    const response = await getClient().messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+    const response = await getClient().chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 2000,
-      system: systemPrompt,
       messages: messages
     });
 
     return {
-      response: response.content[0].text,
+      response: response.choices[0].message.content,
       operations: [],
       toolsUsed: false
     };

@@ -176,6 +176,11 @@ export default function SourcesManager({ documents, clientId, isLoading }) {
       setIsSelectionMode(false);
       setShowGroupModal(false);
       setNewGroupName('');
+      // Re-fetch groups to include any newly created group
+      documentsApi.getGroups(clientId).then(groups => setCustomGroups(groups || []));
+    },
+    onError: (error) => {
+      console.error('Error updating groups:', error);
     },
   });
 
