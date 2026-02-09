@@ -736,7 +736,7 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
               placeholder="Ask a question..."
               rows={1}
               disabled={sendMutation.isPending}
-              className="w-full px-4 py-3 bg-neutral-800/50 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-xl focus:ring-1 focus:ring-pastel-sky/50 focus:border-pastel-sky resize-none transition-all disabled:opacity-50"
+              className="w-full px-4 py-3 bg-neutral-800/50 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-xl focus:ring-1 focus:ring-pastel-sky/50 focus:border-pastel-sky resize-none transition-all disabled:opacity-50 scrollbar-hide"
               style={{
                 minHeight: '48px',
                 maxHeight: '120px',
