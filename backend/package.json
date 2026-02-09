@@ -1,7 +1,7 @@
 {
-  "name": "dodeka-agents-backend",
+  "name": "dodo-backend",
   "version": "1.0.0",
-  "description": "Backend API for Dodeka Agents",
+  "description": "Backend API for Dodo",
   "main": "server.js",
   "type": "module",
   "scripts": {

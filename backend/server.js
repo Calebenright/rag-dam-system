@@ -66,7 +66,7 @@ app.get('/health', (req, res) => {
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    name: 'Dodeka Agents API',
+    name: 'Dodo API',
     version: '1.0.0',
     endpoints: {
       clients: '/api/clients',
