@@ -58,7 +58,7 @@ async function semanticSearch(clientId, query, limit = 5) {
       return {
         ...chunk,
         similarity_score: similarity,
-        documentTitle: parentDoc?.title || 'Unknown',
+        documentTitle: parentDoc?.title || parentDoc?.file_name || 'Unknown',
         documentId: chunk.document_id
       };
     });
@@ -191,7 +191,7 @@ router.post('/query', async (req, res) => {
           context_docs: relevantDocs.map(d => d.id),
           sources: relevantDocs
             .filter(d => d.similarity_score > 0.3)
-            .map(d => ({ id: d.id, title: d.title, similarity: d.similarity_score }))
+            .map(d => ({ id: d.id, title: d.title || d.file_name || 'Untitled', similarity: d.similarity_score }))
         }
       ]);
     }

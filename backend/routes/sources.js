@@ -149,6 +149,7 @@ async function processGoogleDocAsync(documentId, content, title, sourceType) {
     await supabase
       .from('documents')
       .update({
+        title: title || analysis.title,
         summary: analysis.summary,
         tags: analysis.tags,
         keywords: analysis.keywords,

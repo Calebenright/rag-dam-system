@@ -736,12 +736,12 @@ async function processGoogleDocAsync(documentId, content, title, sourceType) {
 
     console.log(`Finished inserting ${insertedCount} chunks for ${documentId}`);
 
-    // Update document record - keep original Google title, don't overwrite with AI title
+    // Update document record with title and analysis
     console.log(`Updating document ${documentId} with processed=true, ${chunks.length} chunks...`);
     const { error: updateError } = await supabase
       .from('documents')
       .update({
-        // Keep the original Google Doc/Sheet title (passed as 'title' param), don't use analysis.title
+        title: title || analysis.title,
         summary: analysis.summary,
         tags: analysis.tags,
         keywords: analysis.keywords,

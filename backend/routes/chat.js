@@ -143,7 +143,7 @@ async function semanticSearch(clientId, query, limit = 5) {
       return {
         ...chunk,
         similarity_score: similarity,
-        documentTitle: parentDoc?.title || 'Unknown',
+        documentTitle: parentDoc?.title || parentDoc?.file_name || 'Unknown',
         documentId: chunk.document_id
       };
     });
@@ -381,7 +381,7 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
       .filter(d => d.similarity_score > 0.3)
       .map(d => ({
         id: d.id,
-        title: d.title,
+        title: d.title || d.file_name || 'Untitled',
         similarity: d.similarity_score,
         isImage: isImageFile(d.file_type)
       }));
