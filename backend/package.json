@@ -1,7 +1,7 @@
 {
-  "name": "internal-client-app-backend",
+  "name": "dodeka-agents-backend",
   "version": "1.0.0",
-  "description": "Backend API for Internal Client Application",
+  "description": "Backend API for Dodeka Agents",
   "main": "server.js",
   "type": "module",
   "scripts": {
