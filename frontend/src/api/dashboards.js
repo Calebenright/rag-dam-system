@@ -1,13 +1,11 @@
-import axios from 'axios';
+import { api as sharedApi } from './axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-const api = axios.create({
-  baseURL: `${API_URL}/api/dashboards`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const api = {
+  get: (url, config) => sharedApi.get(`/api/dashboards${url}`, config),
+  post: (url, data, config) => sharedApi.post(`/api/dashboards${url}`, data, config),
+  put: (url, data, config) => sharedApi.put(`/api/dashboards${url}`, data, config),
+  delete: (url, config) => sharedApi.delete(`/api/dashboards${url}`, config),
+};
 
 // ==================== SOURCES ====================
 
@@ -19,12 +17,13 @@ export const sourcesApi = {
   },
 
   // Create a new source
-  create: async ({ clientId, name, sheetUrl, columnMappings }) => {
+  create: async ({ clientId, name, sheetUrl, columnMappings, group }) => {
     const response = await api.post('/sources', {
       clientId,
       name,
       sheetUrl,
       columnMappings,
+      group,
     });
     return response.data.data;
   },
@@ -54,6 +53,24 @@ export const sourcesApi = {
     if (useCache) params.append('useCache', 'true');
     const response = await api.get(`/sources/${sourceId}/data?${params}`);
     return response.data;
+  },
+
+  // Get all unique groups for a client's sources
+  getGroups: async (clientId) => {
+    const response = await api.get(`/sources/${clientId}/groups`);
+    return response.data.data;
+  },
+
+  // Set group for a single source
+  setGroup: async (sourceId, group) => {
+    const response = await sharedApi.patch(`/api/dashboards/sources/${sourceId}/group`, { group });
+    return response.data.data;
+  },
+
+  // Bulk set group for multiple sources
+  bulkSetGroup: async (sourceIds, group) => {
+    const response = await sharedApi.patch(`/api/dashboards/sources/bulk-group`, { sourceIds, group });
+    return response.data.data;
   },
 };
 

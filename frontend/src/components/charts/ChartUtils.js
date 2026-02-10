@@ -89,6 +89,16 @@ export const applyFilters = (data, filters) => {
           return String(value).toLowerCase().startsWith(String(filterValue).toLowerCase());
         case 'in':
           return Array.isArray(filterValue) ? filterValue.includes(value) : false;
+        case 'date_gte': {
+          const d = new Date(value);
+          const fd = new Date(filterValue);
+          return !isNaN(d.getTime()) && d >= fd;
+        }
+        case 'date_lte': {
+          const d = new Date(value);
+          const fd = new Date(filterValue);
+          return !isNaN(d.getTime()) && d <= fd;
+        }
         default:
           return true;
       }

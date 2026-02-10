@@ -9,6 +9,24 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+/**
+ * Build a current-date context string for system prompts.
+ * Gives the agent awareness of today's date and relative time anchors.
+ */
+function getDateContext() {
+  const now = new Date();
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const formatted = now.toLocaleDateString('en-US', options);
+  const iso = now.toISOString();
+  const year = now.getFullYear();
+  const quarter = Math.ceil((now.getMonth() + 1) / 3);
+  return `## Current Date & Time
+- **Today**: ${formatted}
+- **ISO**: ${iso}
+- **Quarter**: Q${quarter} ${year}
+Use this to understand relative time references like "this week", "last month", "recently", etc.`;
+}
+
 // Define tools for Google Sheets operations
 const sheetTools = [
   {
@@ -421,6 +439,8 @@ export async function enhancedChat(userMessage, contextDocuments, conversationHi
 
 Your task is to answer questions using the provided document context. Always cite your sources.
 
+${getDateContext()}
+
 ${contextText}
 
 ## Response Guidelines:
@@ -516,6 +536,8 @@ export async function chatWithSheets(userMessage, spreadsheetId, sheetInfo, conv
     }
 
     const systemPrompt = `You are an AI assistant that can read and edit Google Sheets.
+
+${getDateContext()}
 
 ${sheetContext}
 ${docContext}

@@ -212,7 +212,7 @@ router.get('/sources/:clientId', async (req, res) => {
  */
 router.post('/sources', async (req, res) => {
   try {
-    const { clientId, name, sheetUrl, columnMappings } = req.body;
+    const { clientId, name, sheetUrl, columnMappings, group } = req.body;
 
     if (!clientId || !sheetUrl) {
       return res.status(400).json({
@@ -248,6 +248,7 @@ router.post('/sources', async (req, res) => {
         sheet_url: sheetUrl,
         sheet_tabs: sheetInfo.sheets,
         column_mappings: columnMappings || {},
+        custom_group: group && group.trim() !== '' ? group.trim() : null,
         last_synced: new Date().toISOString(),
       })
       .select()
@@ -280,12 +281,13 @@ router.post('/sources', async (req, res) => {
 router.put('/sources/:sourceId', async (req, res) => {
   try {
     const { sourceId } = req.params;
-    const { name, columnMappings, refreshInterval } = req.body;
+    const { name, columnMappings, refreshInterval, group } = req.body;
 
     const updateData = {};
     if (name) updateData.name = name;
     if (columnMappings) updateData.column_mappings = columnMappings;
     if (refreshInterval) updateData.refresh_interval = refreshInterval;
+    if (group !== undefined) updateData.custom_group = group && group.trim() !== '' ? group.trim() : null;
 
     const { data, error } = await supabase
       .from('dashboard_sources')
@@ -448,6 +450,100 @@ router.get('/sources/:sourceId/data', async (req, res) => {
       success: false,
       error: error.message,
     });
+  }
+});
+
+// ==================== SOURCE GROUPING ====================
+
+/**
+ * GET /api/dashboards/sources/:clientId/groups
+ * Get all unique custom groups for a client's data sources
+ */
+router.get('/sources/:clientId/groups', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    const { data, error } = await supabase
+      .from('dashboard_sources')
+      .select('custom_group')
+      .eq('client_id', clientId)
+      .not('custom_group', 'is', null);
+
+    if (error) throw error;
+
+    const groups = [...new Set(data.map(d => d.custom_group).filter(Boolean))].sort();
+
+    res.json({
+      success: true,
+      data: groups,
+    });
+  } catch (error) {
+    console.error('Error fetching source groups:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * PATCH /api/dashboards/sources/bulk-group
+ * Update the custom group for multiple sources at once
+ * NOTE: Must be defined BEFORE /:sourceId/group to avoid Express treating "bulk-group" as :sourceId
+ */
+router.patch('/sources/bulk-group', async (req, res) => {
+  try {
+    const { sourceIds, group } = req.body;
+
+    if (!sourceIds || !Array.isArray(sourceIds) || sourceIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'sourceIds array is required' });
+    }
+
+    const groupValue = group && group.trim() !== '' ? group.trim() : null;
+
+    const { data, error } = await supabase
+      .from('dashboard_sources')
+      .update({ custom_group: groupValue })
+      .in('id', sourceIds)
+      .select();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data,
+      message: `Updated group for ${data.length} source(s)`,
+    });
+  } catch (error) {
+    console.error('Error bulk-updating source groups:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * PATCH /api/dashboards/sources/:sourceId/group
+ * Update the custom group for a single source
+ */
+router.patch('/sources/:sourceId/group', async (req, res) => {
+  try {
+    const { sourceId } = req.params;
+    const { group } = req.body;
+
+    const groupValue = group && group.trim() !== '' ? group.trim() : null;
+
+    const { data, error } = await supabase
+      .from('dashboard_sources')
+      .update({ custom_group: groupValue })
+      .eq('id', sourceId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error('Error updating source group:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

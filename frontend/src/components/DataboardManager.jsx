@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, Database, RefreshCw, Loader2, Settings, Trash2, Edit3,
   LayoutGrid, Link2, ChevronDown, FileSpreadsheet, AlertCircle,
   BarChart3, LineChart as LineChartIcon, PieChart, Grid3X3, Gauge,
-  X, Check, Save, ExternalLink
+  X, Check, Save, ExternalLink, Calendar, Maximize2, Tag, FolderOpen
 } from 'lucide-react';
 import clsx from 'clsx';
 import { sourcesApi, dashboardsApi, widgetsApi } from '../api/dashboards';
@@ -30,15 +30,60 @@ const WIDGET_TYPES = [
   { id: 'kpi', label: 'KPI Card', icon: Gauge, description: 'Single metric' },
 ];
 
+// Timeframe presets
+const TIMEFRAME_PRESETS = [
+  { id: 'mtd', label: 'MTD', description: 'Month to Date' },
+  { id: '7d', label: '7D', description: 'Last 7 Days' },
+  { id: '30d', label: '30D', description: 'Last 30 Days' },
+  { id: 'ytd', label: 'YTD', description: 'Year to Date' },
+  { id: 'all', label: 'All', description: 'All Time' },
+];
+
+function getTimeframeRange(preset) {
+  const now = new Date();
+  // Set end of day for the end date
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  switch (preset) {
+    case 'mtd':
+      return { start: new Date(now.getFullYear(), now.getMonth(), 1), end };
+    case '7d': {
+      const start = new Date(end);
+      start.setDate(start.getDate() - 7);
+      return { start, end };
+    }
+    case '30d': {
+      const start = new Date(end);
+      start.setDate(start.getDate() - 30);
+      return { start, end };
+    }
+    case 'ytd':
+      return { start: new Date(now.getFullYear(), 0, 1), end };
+    case 'all':
+    default:
+      return null;
+  }
+}
+
 export default function DataboardManager({ clientId }) {
   const queryClient = useQueryClient();
-  const [selectedDashboard, setSelectedDashboard] = useState(null);
-  const [showSourceModal, setShowSourceModal] = useState(false);
   const [showSourcesManager, setShowSourcesManager] = useState(false);
   const [showDashboardModal, setShowDashboardModal] = useState(false);
   const [showWidgetModal, setShowWidgetModal] = useState(false);
   const [editingWidget, setEditingWidget] = useState(null);
   const [sourceData, setSourceData] = useState({});
+  const [timeframe, setTimeframe] = useState('mtd');
+  const [dateField, setDateField] = useState('Due Date');
+  const [fullscreenWidget, setFullscreenWidget] = useState(null);
+
+  // Close fullscreen on Escape key
+  useEffect(() => {
+    if (!fullscreenWidget) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setFullscreenWidget(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fullscreenWidget]);
 
   // Fetch sources
   const { data: sources = [], isLoading: loadingSources } = useQuery({
@@ -57,7 +102,7 @@ export default function DataboardManager({ clientId }) {
     mutationFn: sourcesApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries(['dashboardSources', clientId]);
-      setShowSourceModal(false);
+      setShowSourcesManager(false);
     },
   });
 
@@ -69,13 +114,21 @@ export default function DataboardManager({ clientId }) {
     },
   });
 
+  // Set source group mutation
+  const setSourceGroupMutation = useMutation({
+    mutationFn: ({ sourceId, group }) => sourcesApi.setGroup(sourceId, group),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['dashboardSources', clientId]);
+    },
+  });
+
   // Create dashboard mutation
   const createDashboardMutation = useMutation({
     mutationFn: dashboardsApi.create,
     onSuccess: (data) => {
       queryClient.invalidateQueries(['dashboards', clientId]);
       setShowDashboardModal(false);
-      setSelectedDashboard(data);
+      setSelectedDashboardId(data.id);
     },
   });
 
@@ -112,9 +165,7 @@ export default function DataboardManager({ clientId }) {
     mutationFn: dashboardsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries(['dashboards', clientId]);
-      if (selectedDashboard) {
-        setSelectedDashboard(null);
-      }
+      setSelectedDashboardId(null);
     },
   });
 
@@ -133,16 +184,61 @@ export default function DataboardManager({ clientId }) {
     }
   }, []);
 
-  // Load selected dashboard data
+  // Track selected dashboard by ID to avoid reference-equality issues with React Query
+  const [selectedDashboardId, setSelectedDashboardId] = useState(null);
+
+  // Auto-select first dashboard
   useEffect(() => {
-    if (selectedDashboard?.widgets) {
-      selectedDashboard.widgets.forEach(widget => {
+    if (dashboards.length > 0 && !selectedDashboardId) {
+      setSelectedDashboardId(dashboards[0].id);
+    }
+  }, [dashboards, selectedDashboardId]);
+
+  // Derive the selected dashboard object from query data using the stable ID
+  const selectedDashboardDerived = useMemo(() => {
+    if (!selectedDashboardId || dashboards.length === 0) return null;
+    return dashboards.find(d => d.id === selectedDashboardId) || null;
+  }, [dashboards, selectedDashboardId]);
+
+  // Load selected dashboard data — only re-fetch when the dashboard ID changes
+  useEffect(() => {
+    if (selectedDashboardDerived?.widgets) {
+      selectedDashboardDerived.widgets.forEach(widget => {
         if (widget.source_id && widget.config?.source_tab) {
-          fetchSourceData(widget.source_id, widget.config.source_tab);
+          const dataKey = `${widget.source_id}-${widget.config.source_tab}`;
+          // Only fetch if we don't already have this data
+          if (!sourceData[dataKey]) {
+            fetchSourceData(widget.source_id, widget.config.source_tab);
+          }
         }
       });
     }
-  }, [selectedDashboard, fetchSourceData]);
+  }, [selectedDashboardId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync timeframe from dashboard settings when dashboard is selected
+  useEffect(() => {
+    if (selectedDashboardDerived?.settings?.timeframe) {
+      setTimeframe(selectedDashboardDerived.settings.timeframe);
+    }
+    if (selectedDashboardDerived?.settings?.dateField) {
+      setDateField(selectedDashboardDerived.settings.dateField);
+    }
+  }, [selectedDashboardId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Compute timeframe date filters
+  const timeframeFilters = useMemo(() => {
+    const range = getTimeframeRange(timeframe);
+    if (!range) return [];
+    return [
+      { field: dateField, operator: 'date_gte', value: range.start.toISOString() },
+      { field: dateField, operator: 'date_lte', value: range.end.toISOString() },
+    ];
+  }, [timeframe, dateField]);
+
+  // Merge timeframe filters with widget-specific filters
+  const getWidgetFilters = useCallback((widgetFilters) => {
+    return [...timeframeFilters, ...(widgetFilters || [])];
+  }, [timeframeFilters]);
 
   // Render widget based on type and config
   const renderWidget = (widget) => {
@@ -178,7 +274,7 @@ export default function DataboardManager({ clientId }) {
           groupBy: config.group_by,
           stackBy: config.stack_by,
           aggregation: config.aggregation || 'sum',
-          filters: config.filters || [],
+          filters: getWidgetFilters(config.filters),
           sortBy: config.sort_by || 'value',
           sortOrder: config.sort_order || 'desc',
           limit: config.limit || 20,
@@ -201,7 +297,7 @@ export default function DataboardManager({ clientId }) {
           colField: config.col_field,
           valueField: config.value_field,
           aggregation: config.aggregation || 'sum',
-          filters: config.filters || [],
+          filters: getWidgetFilters(config.filters),
         });
         return (
           <HeatmapChart
@@ -219,7 +315,7 @@ export default function DataboardManager({ clientId }) {
           primaryMetric: config.primary_metric,
           groupBy: config.group_by,
           aggregation: config.aggregation || 'count',
-          filters: config.filters || [],
+          filters: getWidgetFilters(config.filters),
           limit: config.limit || 10,
         });
         const pieData = chartData.map(d => ({ label: d.label, value: d.value }));
@@ -238,7 +334,7 @@ export default function DataboardManager({ clientId }) {
           primaryMetric: config.primary_metric,
           groupBy: config.group_by,
           aggregation: config.aggregation || 'sum',
-          filters: config.filters || [],
+          filters: getWidgetFilters(config.filters),
           sortBy: 'label',
           sortOrder: 'asc',
         });
@@ -254,7 +350,7 @@ export default function DataboardManager({ clientId }) {
       }
 
       case 'kpi': {
-        const filteredRows = applyFilters(rows, config.filters || []);
+        const filteredRows = applyFilters(rows, getWidgetFilters(config.filters));
         const values = filteredRows.map(r => r[config.primary_metric]);
         const value = aggregators[config.aggregation || 'sum'](values);
         return (
@@ -320,13 +416,13 @@ export default function DataboardManager({ clientId }) {
                 key={dashboard.id}
                 className={clsx(
                   'flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all group',
-                  selectedDashboard?.id === dashboard.id
+                  selectedDashboardDerived?.id === dashboard.id
                     ? 'bg-pastel-mint/15 text-pastel-mint border border-pastel-mint/30 shadow-sm'
                     : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50 border border-transparent'
                 )}
               >
                 <button
-                  onClick={() => setSelectedDashboard(dashboard)}
+                  onClick={() => setSelectedDashboardId(dashboard.id)}
                   className="flex-1"
                 >
                   {dashboard.name}
@@ -340,7 +436,7 @@ export default function DataboardManager({ clientId }) {
                   }}
                   className={clsx(
                     'p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity',
-                    selectedDashboard?.id === dashboard.id
+                    selectedDashboardDerived?.id === dashboard.id
                       ? 'hover:bg-pastel-mint/20 text-pastel-mint hover:text-red-400'
                       : 'hover:bg-neutral-700 text-neutral-500 hover:text-red-400'
                   )}
@@ -357,7 +453,7 @@ export default function DataboardManager({ clientId }) {
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-4">
         {/* Sources Panel */}
-        {sources.length > 0 && !selectedDashboard && (
+        {sources.length > 0 && !selectedDashboardDerived && (
           <div className="mb-6">
             <h4 className="text-sm font-medium text-neutral-300 mb-3 flex items-center gap-2">
               <Database className="w-4 h-4" />
@@ -421,14 +517,36 @@ export default function DataboardManager({ clientId }) {
         )}
 
         {/* Selected Dashboard */}
-        {selectedDashboard ? (
+        {selectedDashboardDerived ? (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <h4 className="text-lg font-semibold text-neutral-200">{selectedDashboard.name}</h4>
-                {selectedDashboard.description && (
-                  <p className="text-sm text-neutral-500">{selectedDashboard.description}</p>
-                )}
+              <div className="flex items-center gap-4">
+                <div>
+                  <h4 className="text-lg font-semibold text-neutral-200">{selectedDashboardDerived.name}</h4>
+                  {selectedDashboardDerived.description && (
+                    <p className="text-sm text-neutral-500">{selectedDashboardDerived.description}</p>
+                  )}
+                </div>
+
+                {/* Timeframe Selector */}
+                <div className="flex items-center gap-1 bg-neutral-800/60 rounded-lg p-1 border border-neutral-700/50">
+                  <Calendar className="w-3.5 h-3.5 text-neutral-500 ml-1.5" />
+                  {TIMEFRAME_PRESETS.map(preset => (
+                    <button
+                      key={preset.id}
+                      onClick={() => setTimeframe(preset.id)}
+                      title={preset.description}
+                      className={clsx(
+                        'px-2.5 py-1 rounded-md text-xs font-medium transition-all',
+                        timeframe === preset.id
+                          ? 'bg-pastel-mint/20 text-pastel-mint shadow-sm'
+                          : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/50'
+                      )}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <button
                 onClick={() => {
@@ -444,7 +562,7 @@ export default function DataboardManager({ clientId }) {
 
             {/* Widgets Grid */}
             <div className="grid gap-4 grid-cols-12">
-              {selectedDashboard.widgets?.map(widget => (
+              {selectedDashboardDerived.widgets?.map(widget => (
                 <div
                   key={widget.id}
                   className={clsx(
@@ -461,6 +579,13 @@ export default function DataboardManager({ clientId }) {
                   <div className="px-3 py-2 border-b border-neutral-800 flex items-center justify-between">
                     <span className="text-xs font-medium text-neutral-400">{widget.title}</span>
                     <div className="flex gap-1">
+                      <button
+                        onClick={() => setFullscreenWidget(widget)}
+                        className="p-1 text-neutral-500 hover:text-neutral-300 rounded"
+                        title="View fullscreen"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      </button>
                       <button
                         onClick={() => {
                           setEditingWidget(widget);
@@ -486,7 +611,7 @@ export default function DataboardManager({ clientId }) {
               ))}
             </div>
 
-            {(!selectedDashboard.widgets || selectedDashboard.widgets.length === 0) && (
+            {(!selectedDashboardDerived.widgets || selectedDashboardDerived.widgets.length === 0) && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-neutral-800 flex items-center justify-center mb-4">
                   <BarChart3 className="w-8 h-8 text-neutral-600" />
@@ -516,7 +641,7 @@ export default function DataboardManager({ clientId }) {
             </p>
             <div className="flex gap-4">
               <button
-                onClick={() => setShowSourceModal(true)}
+                onClick={() => setShowSourcesManager(true)}
                 className="px-5 py-2.5 text-sm font-medium text-neutral-200 bg-neutral-800 rounded-lg hover:bg-neutral-700 flex items-center gap-2 border border-neutral-700"
               >
                 <Database className="w-4 h-4" />
@@ -531,7 +656,7 @@ export default function DataboardManager({ clientId }) {
               </button>
             </div>
           </div>
-        ) : !selectedDashboard && dashboards.length > 0 ? (
+        ) : !selectedDashboardDerived && dashboards.length > 0 ? (
           <div className="text-center py-12 text-neutral-400">
             Select a databoard above to view your metrics
           </div>
@@ -542,9 +667,11 @@ export default function DataboardManager({ clientId }) {
       {showSourcesManager && (
         <SourcesManagerModal
           sources={sources}
+          clientId={clientId}
           onClose={() => setShowSourcesManager(false)}
           onAddSource={(data) => createSourceMutation.mutate({ clientId, ...data })}
           onDeleteSource={(sourceId) => deleteSourceMutation.mutate(sourceId)}
+          onSetGroup={(sourceId, group) => setSourceGroupMutation.mutate({ sourceId, group })}
           isAdding={createSourceMutation.isPending}
           isDeleting={deleteSourceMutation.isPending}
         />
@@ -560,7 +687,7 @@ export default function DataboardManager({ clientId }) {
       )}
 
       {/* Widget Modal */}
-      {showWidgetModal && selectedDashboard && (
+      {showWidgetModal && selectedDashboardDerived && (
         <WidgetModal
           sources={sources}
           widget={editingWidget}
@@ -572,28 +699,110 @@ export default function DataboardManager({ clientId }) {
             if (editingWidget) {
               updateWidgetMutation.mutate({ widgetId: editingWidget.id, updates: data });
             } else {
-              createWidgetMutation.mutate({ dashboardId: selectedDashboard.id, widget: data });
+              createWidgetMutation.mutate({ dashboardId: selectedDashboardDerived.id, widget: data });
             }
           }}
           isLoading={createWidgetMutation.isPending || updateWidgetMutation.isPending}
           fetchSourceData={fetchSourceData}
         />
       )}
+
+      {/* Fullscreen Widget Modal */}
+      {fullscreenWidget && (
+        <div
+          className="fixed inset-0 z-50 bg-neutral-950/90 backdrop-blur-sm flex flex-col"
+          onClick={(e) => { if (e.target === e.currentTarget) setFullscreenWidget(null); }}
+        >
+          {/* Fullscreen Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800 bg-neutral-900/80 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pastel-mint/20 to-pastel-sky/20 flex items-center justify-center">
+                {fullscreenWidget.widget_type === 'line' ? <LineChartIcon className="w-4 h-4 text-pastel-mint" /> :
+                 fullscreenWidget.widget_type === 'donut' ? <PieChart className="w-4 h-4 text-pastel-mint" /> :
+                 fullscreenWidget.widget_type === 'heatmap' ? <Grid3X3 className="w-4 h-4 text-pastel-mint" /> :
+                 fullscreenWidget.widget_type === 'kpi' ? <Gauge className="w-4 h-4 text-pastel-mint" /> :
+                 <BarChart3 className="w-4 h-4 text-pastel-mint" />}
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-100">{fullscreenWidget.title}</h3>
+                <p className="text-xs text-neutral-500">
+                  {WIDGET_TYPES.find(t => t.id === fullscreenWidget.widget_type)?.label}
+                  {timeframe !== 'all' && ` · ${TIMEFRAME_PRESETS.find(p => p.id === timeframe)?.description}`}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setFullscreenWidget(null)}
+              className="p-2 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Fullscreen Chart */}
+          <div className="flex-1 p-6 overflow-auto">
+            <div className="w-full h-full min-h-[500px] bg-neutral-900/50 rounded-2xl border border-neutral-800 p-6">
+              {renderWidget(fullscreenWidget)}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // Sources Manager Modal Component
-function SourcesManagerModal({ sources, onClose, onAddSource, onDeleteSource, isAdding, isDeleting }) {
+function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDeleteSource, onSetGroup, isAdding, isDeleting }) {
   const [showAddForm, setShowAddForm] = useState(sources.length === 0);
   const [name, setName] = useState('');
   const [sheetUrl, setSheetUrl] = useState('');
+  const [group, setGroup] = useState('');
+  const [filterGroup, setFilterGroup] = useState('all');
+  const [editingGroupId, setEditingGroupId] = useState(null);
+  const [editGroupValue, setEditGroupValue] = useState('');
+
+  // Extract unique groups from sources
+  const groups = useMemo(() => {
+    const set = new Set(sources.map(s => s.custom_group).filter(Boolean));
+    return [...set].sort();
+  }, [sources]);
+
+  // Filter sources by group
+  const filteredSources = useMemo(() => {
+    if (filterGroup === 'all') return sources;
+    if (filterGroup === 'ungrouped') return sources.filter(s => !s.custom_group);
+    return sources.filter(s => s.custom_group === filterGroup);
+  }, [sources, filterGroup]);
+
+  // Group the filtered sources for display
+  const groupedSources = useMemo(() => {
+    const grouped = {};
+    filteredSources.forEach(source => {
+      const g = source.custom_group || 'Ungrouped';
+      if (!grouped[g]) grouped[g] = [];
+      grouped[g].push(source);
+    });
+    // Sort: named groups first (alphabetical), then Ungrouped last
+    const sortedKeys = Object.keys(grouped).sort((a, b) => {
+      if (a === 'Ungrouped') return 1;
+      if (b === 'Ungrouped') return -1;
+      return a.localeCompare(b);
+    });
+    return sortedKeys.map(key => ({ group: key, sources: grouped[key] }));
+  }, [filteredSources]);
 
   const handleAddSource = () => {
-    onAddSource({ name, sheetUrl });
+    onAddSource({ name, sheetUrl, group: group || undefined });
     setName('');
     setSheetUrl('');
+    setGroup('');
     setShowAddForm(false);
+  };
+
+  const handleSaveGroup = (sourceId) => {
+    onSetGroup(sourceId, editGroupValue);
+    setEditingGroupId(null);
+    setEditGroupValue('');
   };
 
   return (
@@ -606,7 +815,7 @@ function SourcesManagerModal({ sources, onClose, onAddSource, onDeleteSource, is
             </div>
             <div>
               <h3 className="text-lg font-semibold text-neutral-100">Data Sources</h3>
-              <p className="text-xs text-neutral-500">{sources.length} connected source{sources.length !== 1 ? 's' : ''}</p>
+              <p className="text-xs text-neutral-500">{sources.length} connected source{sources.length !== 1 ? 's' : ''}{groups.length > 0 ? ` in ${groups.length} group${groups.length !== 1 ? 's' : ''}` : ''}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-neutral-500 hover:text-neutral-300">
@@ -614,61 +823,168 @@ function SourcesManagerModal({ sources, onClose, onAddSource, onDeleteSource, is
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {/* Existing Sources List */}
-          {sources.length > 0 && (
-            <div className="space-y-3 mb-4">
-              {sources.map(source => (
-                <div
-                  key={source.id}
-                  className="p-4 bg-neutral-800/50 rounded-xl border border-neutral-700 hover:border-neutral-600 transition-all"
+        {/* Group Filter Pills */}
+        {groups.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            <button
+              onClick={() => setFilterGroup('all')}
+              className={clsx(
+                'px-2.5 py-1 text-xs font-medium rounded-lg transition-all',
+                filterGroup === 'all'
+                  ? 'bg-pastel-sky/15 text-pastel-sky border border-pastel-sky/30'
+                  : 'text-neutral-400 hover:text-neutral-200 bg-neutral-800 border border-neutral-700 hover:border-neutral-600'
+              )}
+            >
+              All ({sources.length})
+            </button>
+            {groups.map(g => {
+              const count = sources.filter(s => s.custom_group === g).length;
+              return (
+                <button
+                  key={g}
+                  onClick={() => setFilterGroup(g)}
+                  className={clsx(
+                    'px-2.5 py-1 text-xs font-medium rounded-lg transition-all flex items-center gap-1',
+                    filterGroup === g
+                      ? 'bg-pastel-lavender/15 text-pastel-lavender border border-pastel-lavender/30'
+                      : 'text-neutral-400 hover:text-neutral-200 bg-neutral-800 border border-neutral-700 hover:border-neutral-600'
+                  )}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <FileSpreadsheet className="w-4 h-4 text-pastel-mint flex-shrink-0" />
-                        <span className="text-sm font-medium text-neutral-200 truncate">{source.name}</span>
-                      </div>
-                      <p className="text-xs text-neutral-500 mb-2 truncate">{source.sheet_url}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {source.sheet_tabs?.slice(0, 5).map((tab, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 text-xs bg-neutral-700 text-neutral-400 rounded"
-                          >
-                            {tab.title || tab}
-                          </span>
-                        ))}
-                        {source.sheet_tabs?.length > 5 && (
-                          <span className="px-2 py-0.5 text-xs text-neutral-500">
-                            +{source.sheet_tabs.length - 5} more
-                          </span>
-                        )}
-                      </div>
+                  <FolderOpen className="w-3 h-3" />
+                  {g} ({count})
+                </button>
+              );
+            })}
+            {sources.some(s => !s.custom_group) && (
+              <button
+                onClick={() => setFilterGroup('ungrouped')}
+                className={clsx(
+                  'px-2.5 py-1 text-xs font-medium rounded-lg transition-all',
+                  filterGroup === 'ungrouped'
+                    ? 'bg-neutral-600/30 text-neutral-300 border border-neutral-500/30'
+                    : 'text-neutral-500 hover:text-neutral-300 bg-neutral-800 border border-neutral-700 hover:border-neutral-600'
+                )}
+              >
+                Ungrouped ({sources.filter(s => !s.custom_group).length})
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="flex-1 overflow-y-auto">
+          {/* Sources grouped by category */}
+          {filteredSources.length > 0 && (
+            <div className="space-y-4 mb-4">
+              {groupedSources.map(({ group: groupName, sources: groupSources }) => (
+                <div key={groupName}>
+                  {/* Group header (only show if there are actual groups) */}
+                  {groups.length > 0 && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <FolderOpen className="w-3.5 h-3.5 text-neutral-500" />
+                      <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider">{groupName}</span>
+                      <div className="flex-1 h-px bg-neutral-800" />
                     </div>
-                    <div className="flex items-center gap-1 ml-3 flex-shrink-0">
-                      <a
-                        href={source.sheet_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-700 rounded-lg transition-colors"
-                        title="Open in Google Sheets"
+                  )}
+                  <div className="space-y-2">
+                    {groupSources.map(source => (
+                      <div
+                        key={source.id}
+                        className="p-4 bg-neutral-800/50 rounded-xl border border-neutral-700 hover:border-neutral-600 transition-all"
                       >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                      <button
-                        onClick={() => {
-                          if (confirm(`Delete data source "${source.name}"? Widgets using this source will no longer display data.`)) {
-                            onDeleteSource(source.id);
-                          }
-                        }}
-                        disabled={isDeleting}
-                        className="p-2 text-neutral-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors disabled:opacity-50"
-                        title="Delete data source"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <FileSpreadsheet className="w-4 h-4 text-pastel-mint flex-shrink-0" />
+                              <span className="text-sm font-medium text-neutral-200 truncate">{source.name}</span>
+                            </div>
+                            <p className="text-xs text-neutral-500 mb-2 truncate">{source.sheet_url}</p>
+                            <div className="flex flex-wrap gap-1 items-center">
+                              {source.sheet_tabs?.slice(0, 5).map((tab, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-2 py-0.5 text-xs bg-neutral-700 text-neutral-400 rounded"
+                                >
+                                  {tab.title || tab}
+                                </span>
+                              ))}
+                              {source.sheet_tabs?.length > 5 && (
+                                <span className="px-2 py-0.5 text-xs text-neutral-500">
+                                  +{source.sheet_tabs.length - 5} more
+                                </span>
+                              )}
+                            </div>
+                            {/* Inline group editor */}
+                            {editingGroupId === source.id ? (
+                              <div className="flex items-center gap-2 mt-2">
+                                <Tag className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
+                                <input
+                                  type="text"
+                                  value={editGroupValue}
+                                  onChange={(e) => setEditGroupValue(e.target.value)}
+                                  placeholder="Group name..."
+                                  list={`groups-${source.id}`}
+                                  className="flex-1 px-2 py-1 text-xs bg-neutral-800 border border-neutral-600 rounded text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-sky/50"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveGroup(source.id);
+                                    if (e.key === 'Escape') { setEditingGroupId(null); setEditGroupValue(''); }
+                                  }}
+                                />
+                                <datalist id={`groups-${source.id}`}>
+                                  {groups.map(g => <option key={g} value={g} />)}
+                                </datalist>
+                                <button
+                                  onClick={() => handleSaveGroup(source.id)}
+                                  className="p-1 text-pastel-mint hover:bg-pastel-mint/10 rounded"
+                                  title="Save group"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => { setEditingGroupId(null); setEditGroupValue(''); }}
+                                  className="p-1 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-700 rounded"
+                                  title="Cancel"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => { setEditingGroupId(source.id); setEditGroupValue(source.custom_group || ''); }}
+                                className="flex items-center gap-1.5 mt-2 text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
+                                title="Set group"
+                              >
+                                <Tag className="w-3 h-3" />
+                                {source.custom_group || 'Add to group...'}
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 ml-3 flex-shrink-0">
+                            <a
+                              href={source.sheet_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-700 rounded-lg transition-colors"
+                              title="Open in Google Sheets"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Delete data source "${source.name}"? Widgets using this source will no longer display data.`)) {
+                                  onDeleteSource(source.id);
+                                }
+                              }}
+                              disabled={isDeleting}
+                              className="p-2 text-neutral-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors disabled:opacity-50"
+                              title="Delete data source"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -709,6 +1025,24 @@ function SourcesManagerModal({ sources, onClose, onAddSource, onDeleteSource, is
                   <p className="text-xs text-neutral-500 mt-2">
                     Sheet must be shared with the service account or set to "Anyone with the link can view"
                   </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-neutral-400 mb-1.5">Group (optional)</label>
+                  <div className="relative">
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+                    <input
+                      type="text"
+                      value={group}
+                      onChange={(e) => setGroup(e.target.value)}
+                      placeholder="e.g. Marketing, Finance, Operations"
+                      list="add-source-groups"
+                      className="w-full pl-10 pr-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-pastel-sky/50 focus:border-pastel-sky/50"
+                    />
+                    <datalist id="add-source-groups">
+                      {groups.map(g => <option key={g} value={g} />)}
+                    </datalist>
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2">
