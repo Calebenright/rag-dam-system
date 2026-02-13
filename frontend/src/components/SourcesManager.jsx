@@ -97,8 +97,20 @@ const getTypeCategory = (doc) => {
   return 'Other';
 };
 
-export default function SourcesManager({ documents, clientId, isLoading }) {
+export default function SourcesManager({ documents, clientId, isLoading, highlightDocumentId, onHighlightHandled }) {
   const [selectedDoc, setSelectedDoc] = useState(null);
+
+  // Auto-select a document when navigating from chat source citation
+  useEffect(() => {
+    if (highlightDocumentId && documents && documents.length > 0) {
+      const doc = documents.find(d => d.id === highlightDocumentId);
+      if (doc) {
+        setSelectedDoc(doc);
+      }
+      // Clear the highlight so it doesn't re-trigger
+      if (onHighlightHandled) onHighlightHandled();
+    }
+  }, [highlightDocumentId, documents, onHighlightHandled]);
   const [viewMode, setViewMode] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');

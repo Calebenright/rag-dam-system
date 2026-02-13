@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Send, Bot, User, Loader2, FileText, Trash2, Image as ImageIcon,
-  Copy, Check, Download, Code, FileSpreadsheet, X, BookOpen, ChevronDown, ChevronUp, Sparkles, AlertCircle, Table2
+  Copy, Check, Download, Code, FileSpreadsheet, X, BookOpen, ChevronDown, ChevronUp, Sparkles, AlertCircle, Table2, ExternalLink, Pencil, MessageSquare
 } from 'lucide-react';
 import { chatApi } from '../api/chat';
 import ReactMarkdown from 'react-markdown';
@@ -12,6 +12,181 @@ import remarkGfm from 'remark-gfm';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
 import clsx from 'clsx';
+
+// Default quick prompts for the empty chat state
+const DEFAULT_QUICK_PROMPTS = [
+  {
+    id: 'prompt-1',
+    icon: 'Code',
+    color: 'lavender',
+    prompt: 'Write LinkedIn Ad Copy for a social media post using the messaging framework',
+  },
+  {
+    id: 'prompt-2',
+    icon: 'FileSpreadsheet',
+    color: 'mint',
+    prompt: 'Analyze the data in my documents and summarize the key metrics and trends',
+  },
+  {
+    id: 'prompt-3',
+    icon: 'ImageIcon',
+    color: 'peach',
+    prompt: 'Describe and analyze the images in my document library',
+  },
+  {
+    id: 'prompt-4',
+    icon: 'FileText',
+    color: 'sky',
+    prompt: 'What are the tasks from the latest meeting?',
+  },
+];
+
+// Icon lookup for quick prompts
+const PROMPT_ICONS = {
+  Code: Code,
+  FileSpreadsheet: FileSpreadsheet,
+  ImageIcon: ImageIcon,
+  FileText: FileText,
+  MessageSquare: MessageSquare,
+  Sparkles: Sparkles,
+  BookOpen: BookOpen,
+};
+
+// Quick prompt color styles
+const promptColorStyles = {
+  lavender: { bg: 'bg-pastel-lavender/10', border: 'border-pastel-lavender/20', text: 'text-pastel-lavender', iconBg: 'bg-pastel-lavender/20', hoverBg: 'hover:bg-pastel-lavender/20' },
+  mint: { bg: 'bg-pastel-mint/10', border: 'border-pastel-mint/20', text: 'text-pastel-mint', iconBg: 'bg-pastel-mint/20', hoverBg: 'hover:bg-pastel-mint/20' },
+  peach: { bg: 'bg-pastel-peach/10', border: 'border-pastel-peach/20', text: 'text-pastel-peach', iconBg: 'bg-pastel-peach/20', hoverBg: 'hover:bg-pastel-peach/20' },
+  sky: { bg: 'bg-pastel-sky/10', border: 'border-pastel-sky/20', text: 'text-pastel-sky', iconBg: 'bg-pastel-sky/20', hoverBg: 'hover:bg-pastel-sky/20' },
+};
+
+// Helper to get/set quick prompts from localStorage
+function getQuickPrompts(clientId) {
+  try {
+    const stored = localStorage.getItem(`dodeka-quick-prompts-${clientId}`);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return DEFAULT_QUICK_PROMPTS;
+}
+
+function saveQuickPrompts(clientId, prompts) {
+  try {
+    localStorage.setItem(`dodeka-quick-prompts-${clientId}`, JSON.stringify(prompts));
+  } catch {}
+}
+
+// Edit Quick Prompts Modal
+function EditQuickPromptsModal({ isOpen, onClose, prompts, onSave }) {
+  const [editPrompts, setEditPrompts] = useState(prompts);
+
+  useEffect(() => {
+    if (isOpen) setEditPrompts(prompts);
+  }, [isOpen, prompts]);
+
+  if (!isOpen) return null;
+
+  const updatePrompt = (idx, field, value) => {
+    setEditPrompts(prev => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p));
+  };
+
+  const handleSave = () => {
+    onSave(editPrompts);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-lg mx-4 shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-800">
+          <h3 className="text-base font-semibold text-neutral-100">Edit Quick Prompts</h3>
+          <button onClick={onClose} className="p-1.5 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded-lg transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto scrollbar-dark">
+          {editPrompts.map((prompt, idx) => {
+            const colorStyle = promptColorStyles[prompt.color] || promptColorStyles.lavender;
+            return (
+              <div key={prompt.id} className={clsx('p-4 rounded-xl border', colorStyle.bg, colorStyle.border)}>
+                <div className="flex items-center gap-3 mb-3">
+                  {/* Color picker */}
+                  <div className="flex gap-1.5">
+                    {Object.keys(promptColorStyles).map(color => (
+                      <button
+                        key={color}
+                        onClick={() => updatePrompt(idx, 'color', color)}
+                        className={clsx(
+                          'w-5 h-5 rounded-full border-2 transition-all',
+                          `bg-pastel-${color}`,
+                          prompt.color === color ? 'border-white scale-110' : 'border-transparent opacity-50 hover:opacity-80'
+                        )}
+                      />
+                    ))}
+                  </div>
+                  {/* Icon picker */}
+                  <div className="flex gap-1 ml-auto">
+                    {Object.entries(PROMPT_ICONS).map(([name, IconComp]) => (
+                      <button
+                        key={name}
+                        onClick={() => updatePrompt(idx, 'icon', name)}
+                        className={clsx(
+                          'p-1.5 rounded-lg transition-all',
+                          prompt.icon === name
+                            ? `${colorStyle.iconBg} ${colorStyle.text}`
+                            : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800'
+                        )}
+                      >
+                        <IconComp className="w-3.5 h-3.5" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Prompt text */}
+                <textarea
+                  value={prompt.prompt}
+                  onChange={e => updatePrompt(idx, 'prompt', e.target.value)}
+                  placeholder="What should the agent do when this button is clicked?"
+                  rows={2}
+                  className="w-full px-3 py-2 bg-neutral-800/60 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-sky/50 focus:border-pastel-sky resize-none scrollbar-hide"
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-800">
+          <button
+            onClick={() => setEditPrompts(DEFAULT_QUICK_PROMPTS)}
+            className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
+          >
+            Reset to defaults
+          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 text-sm bg-pastel-lavender/20 text-pastel-lavender hover:bg-pastel-lavender/30 rounded-lg transition-colors font-medium"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Color style mappings - explicit classes for Tailwind to detect
 const citationColorStyles = {
@@ -48,8 +223,13 @@ const citationColorStyles = {
 const citationColors = ['mint', 'sky', 'lavender', 'peach'];
 
 // Source Citation Component - Circle icons at bottom
-function SourceCitations({ sources }) {
+function SourceCitations({ sources, onNavigateToSource }) {
   if (!sources || sources.length === 0) return null;
+
+  const isGoogleSource = (source) => {
+    return source.sourceType === 'google' ||
+      (source.fileUrl && (source.fileUrl.includes('docs.google.com') || source.fileUrl.includes('sheets.google.com')));
+  };
 
   return (
     <div className="mt-4 pt-3 border-t border-neutral-700/50">
@@ -59,6 +239,7 @@ function SourceCitations({ sources }) {
           {sources.slice(0, 5).map((source, idx) => {
             const colorName = citationColors[idx % citationColors.length];
             const styles = citationColorStyles[colorName];
+            const isGoogle = isGoogleSource(source);
             return (
               <div
                 key={source.id || idx}
@@ -72,18 +253,32 @@ function SourceCitations({ sources }) {
                     styles.bgLight,
                     styles.border
                   )}
-                  title={source.title || 'Untitled'}
+                  title={`${source.title || 'Untitled'} — Click to view in Sources`}
+                  onClick={() => onNavigateToSource && onNavigateToSource(source.id)}
                 >
-                  <FileText className={clsx('w-3 h-3', styles.text)} />
+                  {isGoogle
+                    ? <ExternalLink className={clsx('w-3 h-3', styles.text)} />
+                    : <FileText className={clsx('w-3 h-3', styles.text)} />
+                  }
                 </div>
                 {/* Tooltip on hover */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-neutral-800 rounded-lg text-xs text-neutral-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border border-neutral-700">
-                  <div className="font-medium truncate max-w-[150px]">{source.title || 'Untitled'}</div>
-                  {source.similarity && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-neutral-800 rounded-lg text-xs text-neutral-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border border-neutral-700">
+                  <div className="font-medium truncate max-w-[180px]">{source.title || 'Untitled'}</div>
+                  {(source.usage || source.similarity) && (
                     <div className={clsx('text-[10px]', styles.text)}>
-                      {Math.round(source.similarity * 100)}% match
+                      {source.usage
+                        ? `${Math.round(source.usage * 100)}% used`
+                        : `${Math.round(source.similarity * 100)}% match`
+                      }
                     </div>
                   )}
+                  {isGoogle && (
+                    <div className="text-[10px] text-neutral-400 mt-0.5 flex items-center gap-1">
+                      <ExternalLink className="w-2.5 h-2.5" />
+                      Google source
+                    </div>
+                  )}
+                  <div className="text-[10px] text-neutral-500 mt-0.5">Click to view in Sources</div>
                   <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-neutral-800" />
                 </div>
               </div>
@@ -101,7 +296,7 @@ function SourceCitations({ sources }) {
 }
 
 // Message component with animation
-function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onExportText }) {
+function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onExportText, onNavigateToSource }) {
   const isUser = msg.role === 'user';
 
   // Custom markdown components
@@ -311,7 +506,7 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
 
           {/* Sources - Always visible at bottom for assistant messages */}
           {!isUser && msg.sources && msg.sources.length > 0 && (
-            <SourceCitations sources={msg.sources} />
+            <SourceCitations sources={msg.sources} onNavigateToSource={onNavigateToSource} />
           )}
 
           {/* Fallback for context_docs if no sources */}
@@ -329,13 +524,15 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
   );
 }
 
-export default function EnhancedChatInterface({ clientId, client, selectedSheetId = null, conversationId = null, onConversationChange = null }) {
+export default function EnhancedChatInterface({ clientId, client, selectedSheetId = null, conversationId = null, onConversationChange = null, onNavigateToSource = null }) {
   const [message, setMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [copiedCode, setCopiedCode] = useState(null);
   const [pendingMessage, setPendingMessage] = useState(null); // For optimistic UI
   const [activeConversationId, setActiveConversationId] = useState(conversationId);
+  const [quickPrompts, setQuickPrompts] = useState(() => getQuickPrompts(clientId));
+  const [showEditPrompts, setShowEditPrompts] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const textareaRef = useRef(null);
@@ -500,6 +697,19 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
     }
   };
 
+  // Send a quick prompt as if the user typed it
+  const sendQuickPrompt = (promptText) => {
+    if (sendMutation.isPending) return;
+    setPendingMessage({ role: 'user', content: promptText, hasImage: false });
+    sendMutation.mutate({ message: promptText, image: null });
+  };
+
+  // Save edited quick prompts
+  const handleSavePrompts = (newPrompts) => {
+    setQuickPrompts(newPrompts);
+    saveQuickPrompts(clientId, newPrompts);
+  };
+
   const copyToClipboard = (text, id) => {
     navigator.clipboard.writeText(text);
     setCopiedCode(id);
@@ -590,32 +800,37 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
             <p className="text-sm text-neutral-500 max-w-sm mb-6">
               Ask questions about your documents, upload images, or request analysis.
             </p>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex items-center gap-3 p-3 bg-pastel-lavender/10 rounded-xl border border-pastel-lavender/20">
-                <div className="w-8 h-8 rounded-lg bg-pastel-lavender/20 flex items-center justify-center">
-                  <Code className="w-4 h-4 text-pastel-lavender" />
-                </div>
-                <span className="text-pastel-lavender font-medium">Code</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-pastel-mint/10 rounded-xl border border-pastel-mint/20">
-                <div className="w-8 h-8 rounded-lg bg-pastel-mint/20 flex items-center justify-center">
-                  <FileSpreadsheet className="w-4 h-4 text-pastel-mint" />
-                </div>
-                <span className="text-pastel-mint font-medium">Data</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-pastel-peach/10 rounded-xl border border-pastel-peach/20">
-                <div className="w-8 h-8 rounded-lg bg-pastel-peach/20 flex items-center justify-center">
-                  <ImageIcon className="w-4 h-4 text-pastel-peach" />
-                </div>
-                <span className="text-pastel-peach font-medium">Images</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-pastel-sky/10 rounded-xl border border-pastel-sky/20">
-                <div className="w-8 h-8 rounded-lg bg-pastel-sky/20 flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-pastel-sky" />
-                </div>
-                <span className="text-pastel-sky font-medium">Q&A</span>
-              </div>
+            <div className="grid grid-cols-2 gap-3 text-sm max-w-md">
+              {quickPrompts.map((qp) => {
+                const colorStyle = promptColorStyles[qp.color] || promptColorStyles.lavender;
+                const IconComp = PROMPT_ICONS[qp.icon] || FileText;
+                return (
+                  <button
+                    key={qp.id}
+                    onClick={() => sendQuickPrompt(qp.prompt)}
+                    disabled={sendMutation.isPending}
+                    className={clsx(
+                      'flex items-center gap-3 p-3 rounded-xl border transition-all text-left group',
+                      colorStyle.bg, colorStyle.border, colorStyle.hoverBg,
+                      'hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50'
+                    )}
+                  >
+                    <div className={clsx('w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center', colorStyle.iconBg)}>
+                      <IconComp className={clsx('w-4 h-4', colorStyle.text)} />
+                    </div>
+                    <span className={clsx('text-xs leading-snug line-clamp-2 min-w-0 flex-1', colorStyle.text)}>{qp.prompt}</span>
+                  </button>
+                );
+              })}
             </div>
+            {/* Edit button */}
+            <button
+              onClick={() => setShowEditPrompts(true)}
+              className="mt-4 flex items-center gap-1.5 text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors"
+            >
+              <Pencil className="w-3 h-3" />
+              Edit prompts
+            </button>
           </div>
         ) : (
           <>
@@ -630,6 +845,7 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
                 copiedCode={copiedCode}
                 onExportCSV={exportToCSV}
                 onExportText={exportAsText}
+                onNavigateToSource={onNavigateToSource}
               />
             ))}
 
@@ -806,6 +1022,14 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
           animation: fade-in-up 0.3s ease-out forwards;
         }
       `}</style>
+
+      {/* Edit Quick Prompts Modal */}
+      <EditQuickPromptsModal
+        isOpen={showEditPrompts}
+        onClose={() => setShowEditPrompts(false)}
+        prompts={quickPrompts}
+        onSave={handleSavePrompts}
+      />
     </div>
   );
 }

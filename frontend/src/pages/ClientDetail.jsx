@@ -22,6 +22,13 @@ export default function ClientDetail() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [chatHistoryExpanded, setChatHistoryExpanded] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [highlightDocumentId, setHighlightDocumentId] = useState(null);
+
+  // Navigate from chat source citation to Sources tab and highlight the document
+  const handleNavigateToSource = (documentId) => {
+    setHighlightDocumentId(documentId);
+    setAgentTab('sources');
+  };
 
   // Check if this is the Dodeka superclient (case-insensitive name check)
 
@@ -88,7 +95,7 @@ export default function ClientDetail() {
               {client.thumbnail_url ? (
                 <div
                   className={clsx(
-                    "w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center border-2",
+                    "w-14 h-8 rounded-lg overflow-hidden flex items-center justify-center border-2",
                     `${podColor.border}/30`
                   )}
                   style={{ backgroundColor: client.thumbnail_bg_color || '#000000' }}
@@ -96,7 +103,7 @@ export default function ClientDetail() {
                   <img
                     src={client.thumbnail_url}
                     alt={client.name}
-                    className="max-w-full max-h-full object-contain"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               ) : (
@@ -280,6 +287,7 @@ export default function ClientDetail() {
                   client={client}
                   conversationId={currentConversationId}
                   onConversationChange={setCurrentConversationId}
+                  onNavigateToSource={handleNavigateToSource}
                 />
               </div>
               <ChatHistory
@@ -296,6 +304,8 @@ export default function ClientDetail() {
               documents={documents}
               clientId={clientId}
               isLoading={isLoadingDocs}
+              highlightDocumentId={highlightDocumentId}
+              onHighlightHandled={() => setHighlightDocumentId(null)}
             />
           ) : agentTab === 'databoards' ? (
             <DataboardManager clientId={clientId} />

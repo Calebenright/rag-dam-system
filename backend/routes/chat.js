@@ -95,7 +95,21 @@ async function semanticSearch(clientId, query, limit = 5) {
     return { documents: [], chunks: [] };
   }
 
-  // Score documents by similarity
+  // Extract meaningful keywords from the query for title/keyword matching.
+  // Remove common stop words so we match on substantive terms.
+  const stopWords = new Set([
+    'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
+    'has', 'have', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+    'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those',
+    'it', 'its', 'my', 'your', 'our', 'their', 'what', 'which', 'who',
+    'how', 'when', 'where', 'why', 'about', 'using', 'use', 'write',
+    'create', 'make', 'get', 'me', 'i', 'we', 'you', 'they', 'some',
+    'all', 'any', 'each', 'just', 'also', 'so', 'if', 'up', 'out',
+  ]);
+  const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+
+  // Score documents by combining embedding similarity with title/keyword matching
   const scoredDocs = documents.map(doc => {
     let embedding;
     try {
@@ -106,9 +120,48 @@ async function semanticSearch(clientId, query, limit = 5) {
 
     const similarity = cosineSimilarity(queryEmbedding, embedding);
 
+    // Title/filename match boost: if query words appear in the document title or filename,
+    // boost the score significantly. This ensures "messaging framework" finds a doc named that.
+    const titleLower = (doc.title || '').toLowerCase();
+    const fileNameLower = (doc.file_name || '').toLowerCase();
+    const keywordsLower = (doc.keywords || []).map(k => k.toLowerCase());
+    const topicLower = (doc.topic || '').toLowerCase();
+
+    let titleBoost = 0;
+    let matchedWords = 0;
+    for (const word of queryWords) {
+      const inTitle = titleLower.includes(word);
+      const inFileName = fileNameLower.includes(word);
+      const inKeywords = keywordsLower.some(k => k.includes(word));
+      const inTopic = topicLower.includes(word);
+      if (inTitle || inFileName) {
+        titleBoost += 0.15; // Strong boost for title/filename match
+        matchedWords++;
+      } else if (inKeywords || inTopic) {
+        titleBoost += 0.08; // Moderate boost for keyword/topic match
+        matchedWords++;
+      }
+    }
+
+    // Multi-word phrase bonus: if multiple query words match, it's likely a specific document reference
+    if (matchedWords >= 2) {
+      titleBoost *= 1.5;
+    }
+
+    // Check for exact phrase matches in title (e.g., "messaging framework" as a phrase)
+    // Build 2-word and 3-word phrases from query
+    for (let n = 2; n <= Math.min(4, queryWords.length); n++) {
+      for (let i = 0; i <= queryWords.length - n; i++) {
+        const phrase = queryWords.slice(i, i + n).join(' ');
+        if (titleLower.includes(phrase) || fileNameLower.includes(phrase)) {
+          titleBoost += 0.25 * n; // Longer phrase matches get bigger boosts
+        }
+      }
+    }
+
     return {
       ...doc,
-      similarity_score: similarity
+      similarity_score: Math.min(similarity + titleBoost, 1.0) // Cap at 1.0
     };
   });
 
@@ -376,15 +429,85 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
       );
     }
 
-    // Prepare source references for storage
-    const sourceRefs = relevantDocs
-      .filter(d => d.similarity_score > 0.3)
-      .map(d => ({
-        id: d.id,
-        title: d.title || d.file_name || 'Untitled',
-        similarity: d.similarity_score,
-        isImage: isImageFile(d.file_type)
-      }));
+    // --- Source usage calculation ---
+    // We analyze the AI's actual response to determine which sources it cited,
+    // then combine that with chunk-level context to calculate accurate usage percentages.
+
+    const filteredDocs = relevantDocs.filter(d => d.similarity_score > 0.3);
+
+    // Step 1: Count how many times each source is cited in the AI response.
+    // The AI uses patterns like [Source: Title] and references source content by title.
+    const citationCounts = {};
+    for (const doc of filteredDocs) {
+      const title = doc.title || doc.file_name || '';
+      if (!title) continue;
+      // Escape regex special chars in the title
+      const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Match [Source: Title] citations
+      const citationRegex = new RegExp(`\\[Source:?\\s*${escapedTitle}\\]`, 'gi');
+      const citationMatches = (aiResponse || '').match(citationRegex);
+      // Also check if the title appears as plain text in the response (the AI often weaves it in)
+      const titleRegex = new RegExp(escapedTitle, 'gi');
+      const titleMatches = (aiResponse || '').match(titleRegex);
+      // Citation = formal [Source:] references; mention = title appears in text
+      const formalCitations = citationMatches ? citationMatches.length : 0;
+      const mentions = titleMatches ? titleMatches.length : 0;
+      // Formal citations are worth more, plain mentions still count
+      citationCounts[doc.id] = (formalCitations * 3) + Math.max(0, mentions - formalCitations);
+    }
+    const totalCitations = Object.values(citationCounts).reduce((sum, c) => sum + c, 0);
+
+    // Step 2: Build chunk weights as a baseline signal (how much context came from each doc).
+    const chunkCountByDoc = {};
+    if (relevantChunks && relevantChunks.length > 0) {
+      for (const chunk of relevantChunks) {
+        const docId = chunk.document_id || chunk.documentId;
+        chunkCountByDoc[docId] = (chunkCountByDoc[docId] || 0) + 1;
+      }
+    }
+    const totalChunks = Object.values(chunkCountByDoc).reduce((sum, c) => sum + c, 0);
+
+    // Step 3: Combine citation-based weight (70%) with chunk-based weight (30%).
+    // If the AI cited sources, that's the strongest signal of actual usage.
+    // Chunk counts provide a fallback for sources that contributed context but weren't explicitly cited.
+    const sourceRefs = filteredDocs
+      .map(d => {
+        let usagePercent;
+        const citationWeight = totalCitations > 0 ? (citationCounts[d.id] || 0) / totalCitations : 0;
+        const chunkWeight = totalChunks > 0 ? (chunkCountByDoc[d.id] || 0) / totalChunks : 0;
+
+        if (totalCitations > 0) {
+          // We have citation data — heavily favor it
+          usagePercent = (citationWeight * 0.7) + (chunkWeight * 0.3);
+        } else {
+          // No citations found in response — use chunk distribution only
+          usagePercent = chunkWeight;
+        }
+
+        // If nothing worked, fall back to similarity proportion
+        if (usagePercent === 0 && filteredDocs.length > 0) {
+          const totalSimilarity = filteredDocs.reduce((sum, dd) => sum + dd.similarity_score, 0);
+          usagePercent = totalSimilarity > 0 ? d.similarity_score / totalSimilarity : 0;
+        }
+
+        return {
+          id: d.id,
+          title: d.title || d.file_name || 'Untitled',
+          similarity: d.similarity_score,
+          usage: usagePercent,
+          chunkCount: chunkCountByDoc[d.id] || 0,
+          isImage: isImageFile(d.file_type),
+          fileUrl: d.file_url || null,
+          sourceType: d.source_type || null
+        };
+      })
+      // Normalize so percentages add up to 100%
+      .map((ref, _, arr) => {
+        const total = arr.reduce((sum, r) => sum + r.usage, 0);
+        return { ...ref, usage: total > 0 ? ref.usage / total : 0 };
+      })
+      // Sort by usage descending so the most-used source is first
+      .sort((a, b) => b.usage - a.usage);
 
     // Save user message (with image indicator if applicable)
     const userMessageContent = imageFiles.length > 0

@@ -213,12 +213,12 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
                   <div
                     onClick={() => fileInputRef.current?.click()}
                     className={clsx(
-                      "w-20 h-20 rounded-xl border-2 border-dashed cursor-pointer transition-all flex items-center justify-center overflow-hidden",
+                      "w-24 h-[54px] rounded-xl border-2 border-dashed cursor-pointer transition-all flex items-center justify-center overflow-hidden",
                       thumbnailPreview ? "border-neutral-700" : "border-neutral-700 hover:border-neutral-500"
                     )}
                   >
                     {thumbnailPreview ? (
-                      <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-contain" />
+                      <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
                       <Upload className="w-6 h-6 text-neutral-500" />
                     )}

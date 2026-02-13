@@ -191,14 +191,14 @@ export default function CreateClientModal({ isOpen, onClose }) {
               </label>
               <div className="mt-1 flex items-center space-x-4">
                 <div
-                  className="w-16 h-16 rounded-lg border border-neutral-700 flex items-center justify-center overflow-hidden"
+                  className="w-24 h-[54px] rounded-lg border border-neutral-700 flex items-center justify-center overflow-hidden"
                   style={{ backgroundColor: thumbnailBgColor }}
                 >
                   {thumbnailPreview ? (
                     <img
                       src={thumbnailPreview}
                       alt="Preview"
-                      className="max-w-full max-h-full object-contain"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <Upload className="w-6 h-6 text-neutral-600" />
