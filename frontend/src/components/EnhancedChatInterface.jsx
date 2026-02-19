@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Send, Bot, User, Loader2, FileText, Trash2, Image as ImageIcon,
-  Copy, Check, Download, Code, FileSpreadsheet, X, BookOpen, ChevronDown, ChevronUp, Sparkles, AlertCircle, Table2, ExternalLink, Pencil, MessageSquare
+  Copy, Check, Download, Code, FileSpreadsheet, X, BookOpen, ChevronDown, ChevronUp, Sparkles, AlertCircle, Table2, ExternalLink, Pencil, MessageSquare, Megaphone, Layout
 } from 'lucide-react';
 import { chatApi } from '../api/chat';
 import ReactMarkdown from 'react-markdown';
@@ -296,7 +296,7 @@ function SourceCitations({ sources, onNavigateToSource }) {
 }
 
 // Message component with animation
-function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onExportText, onNavigateToSource }) {
+function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onExportText, onNavigateToSource, onOpenAds, isAdSelected, onOpenLandingPage, isLPSelected }) {
   const isUser = msg.role === 'user';
 
   // Custom markdown components
@@ -518,13 +518,45 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
               </div>
             </div>
           )}
+
+          {/* Message actions for assistant messages */}
+          {!isUser && (
+            <div className="mt-2 pt-2 border-t border-neutral-700/30 flex items-center gap-1">
+              <button
+                onClick={() => onOpenAds && onOpenAds(msg)}
+                className={clsx(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all',
+                  isAdSelected
+                    ? 'bg-pastel-peach/20 text-pastel-peach border border-pastel-peach/30'
+                    : 'text-neutral-500 hover:text-pastel-peach hover:bg-pastel-peach/10'
+                )}
+                title="Preview as Ad"
+              >
+                <Megaphone className="w-3 h-3" />
+                Ads
+              </button>
+              <button
+                onClick={() => onOpenLandingPage && onOpenLandingPage(msg)}
+                className={clsx(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all',
+                  isLPSelected
+                    ? 'bg-pastel-sky/20 text-pastel-sky border border-pastel-sky/30'
+                    : 'text-neutral-500 hover:text-pastel-sky hover:bg-pastel-sky/10'
+                )}
+                title="Preview as Landing Page"
+              >
+                <Layout className="w-3 h-3" />
+                Landing Page
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export default function EnhancedChatInterface({ clientId, client, selectedSheetId = null, conversationId = null, onConversationChange = null, onNavigateToSource = null }) {
+export default function EnhancedChatInterface({ clientId, client, selectedSheetId = null, conversationId = null, onConversationChange = null, onNavigateToSource = null, onOpenAdPreview = null, adPreviewMessage = null, onOpenLandingPagePreview = null, landingPageMessage = null }) {
   const [message, setMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -846,6 +878,10 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
                 onExportCSV={exportToCSV}
                 onExportText={exportAsText}
                 onNavigateToSource={onNavigateToSource}
+                onOpenAds={(m) => onOpenAdPreview && onOpenAdPreview(m)}
+                isAdSelected={adPreviewMessage && (adPreviewMessage.id === msg.id || adPreviewMessage.content === msg.content)}
+                onOpenLandingPage={(m) => onOpenLandingPagePreview && onOpenLandingPagePreview(m)}
+                isLPSelected={landingPageMessage && (landingPageMessage.id === msg.id || landingPageMessage.content === msg.content)}
               />
             ))}
 

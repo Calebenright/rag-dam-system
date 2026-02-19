@@ -35,16 +35,17 @@ const upload = multer({
 
 /**
  * GET /api/documents/:clientId
- * Get all documents for a client
+ * Get all documents for a client (includes global sources)
  */
 router.get('/:clientId', async (req, res) => {
   try {
     const { clientId } = req.params;
 
+    // Fetch client-specific AND global sources
     const { data, error } = await supabase
       .from('documents')
       .select('*')
-      .eq('client_id', clientId)
+      .or(`client_id.eq.${clientId},is_global.eq.true`)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -148,6 +149,7 @@ router.post('/:clientId/upload', upload.single('file'), async (req, res) => {
     const fileName = req.file.originalname;
     const fileType = req.file.mimetype;
     const fileSize = req.file.size;
+    const isGlobal = req.body.isGlobal === 'true' || req.body.isGlobal === true;
 
     // Verify client exists
     const { data: client, error: clientError } = await supabase
@@ -165,7 +167,8 @@ router.post('/:clientId/upload', upload.single('file'), async (req, res) => {
 
     // Upload file to Supabase Storage
     const fileExt = path.extname(fileName);
-    const storagePath = `documents/${clientId}/${uuidv4()}${fileExt}`;
+    const storageFolderPath = isGlobal ? 'documents/global' : `documents/${clientId}`;
+    const storagePath = `${storageFolderPath}/${uuidv4()}${fileExt}`;
 
     const fileBuffer = await fs.readFile(tempFilePath);
 
@@ -187,12 +190,13 @@ router.post('/:clientId/upload', upload.single('file'), async (req, res) => {
     const { data: document, error: insertError } = await supabase
       .from('documents')
       .insert([{
-        client_id: clientId,
+        client_id: isGlobal ? null : clientId,
         file_name: fileName,
         file_type: fileType,
         file_url: publicUrl,
         file_size: fileSize,
-        processed: false
+        processed: false,
+        is_global: isGlobal
       }])
       .select()
       .single();
@@ -323,7 +327,8 @@ async function processDocumentAsync(documentId, filePath, fileName, fileType) {
 router.post('/:clientId/google', async (req, res) => {
   try {
     const { clientId } = req.params;
-    const { url } = req.body;
+    const { url, isGlobal } = req.body;
+    const isGlobalSource = isGlobal === true || isGlobal === 'true';
 
     if (!url) {
       return res.status(400).json({
@@ -415,7 +420,7 @@ router.post('/:clientId/google', async (req, res) => {
     const { data: document, error: insertError } = await supabase
       .from('documents')
       .insert([{
-        client_id: clientId,
+        client_id: isGlobalSource ? null : clientId,
         file_name: title,
         file_type: sourceType,
         file_url: url,
@@ -425,7 +430,8 @@ router.post('/:clientId/google', async (req, res) => {
         last_synced: new Date().toISOString(),
         content_hash: contentHash,
         processed: false,
-        sheet_tabs: sheetTabs.length > 0 ? sheetTabs : null
+        sheet_tabs: sheetTabs.length > 0 ? sheetTabs : null,
+        is_global: isGlobalSource
       }])
       .select()
       .single();
@@ -560,11 +566,11 @@ router.post('/:clientId/sync-all', async (req, res) => {
   try {
     const { clientId } = req.params;
 
-    // Get all Google sources for this client
+    // Get all Google sources for this client (including global sources)
     const { data: googleDocs, error: fetchError } = await supabase
       .from('documents')
       .select('*')
-      .eq('client_id', clientId)
+      .or(`client_id.eq.${clientId},is_global.eq.true`)
       .eq('source_type', 'google');
 
     if (fetchError) throw fetchError;
@@ -794,11 +800,11 @@ router.post('/search/:clientId', async (req, res) => {
     // Generate embedding for query
     const queryEmbedding = await generateEmbedding(query);
 
-    // Get all documents for this client
+    // Get all documents for this client (including global sources)
     const { data: documents, error: docError } = await supabase
       .from('documents')
       .select('*')
-      .eq('client_id', clientId)
+      .or(`client_id.eq.${clientId},is_global.eq.true`)
       .eq('processed', true);
 
     if (docError) throw docError;
@@ -1276,10 +1282,11 @@ router.get('/:clientId/groups', async (req, res) => {
   try {
     const { clientId } = req.params;
 
+    // Include groups from both client-specific and global sources
     const { data, error } = await supabase
       .from('documents')
       .select('custom_group')
-      .eq('client_id', clientId)
+      .or(`client_id.eq.${clientId},is_global.eq.true`)
       .not('custom_group', 'is', null);
 
     if (error) throw error;

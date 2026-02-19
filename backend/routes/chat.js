@@ -82,11 +82,11 @@ async function semanticSearch(clientId, query, limit = 5) {
   // Generate embedding for the query
   const queryEmbedding = await generateEmbedding(query);
 
-  // Get all processed documents for this client
+  // Get all processed documents for this client (including global sources)
   const { data: documents, error: docError } = await supabase
     .from('documents')
     .select('*')
-    .eq('client_id', clientId)
+    .or(`client_id.eq.${clientId},is_global.eq.true`)
     .eq('processed', true);
 
   if (docError) throw docError;

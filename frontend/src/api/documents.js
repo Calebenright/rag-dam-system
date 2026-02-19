@@ -1,7 +1,7 @@
 import api from './axios';
 
 export const documentsApi = {
-  // Get all documents for a client
+  // Get all documents for a client (includes global sources)
   getByClientId: async (clientId) => {
     const { data } = await api.get(`/api/documents/${clientId}`);
     return data.data;
@@ -13,10 +13,11 @@ export const documentsApi = {
     return data.data;
   },
 
-  // Upload document
-  upload: async (clientId, file, onUploadProgress) => {
+  // Upload document (supports isGlobal flag for global sources)
+  upload: async (clientId, file, onUploadProgress, isGlobal = false) => {
     const formData = new FormData();
     formData.append('file', file);
+    if (isGlobal) formData.append('isGlobal', 'true');
 
     const { data } = await api.post(`/api/documents/${clientId}/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -40,9 +41,9 @@ export const documentsApi = {
     return data.data;
   },
 
-  // Add Google Doc/Sheet as source
-  addGoogleDoc: async (clientId, url) => {
-    const { data } = await api.post(`/api/documents/${clientId}/google`, { url });
+  // Add Google Doc/Sheet as source (supports isGlobal flag)
+  addGoogleDoc: async (clientId, url, isGlobal = false) => {
+    const { data } = await api.post(`/api/documents/${clientId}/google`, { url, isGlobal });
     return data.data;
   },
 

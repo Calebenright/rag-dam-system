@@ -204,11 +204,12 @@ export default function DataboardManager({ clientId }) {
   useEffect(() => {
     if (selectedDashboardDerived?.widgets) {
       selectedDashboardDerived.widgets.forEach(widget => {
-        if (widget.source_id && widget.config?.source_tab) {
-          const dataKey = `${widget.source_id}-${widget.config.source_tab}`;
+        if (widget.source_id) {
+          const tab = widget.config?.source_tab || 'default';
+          const dataKey = `${widget.source_id}-${tab}`;
           // Only fetch if we don't already have this data
           if (!sourceData[dataKey]) {
-            fetchSourceData(widget.source_id, widget.config.source_tab);
+            fetchSourceData(widget.source_id, widget.config?.source_tab || null);
           }
         }
       });

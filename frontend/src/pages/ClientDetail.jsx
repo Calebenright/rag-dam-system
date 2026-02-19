@@ -11,6 +11,8 @@ import EnhancedChatInterface from '../components/EnhancedChatInterface';
 import DataboardManager from '../components/DataboardManager';
 import LeadsManager from '../components/LeadsManager';
 import ChatHistory from '../components/ChatHistory';
+import AdPreviewPanel from '../components/AdPreviewPanel';
+import LandingPagePanel from '../components/LandingPagePanel';
 import SettingsModal, { getPodColor } from '../components/SettingsModal';
 import clsx from 'clsx';
 
@@ -23,6 +25,8 @@ export default function ClientDetail() {
   const [chatHistoryExpanded, setChatHistoryExpanded] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [highlightDocumentId, setHighlightDocumentId] = useState(null);
+  const [adPreviewMessage, setAdPreviewMessage] = useState(null);
+  const [landingPageMessage, setLandingPageMessage] = useState(null);
 
   // Navigate from chat source citation to Sources tab and highlight the document
   const handleNavigateToSource = (documentId) => {
@@ -288,8 +292,34 @@ export default function ClientDetail() {
                   conversationId={currentConversationId}
                   onConversationChange={setCurrentConversationId}
                   onNavigateToSource={handleNavigateToSource}
+                  onOpenAdPreview={(msg) => {
+                    setAdPreviewMessage(prev => prev?.content === msg?.content ? null : msg);
+                    setLandingPageMessage(null);
+                  }}
+                  adPreviewMessage={adPreviewMessage}
+                  onOpenLandingPagePreview={(msg) => {
+                    setLandingPageMessage(prev => prev?.content === msg?.content ? null : msg);
+                    setAdPreviewMessage(null);
+                  }}
+                  landingPageMessage={landingPageMessage}
                 />
               </div>
+              {adPreviewMessage && (
+                <AdPreviewPanel
+                  message={adPreviewMessage}
+                  onClose={() => setAdPreviewMessage(null)}
+                  clientId={clientId}
+                  conversationId={currentConversationId}
+                />
+              )}
+              {landingPageMessage && (
+                <LandingPagePanel
+                  message={landingPageMessage}
+                  onClose={() => setLandingPageMessage(null)}
+                  clientId={clientId}
+                  conversationId={currentConversationId}
+                />
+              )}
               <ChatHistory
                 clientId={clientId}
                 currentConversationId={currentConversationId}

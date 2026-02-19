@@ -80,6 +80,7 @@ async function readPublicSheetData(spreadsheetId, sheetName = 'Sheet1') {
       const dataResponse = await sheets.spreadsheets.values.get({
         spreadsheetId,
         range: sheetName,
+        valueRenderOption: 'FORMATTED_VALUE',
       });
 
       const values = dataResponse.data.values || [];
