@@ -41,10 +41,10 @@ router.get('/:clientId', async (req, res) => {
   try {
     const { clientId } = req.params;
 
-    // Fetch client-specific AND global sources
+    // Fetch client-specific AND global sources (exclude embedding to reduce egress)
     const { data, error } = await supabase
       .from('documents')
-      .select('*')
+      .select('id, client_id, file_name, file_type, file_url, file_size, title, summary, tags, keywords, topic, sentiment, sentiment_score, processed, created_at, google_doc_id, source_type, last_synced, content_hash, chunk_count, sheet_tabs, custom_group, is_global')
       .or(`client_id.eq.${clientId},is_global.eq.true`)
       .order('created_at', { ascending: false });
 
@@ -566,10 +566,10 @@ router.post('/:clientId/sync-all', async (req, res) => {
   try {
     const { clientId } = req.params;
 
-    // Get all Google sources for this client (including global sources)
+    // Get all Google sources for this client (including global sources) - exclude embedding to reduce egress
     const { data: googleDocs, error: fetchError } = await supabase
       .from('documents')
-      .select('*')
+      .select('id, client_id, file_name, file_type, file_url, google_doc_id, source_type, last_synced, content_hash, chunk_count, sheet_tabs, processed, is_global')
       .or(`client_id.eq.${clientId},is_global.eq.true`)
       .eq('source_type', 'google');
 

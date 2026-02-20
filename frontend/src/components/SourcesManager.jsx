@@ -165,15 +165,15 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
     if (clientId) fetchGroups();
   }, [clientId, documents]);
 
-  // Poll for updates when there are unprocessed documents (reduced frequency)
+  // Poll for updates when there are unprocessed documents
   useEffect(() => {
     const hasUnprocessed = documents?.some(doc => !doc.processed);
     if (!hasUnprocessed) return;
 
-    // Poll every 10 seconds instead of 3 - processing takes time anyway
+    // Poll every 30 seconds - processing takes time, no need for frequent checks
     const interval = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ['documents', clientId], exact: true });
-    }, 10000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [documents, clientId, queryClient]);

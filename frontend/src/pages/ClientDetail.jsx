@@ -47,7 +47,7 @@ export default function ClientDetail() {
   const { data: documents = [], isLoading: isLoadingDocs } = useQuery({
     queryKey: ['documents', clientId],
     queryFn: () => documentsApi.getByClientId(clientId),
-    staleTime: 5000, // 5 seconds - allow polling to work but prevent duplicate fetches
+    staleTime: 60000, // 1 minute - reduces egress, manual actions invalidate the cache anyway
   });
 
   if (isLoadingClient) {
