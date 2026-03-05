@@ -5,7 +5,7 @@ export const AD_FORMATS = {
       headlines: { label: 'Headlines', count: 3, maxChars: 30, required: true },
       descriptions: { label: 'Descriptions', count: 2, maxChars: 90, required: true },
       displayUrl: { label: 'Display URL Path', count: 1, maxChars: 35, required: false },
-      sitelinks: { label: 'Sitelinks', count: 4, maxChars: 25, required: false },
+      sitelinks: { label: 'Sitelinks', count: 1, maxChars: 120, required: false, hint: 'pipe-separated list e.g. "About Us | Pricing | Features | Contact"' },
     },
   },
   meta: {

@@ -173,10 +173,10 @@ export function GoogleAdPreview({ ad }) {
       <p className="text-[13px] text-neutral-600 mt-1 leading-relaxed line-clamp-3">
         {(ad.descriptions || [])[0] || 'Your description will appear here.'}
       </p>
-      {(ad.sitelinks || []).length > 0 && (
+      {ad.sitelinks && (
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-          {ad.sitelinks.slice(0, 4).map((s, i) => (
-            <span key={i} className="text-xs text-blue-700 hover:underline cursor-pointer">{s}</span>
+          {(typeof ad.sitelinks === 'string' ? ad.sitelinks.split('|') : ad.sitelinks).map((s, i) => (
+            <span key={i} className="text-xs text-blue-700 hover:underline cursor-pointer">{String(s).trim()}</span>
           ))}
         </div>
       )}

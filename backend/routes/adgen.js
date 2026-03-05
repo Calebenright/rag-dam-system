@@ -219,6 +219,7 @@ function buildAdPrompt({ text, urlContent, imageAnalysis, searchResults, formatS
         desc += `LONG-FORM field - MUST apply Writing Structure, Tone, Hook Approach, and Target Length`;
       }
       if (spec.enum) desc += `choose from: ${spec.enum.join(', ')}`;
+      if (spec.hint) desc += ` (${spec.hint})`;
       if (spec.required) desc += ' [REQUIRED]';
       return desc;
     })
@@ -556,9 +557,25 @@ router.post('/:clientId/push-to-sheet', async (req, res) => {
     }
 
     // Map fields to the correct columns based on platform
-    const introText = fields.primaryText || fields.introText || '';
-    const headline = fields.postTitle || (Array.isArray(fields.headlines) ? fields.headlines[0] : fields.headlines) || '';
-    const cta = fields.cta || '';
+    // Google: headlines (arr of 3), descriptions (arr of 2), displayUrl, sitelinks (pipe-separated)
+    // Meta/LinkedIn/Reddit: primaryText/introText, headlines (single), cta, etc.
+    let introText = '';
+    let headline = '';
+    let cta = fields.cta || '';
+    let adGraphicCopy = '';
+
+    if (platform === 'google') {
+      // Google: descriptions go to intro text column, headlines pipe-separated to headline column
+      const headlines = Array.isArray(fields.headlines) ? fields.headlines : [fields.headlines].filter(Boolean);
+      const descriptions = Array.isArray(fields.descriptions) ? fields.descriptions : [fields.descriptions].filter(Boolean);
+      headline = headlines.join(' | ');
+      introText = descriptions.join(' | ');
+      adGraphicCopy = fields.sitelinks || '';
+    } else {
+      introText = fields.primaryText || fields.introText || '';
+      headline = fields.postTitle || (Array.isArray(fields.headlines) ? fields.headlines[0] : fields.headlines) || '';
+    }
+
     const campaign = `DD_${funnel || 'TOF'}`;
 
     // Auto-generate a short PascalCase concept name (priority: image > URL > copy > hook)
@@ -570,11 +587,11 @@ router.post('/:clientId/push-to-sheet', async (req, res) => {
       conceptName,                                      // B: Name / Concept
       'Planned',                                        // C: Status
       introText ? String(introText.length) : '',        // D: char count
-      introText,                                        // E: Intro Text
+      introText,                                        // E: Intro Text / Descriptions
       headline ? String(headline.length) : '',          // F: char count
-      headline,                                         // G: Headline
-      '',                                               // H: char count (ad graphic copy)
-      '',                                               // I: Ad Graphic Copy
+      headline,                                         // G: Headline(s)
+      adGraphicCopy ? String(adGraphicCopy.length) : '',// H: char count (ad graphic copy / sitelinks)
+      adGraphicCopy,                                    // I: Ad Graphic Copy / Sitelinks
       '',                                               // J: blank
       cta,                                              // K: CTA
       '',                                               // L: Image
@@ -585,7 +602,7 @@ router.post('/:clientId/push-to-sheet', async (req, res) => {
     ];
 
     // Find the first row where columns A, B, E, and G are all empty
-    const sheet = await readEntireSheet(AD_COPY_SHEET_ID, 'Sheet1');
+    const sheet = await readEntireSheet(AD_COPY_SHEET_ID, 'Generations');
     const rows = sheet.values || [];
     let targetRow = rows.length + 1; // default: after last row
 
@@ -601,7 +618,7 @@ router.post('/:clientId/push-to-sheet', async (req, res) => {
       }
     }
 
-    const result = await writeSheetRange(AD_COPY_SHEET_ID, `Sheet1!A${targetRow}:P${targetRow}`, [row]);
+    const result = await writeSheetRange(AD_COPY_SHEET_ID, `Generations!A${targetRow}:P${targetRow}`, [row]);
 
     res.json({
       success: true,
