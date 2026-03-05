@@ -80,74 +80,95 @@ function buildSourceRefs(searchResults) {
 }
 
 /**
- * Map styleConfig dropdown values into rich prompt instructions.
+ * Full option maps for style instructions (used by both fixed and random modes).
  */
-function buildStyleInstructions(styleConfig) {
-  const sc = { ...getDefaultStyleConfig(), ...styleConfig };
-  const sections = [];
-
-  // --- Structure ---
-  const structureMap = {
-    'hook-body-closer': `Use a 3-part paragraph structure separated by \\n\\n (double newline):
+const STRUCTURE_MAP = {
+  'hook-body-closer': `Use a 3-part paragraph structure separated by \\n\\n (double newline):
 1. **Hook** - A bold, attention-grabbing opening line that calls out the audience or a pain point.
 2. **Body** - The value proposition with concrete details, numbers, or benefits.
 3. **Closer** - A short, punchy line about who it's for or a soft CTA.
 Each part is 1-2 sentences. Always use \\n\\n between parts in the JSON string.`,
-    'hook-body': `Use a 2-part paragraph structure separated by \\n\\n (double newline):
+  'hook-body': `Use a 2-part paragraph structure separated by \\n\\n (double newline):
 1. **Hook** - A bold, attention-grabbing opening that calls out the audience or pain point.
 2. **Body** - The value proposition with details and a soft CTA woven in.
 Each part is 1-3 sentences. Use \\n\\n between parts in the JSON string.`,
-    'single': `Write as a single continuous paragraph - no line breaks or bullet points. Keep it punchy and direct. One cohesive block of text.`,
-    'listicle': `Use a listicle / bullet-point format:
+  'single': `Write as a single continuous paragraph - no line breaks or bullet points. Keep it punchy and direct. One cohesive block of text.`,
+  'listicle': `Use a listicle / bullet-point format:
 - Open with a bold hook line
-- Follow with 3-5 short bullet points highlighting key benefits (use • or - as bullets)
+- Follow with 3-5 short bullet points highlighting key benefits (use . or - as bullets)
 - End with a punchy closer or CTA line
 Separate the hook, bullets section, and closer with \\n\\n in the JSON string.`,
-  };
-  let structureKey = sc.structure;
-  if (structureKey === 'random') {
-    const structureKeys = Object.keys(structureMap);
-    structureKey = structureKeys[Math.floor(Math.random() * structureKeys.length)];
+};
+
+const TONE_MAP = {
+  'conversational': 'Write in a casual, conversational tone - like a smart friend giving advice. Use contractions, direct address ("you"), and natural language. Avoid corporate jargon.',
+  'professional': 'Write in a polished, professional tone - credible and buttoned-up. Clear, precise language. Suitable for B2B and enterprise audiences. Avoid slang or overly casual phrasing.',
+  'bold': 'Write in a bold, aggressive tone - confident and unapologetic. Short punchy sentences. Strong claims. Create urgency. Challenge the reader. Be direct and provocative.',
+  'friendly': 'Write in a warm, friendly tone - approachable and supportive. Use inclusive language ("we", "together"), positive framing, and an encouraging voice. Feel like a helpful neighbor.',
+  'authoritative': 'Write in an authoritative, expert tone - backed by data and certainty. Use definitive language ("the best", "proven", "industry-leading"). Position the brand as the clear authority.',
+};
+
+const HOOK_MAP = {
+  'pain-point': 'Open with a **pain-point question** - call out a frustration or challenge the audience faces. Example openers: "Tired of...", "Still struggling with...", "Why do most X fail at...?"',
+  'bold-statement': 'Open with a **bold, provocative statement** - a strong claim or surprising declaration that demands attention. Example: "Most marketing agencies are wasting your budget.", "Your landing page is losing 73% of visitors."',
+  'stat': 'Open with a **compelling statistic or number** - lead with data that shocks or validates. Example: "87% of B2B buyers say...", "Companies that do X see 3x more...", "$2.4M - that\'s how much the average..."',
+  'story': 'Open with a **mini story or anecdote** - a brief narrative hook that pulls the reader in. Example: "Last quarter, one of our clients...", "We kept hearing the same thing from founders...", "Three months ago, we noticed a pattern..."',
+  'direct-address': 'Open with a **direct address to the audience** - speak directly to a specific role or identity. Example: "Hey marketing leaders,", "If you\'re a SaaS founder doing $1M+ ARR...", "This is for teams that..."',
+};
+
+const LENGTH_MAP = {
+  'short': { label: 'Short', longForm: '80-120 characters' },
+  'medium': { label: 'Medium', longForm: '150-250 characters' },
+  'long': { label: 'Long', longForm: '300-450 characters' },
+};
+
+/**
+ * Map styleConfig dropdown values into rich prompt instructions.
+ * When a field is set to "random", the prompt tells the AI to use a DIFFERENT
+ * option for each variation so every variation is unique for that axis.
+ */
+function buildStyleInstructions(styleConfig, variationCount = 2) {
+  const sc = { ...getDefaultStyleConfig(), ...styleConfig };
+  const sections = [];
+
+  // --- Structure ---
+  if (sc.structure === 'random') {
+    const optionList = Object.entries(STRUCTURE_MAP)
+      .map(([key, desc], i) => `  ${i + 1}. **${key}**: ${desc}`)
+      .join('\n');
+    sections.push(`## Writing Structure (RANDOMIZE PER VARIATION):
+Each variation MUST use a DIFFERENT structure. Pick a unique structure for each variation from the options below - no two variations should share the same structure:
+${optionList}`);
+  } else {
+    sections.push(`## Writing Structure:\n${STRUCTURE_MAP[sc.structure] || STRUCTURE_MAP['hook-body-closer']}`);
   }
-  sections.push(`## Writing Structure:\n${structureMap[structureKey] || structureMap['hook-body-closer']}`);
 
   // --- Tone ---
-  const toneMap = {
-    'conversational': 'Write in a casual, conversational tone - like a smart friend giving advice. Use contractions, direct address ("you"), and natural language. Avoid corporate jargon.',
-    'professional': 'Write in a polished, professional tone - credible and buttoned-up. Clear, precise language. Suitable for B2B and enterprise audiences. Avoid slang or overly casual phrasing.',
-    'bold': 'Write in a bold, aggressive tone - confident and unapologetic. Short punchy sentences. Strong claims. Create urgency. Challenge the reader. Be direct and provocative.',
-    'friendly': 'Write in a warm, friendly tone - approachable and supportive. Use inclusive language ("we", "together"), positive framing, and an encouraging voice. Feel like a helpful neighbor.',
-    'authoritative': 'Write in an authoritative, expert tone - backed by data and certainty. Use definitive language ("the best", "proven", "industry-leading"). Position the brand as the clear authority.',
-  };
-  let toneKey = sc.tone;
-  if (toneKey === 'random') {
-    const toneKeys = Object.keys(toneMap);
-    toneKey = toneKeys[Math.floor(Math.random() * toneKeys.length)];
+  if (sc.tone === 'random') {
+    const optionList = Object.entries(TONE_MAP)
+      .map(([key, desc], i) => `  ${i + 1}. **${key}**: ${desc}`)
+      .join('\n');
+    sections.push(`## Tone of Voice (RANDOMIZE PER VARIATION):
+Each variation MUST use a DIFFERENT tone. Pick a unique tone for each variation from the options below - no two variations should share the same tone:
+${optionList}`);
+  } else {
+    sections.push(`## Tone of Voice:\n${TONE_MAP[sc.tone] || TONE_MAP['conversational']}`);
   }
-  sections.push(`## Tone of Voice:\n${toneMap[toneKey] || toneMap['conversational']}`);
 
   // --- Hook Style ---
-  const hookMap = {
-    'pain-point': 'Open with a **pain-point question** - call out a frustration or challenge the audience faces. Example openers: "Tired of...", "Still struggling with...", "Why do most X fail at...?"',
-    'bold-statement': 'Open with a **bold, provocative statement** - a strong claim or surprising declaration that demands attention. Example: "Most marketing agencies are wasting your budget.", "Your landing page is losing 73% of visitors."',
-    'stat': 'Open with a **compelling statistic or number** - lead with data that shocks or validates. Example: "87% of B2B buyers say...", "Companies that do X see 3x more...", "$2.4M - that\'s how much the average..."',
-    'story': 'Open with a **mini story or anecdote** - a brief narrative hook that pulls the reader in. Example: "Last quarter, one of our clients...", "We kept hearing the same thing from founders...", "Three months ago, we noticed a pattern..."',
-    'direct-address': 'Open with a **direct address to the audience** - speak directly to a specific role or identity. Example: "Hey marketing leaders,", "If you\'re a SaaS founder doing $1M+ ARR...", "This is for teams that..."',
-  };
-  let hookKey = sc.hookStyle;
-  if (hookKey === 'random') {
-    const hookKeys = Object.keys(hookMap);
-    hookKey = hookKeys[Math.floor(Math.random() * hookKeys.length)];
+  if (sc.hookStyle === 'random') {
+    const optionList = Object.entries(HOOK_MAP)
+      .map(([key, desc], i) => `  ${i + 1}. **${key}**: ${desc}`)
+      .join('\n');
+    sections.push(`## Hook Approach (RANDOMIZE PER VARIATION):
+Each variation MUST use a DIFFERENT hook approach. Pick a unique hook style for each variation from the options below - no two variations should share the same hook:
+${optionList}`);
+  } else {
+    sections.push(`## Hook Approach:\n${HOOK_MAP[sc.hookStyle] || HOOK_MAP['pain-point']}`);
   }
-  sections.push(`## Hook Approach:\n${hookMap[hookKey] || hookMap['pain-point']}`);
 
   // --- Length ---
-  const lengthMap = {
-    'short': { label: 'Short', target: '80-120 characters', longForm: '80-120 characters' },
-    'medium': { label: 'Medium', target: '150-250 characters', longForm: '150-250 characters' },
-    'long': { label: 'Long', target: '300-450 characters', longForm: '300-450 characters' },
-  };
-  const len = lengthMap[sc.length] || lengthMap['medium'];
+  const len = LENGTH_MAP[sc.length] || LENGTH_MAP['medium'];
   sections.push(`## Target Length:\nFor long-form text fields (intro text, primary text, captions), write approximately **${len.longForm}**. For shorter fields (headlines, descriptions), write close to their character limit. The length target is a guideline for the body text - always respect the field's maxChars as a hard ceiling.`);
 
   // --- Emoji ---
@@ -204,7 +225,7 @@ function buildAdPrompt({ text, urlContent, imageAnalysis, searchResults, formatS
     .join('\n');
 
   // Build style instructions from dropdown config
-  const styleInstructions = buildStyleInstructions(styleConfig);
+  const styleInstructions = buildStyleInstructions(styleConfig, variationCount);
 
   // Build word guidelines
   let wordGuidelines = '';
@@ -399,21 +420,34 @@ router.post('/:clientId/regenerate', async (req, res) => {
     prompt += '\n\nReturn ONLY the new value as a JSON object: { "newValue": "..." }';
 
     // Build style-aware system prompt for regeneration
+    // For single-field regen, resolve any "random" to a concrete pick
     const sc = { ...getDefaultStyleConfig(), ...(styleConfig || {}) };
+    if (sc.structure === 'random') {
+      const keys = Object.keys(STRUCTURE_MAP);
+      sc.structure = keys[Math.floor(Math.random() * keys.length)];
+    }
+    if (sc.tone === 'random') {
+      const keys = Object.keys(TONE_MAP);
+      sc.tone = keys[Math.floor(Math.random() * keys.length)];
+    }
+    if (sc.hookStyle === 'random') {
+      const keys = Object.keys(HOOK_MAP);
+      sc.hookStyle = keys[Math.floor(Math.random() * keys.length)];
+    }
     const isLongFormField = /intro text|primary text|caption/i.test(field);
     let styleGuide = `You are an expert advertising copywriter. Rewrite the requested field while keeping the overall ad coherent. Respect the character limit.`;
     if (isLongFormField) {
-      styleGuide += `\n\n${buildStyleInstructions(sc)}`;
+      styleGuide += `\n\n${buildStyleInstructions(sc, 1)}`;
     } else {
       // For short fields, still apply tone and hook style
-      const toneMap = {
+      const shortToneMap = {
         'conversational': 'casual, conversational',
         'professional': 'polished, professional',
         'bold': 'bold, aggressive',
         'friendly': 'warm, friendly',
         'authoritative': 'authoritative, expert',
       };
-      styleGuide += `\nTone: ${toneMap[sc.tone] || 'conversational'}. Write close to the character limit.`;
+      styleGuide += `\nTone: ${shortToneMap[sc.tone] || 'conversational'}. Write close to the character limit.`;
     }
 
     const response = await openai.chat.completions.create({
