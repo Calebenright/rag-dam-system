@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ArrowLeft, MessageSquare, Database, Loader2, Settings, BarChart3, Users, PanelLeftClose, PanelLeft
+  ArrowLeft, MessageSquare, Database, Loader2, Settings, BarChart3, Users, PanelLeftClose, PanelLeft, Megaphone
 } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import { documentsApi } from '../api/documents';
@@ -13,6 +13,7 @@ import LeadsManager from '../components/LeadsManager';
 import ChatHistory from '../components/ChatHistory';
 import AdPreviewPanel from '../components/AdPreviewPanel';
 import LandingPagePanel from '../components/LandingPagePanel';
+import AdCopyGenerator from '../components/AdCopyGenerator';
 import SettingsModal, { getPodColor } from '../components/SettingsModal';
 import clsx from 'clsx';
 
@@ -165,6 +166,28 @@ export default function ClientDetail() {
                     Client Agent
                     {agentTab === 'chat' && (
                       <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-lavender" />
+                    )}
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => setAgentTab('adgen')}
+                className={clsx(
+                  'w-full flex items-center rounded-lg text-sm font-medium transition-all',
+                  sidebarCollapsed ? 'px-2.5 py-2.5 justify-center' : 'px-3 py-2.5',
+                  agentTab === 'adgen'
+                    ? 'bg-pastel-peach/15 text-pastel-peach border-l-2 border-l-pastel-peach'
+                    : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
+                )}
+                title={sidebarCollapsed ? 'Ad Copy' : undefined}
+              >
+                <Megaphone className={clsx("w-4 h-4", !sidebarCollapsed && "mr-3")} />
+                {!sidebarCollapsed && (
+                  <>
+                    Ad Copy
+                    {agentTab === 'adgen' && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-peach" />
                     )}
                   </>
                 )}
@@ -337,6 +360,8 @@ export default function ClientDetail() {
               highlightDocumentId={highlightDocumentId}
               onHighlightHandled={() => setHighlightDocumentId(null)}
             />
+          ) : agentTab === 'adgen' ? (
+            <AdCopyGenerator clientId={clientId} />
           ) : agentTab === 'databoards' ? (
             <DataboardManager clientId={clientId} />
           ) : agentTab === 'leads' ? (

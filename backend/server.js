@@ -14,6 +14,7 @@ import dashboardsRouter from './routes/dashboards.js';
 import leadsRouter from './routes/leads.js';
 import agentRouter from './routes/agent.js';
 import sourcesRouter from './routes/sources.js';
+import adgenRouter from './routes/adgen.js';
 
 dotenv.config({ override: true });
 
@@ -47,6 +48,7 @@ app.use('/api/chat', requireAuth, chatRouter);
 app.use('/api/sheets', requireAuth, sheetsRouter);
 app.use('/api/dashboards', requireAuth, dashboardsRouter);
 app.use('/api/leads', requireAuth, leadsRouter);
+app.use('/api/adgen', requireAuth, adgenRouter);
 
 // Agent API - requires API key (for external services/tools)
 app.use('/api/agent', requireApiKey, agentRouter);
