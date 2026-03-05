@@ -570,7 +570,8 @@ router.post('/:clientId/push-to-sheet', async (req, res) => {
       const descriptions = Array.isArray(fields.descriptions) ? fields.descriptions : [fields.descriptions].filter(Boolean);
       headline = headlines.join(' | ');
       introText = descriptions.join(' | ');
-      adGraphicCopy = fields.sitelinks || '';
+      const sitelinks = fields.sitelinks;
+      adGraphicCopy = Array.isArray(sitelinks) ? sitelinks.join(' | ') : (sitelinks || '');
     } else {
       introText = fields.primaryText || fields.introText || '';
       headline = fields.postTitle || (Array.isArray(fields.headlines) ? fields.headlines[0] : fields.headlines) || '';
@@ -581,24 +582,27 @@ router.post('/:clientId/push-to-sheet', async (req, res) => {
     // Auto-generate a short PascalCase concept name (priority: image > URL > copy > hook)
     const conceptName = deriveConceptName({ hookStyle, introText, headline, cta, urlTitle, hadImages, url });
 
-    // Build the row: 16 columns (A-P)
+    // Ensure every cell value is a string (Sheets API rejects arrays)
+    const str = (v) => Array.isArray(v) ? v.join(' | ') : String(v ?? '');
+
+    // Build the row: 16 columns (A-P) - str() ensures no arrays leak through
     const row = [
-      campaign,                                         // A: Campaign
-      conceptName,                                      // B: Name / Concept
-      'Planned',                                        // C: Status
-      introText ? String(introText.length) : '',        // D: char count
-      introText,                                        // E: Intro Text / Descriptions
-      headline ? String(headline.length) : '',          // F: char count
-      headline,                                         // G: Headline(s)
-      adGraphicCopy ? String(adGraphicCopy.length) : '',// H: char count (ad graphic copy / sitelinks)
-      adGraphicCopy,                                    // I: Ad Graphic Copy / Sitelinks
-      '',                                               // J: blank
-      cta,                                              // K: CTA
-      '',                                               // L: Image
-      '',                                               // M: More image inspo
-      '',                                               // N: Notes
-      url || '',                                        // O: FINAL URL
-      'Square (1080x1080px)',                           // P: Sizes Needed
+      str(campaign),                                      // A: Campaign
+      str(conceptName),                                   // B: Name / Concept
+      'Planned',                                          // C: Status
+      introText ? String(introText.length) : '',          // D: char count
+      str(introText),                                     // E: Intro Text / Descriptions
+      headline ? String(headline.length) : '',            // F: char count
+      str(headline),                                      // G: Headline(s)
+      adGraphicCopy ? String(adGraphicCopy.length) : '',  // H: char count (ad graphic copy / sitelinks)
+      str(adGraphicCopy),                                 // I: Ad Graphic Copy / Sitelinks
+      '',                                                 // J: blank
+      str(cta),                                           // K: CTA
+      '',                                                 // L: Image
+      '',                                                 // M: More image inspo
+      '',                                                 // N: Notes
+      str(url || ''),                                     // O: FINAL URL
+      'Square (1080x1080px)',                             // P: Sizes Needed
     ];
 
     // Find the first row where columns A, B, E, and G are all empty
