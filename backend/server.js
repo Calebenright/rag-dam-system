@@ -22,9 +22,29 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  frameguard: false,            // allow iframe embedding (ClickUp)
+  contentSecurityPolicy: false, // relax CSP for cross-origin iframe + OAuth
+}));
+
+// Build allowed origins list: env var + local dev + ClickUp
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3004',
+  'http://localhost:5173',
+  'https://app.clickup.com',
+];
+if (process.env.FRONTEND_URL) allowedOrigins.push(process.env.FRONTEND_URL);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || ['http://localhost:3000', 'http://localhost:3004', 'http://localhost:5173'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (server-to-server, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.endsWith('.clickup.com')) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(morgan('dev'));

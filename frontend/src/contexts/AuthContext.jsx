@@ -1,9 +1,14 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext({});
 
 const ALLOWED_DOMAIN = 'dodekadigital.com';
+
+// Detect if we're running inside an iframe
+const isInIframe = () => {
+  try { return window.self !== window.top; } catch { return true; }
+};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -19,7 +24,6 @@ export function AuthProvider({ children }) {
           setSession(session);
           setUser(session.user);
         } else {
-          // Sign out if wrong domain
           supabase.auth.signOut();
         }
       }
@@ -35,7 +39,6 @@ export function AuthProvider({ children }) {
             setSession(session);
             setUser(session.user);
           } else {
-            // Sign out and show error if wrong domain
             await supabase.auth.signOut();
             setSession(null);
             setUser(null);
@@ -51,18 +54,62 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
+  // Listen for auth messages from popup window (iframe flow)
+  useEffect(() => {
+    const handleMessage = async (event) => {
+      // Only accept messages from our own origin
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'dodeka-auth-success') return;
+
+      // Popup sent us a token - refresh session from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const email = session.user?.email || '';
+        if (email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+          setSession(session);
+          setUser(session.user);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const signInWithGoogle = useCallback(async () => {
+    if (isInIframe()) {
+      // Iframe flow: open OAuth in a popup window
+      const callbackUrl = `${window.location.origin}/auth/callback`;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          queryParams: { hd: ALLOWED_DOMAIN },
+          redirectTo: callbackUrl,
+          skipBrowserRedirect: true, // don't navigate - we'll open a popup
+        },
+      });
+
+      if (error) return { error };
+
+      // Open the OAuth URL in a popup
+      const w = 500, h = 600;
+      const left = window.screenX + (window.outerWidth - w) / 2;
+      const top = window.screenY + (window.outerHeight - h) / 2;
+      window.open(data.url, 'dodeka-oauth', `width=${w},height=${h},left=${left},top=${top}`);
+
+      return { error: null };
+    }
+
+    // Standard flow: full-page redirect
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        queryParams: {
-          hd: ALLOWED_DOMAIN, // Hint to Google to show only this domain
-        },
+        queryParams: { hd: ALLOWED_DOMAIN },
         redirectTo: window.location.origin,
       },
     });
     return { error };
-  };
+  }, []);
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -75,6 +122,7 @@ export function AuthProvider({ children }) {
     loading,
     signInWithGoogle,
     signOut,
+    isIframe: isInIframe(),
   };
 
   return (

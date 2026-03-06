@@ -24,14 +24,24 @@ api.interceptors.request.use(
   }
 );
 
+// Detect iframe context
+const isInIframe = (() => {
+  try { return window.self !== window.top; } catch { return true; }
+})();
+
 // Response interceptor - handle 401
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - sign out
       await supabase.auth.signOut();
-      window.location.href = '/login';
+      if (isInIframe) {
+        // In iframe: dispatch event so AuthContext can trigger popup login
+        window.dispatchEvent(new CustomEvent('dodeka-auth-expired'));
+      } else {
+        // Standalone: redirect to login page
+        window.location.href = '/login';
+      }
     }
     console.error('API Error:', error);
     return Promise.reject(error);
