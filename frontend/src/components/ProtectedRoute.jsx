@@ -1,9 +1,15 @@
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { hasEmbedKey } from '../api/axios';
 
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
+
+  // Embed mode: API key in sessionStorage - skip OAuth entirely
+  if (hasEmbedKey()) {
+    return children;
+  }
 
   if (loading) {
     return (

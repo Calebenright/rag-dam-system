@@ -61,14 +61,14 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Protected Routes - require authentication
-app.use('/api/clients', requireAuth, clientsRouter);
+// Protected Routes - accept JWT or API key (API key enables ClickUp embed)
+app.use('/api/clients', requireAuthOrApiKey, clientsRouter);
 app.use('/api/documents', requireAuthOrApiKey, documentsRouter);
-app.use('/api/chat', requireAuth, chatRouter);
-app.use('/api/sheets', requireAuth, sheetsRouter);
-app.use('/api/dashboards', requireAuth, dashboardsRouter);
-app.use('/api/leads', requireAuth, leadsRouter);
-app.use('/api/adgen', requireAuth, adgenRouter);
+app.use('/api/chat', requireAuthOrApiKey, chatRouter);
+app.use('/api/sheets', requireAuthOrApiKey, sheetsRouter);
+app.use('/api/dashboards', requireAuthOrApiKey, dashboardsRouter);
+app.use('/api/leads', requireAuthOrApiKey, leadsRouter);
+app.use('/api/adgen', requireAuthOrApiKey, adgenRouter);
 
 // Agent API - requires API key (for external services/tools)
 app.use('/api/agent', requireApiKey, agentRouter);
