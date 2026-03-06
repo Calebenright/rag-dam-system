@@ -2,7 +2,7 @@ import api from './axios';
 
 export const adgenApi = {
   // Generate ad copy variations
-  generate: async (clientId, { text, url, platform, images, variationCount, styleConfig, positiveWords, negativeWords }) => {
+  generate: async (clientId, { text, url, platform, images, variationCount, styleConfig, positiveWords, negativeWords, customPrompt }) => {
     const formData = new FormData();
     if (text) formData.append('text', text);
     if (url) formData.append('url', url);
@@ -16,6 +16,7 @@ export const adgenApi = {
     }
     if (positiveWords) formData.append('positiveWords', positiveWords);
     if (negativeWords) formData.append('negativeWords', negativeWords);
+    if (customPrompt) formData.append('customPrompt', customPrompt);
 
     const { data } = await api.post(`/api/adgen/${clientId}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -25,9 +26,9 @@ export const adgenApi = {
   },
 
   // Regenerate a single field
-  regenerate: async (clientId, { field, currentValue, allFields, platform, direction, styleConfig, positiveWords, negativeWords }) => {
+  regenerate: async (clientId, { field, currentValue, allFields, platform, direction, styleConfig, positiveWords, negativeWords, customPrompt }) => {
     const { data } = await api.post(`/api/adgen/${clientId}/regenerate`, {
-      field, currentValue, allFields, platform, direction, styleConfig, positiveWords, negativeWords,
+      field, currentValue, allFields, platform, direction, styleConfig, positiveWords, negativeWords, customPrompt,
     });
     return data.data;
   },

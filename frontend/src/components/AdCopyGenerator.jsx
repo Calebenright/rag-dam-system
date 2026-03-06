@@ -59,6 +59,7 @@ export default function AdCopyGenerator({ clientId }) {
   });
   const [positiveWords, setPositiveWords] = useState(saved?.positiveWords || '');
   const [negativeWords, setNegativeWords] = useState(saved?.negativeWords || '');
+  const [customPrompt, setCustomPrompt] = useState(saved?.customPrompt || '');
   const [results, setResults] = useState(null);
   const [activeVariation, setActiveVariation] = useState(0);
   const [overrides, setOverrides] = useState({});
@@ -72,9 +73,9 @@ export default function AdCopyGenerator({ clientId }) {
 
   // Persist inputs to localStorage (debounced via effect)
   useEffect(() => {
-    const data = { platform, url, variationCount, styleConfig, positiveWords, negativeWords };
+    const data = { platform, url, variationCount, styleConfig, positiveWords, negativeWords, customPrompt };
     localStorage.setItem(STORAGE_KEY(clientId), JSON.stringify(data));
-  }, [clientId, platform, url, variationCount, styleConfig, positiveWords, negativeWords]);
+  }, [clientId, platform, url, variationCount, styleConfig, positiveWords, negativeWords, customPrompt]);
 
   // Current platform's format spec
   const formatSpec = AD_FORMATS[platform];
@@ -121,6 +122,7 @@ export default function AdCopyGenerator({ clientId }) {
         styleConfig,
         positiveWords: positiveWords.trim() || undefined,
         negativeWords: negativeWords.trim() || undefined,
+        customPrompt: customPrompt.trim() || undefined,
       });
       setResults(result);
       setMode('results');
@@ -210,6 +212,7 @@ export default function AdCopyGenerator({ clientId }) {
         styleConfig,
         positiveWords: positiveWords.trim() || undefined,
         negativeWords: negativeWords.trim() || undefined,
+        customPrompt: customPrompt.trim() || undefined,
       });
       if (result.newValue) {
         setOverrides(prev => ({ ...prev, [`${activeVariation}-${fieldKey}`]: result.newValue }));
@@ -219,7 +222,7 @@ export default function AdCopyGenerator({ clientId }) {
     } finally {
       setRegeneratingField(null);
     }
-  }, [clientId, currentFields, results, platform, activeVariation, regeneratingField, styleConfig, positiveWords, negativeWords]);
+  }, [clientId, currentFields, results, platform, activeVariation, regeneratingField, styleConfig, positiveWords, negativeWords, customPrompt]);
 
   const handleCopyAll = () => {
     if (!currentFields) return;
@@ -749,6 +752,22 @@ export default function AdCopyGenerator({ clientId }) {
                 className="w-full px-2.5 py-2 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:border-pastel-coral/40 focus:outline-none focus:ring-1 focus:ring-pastel-coral/20"
               />
             </div>
+          </div>
+
+          {/* Creative direction prompt */}
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1.5 flex items-center gap-1">
+              <FileText className="w-2.5 h-2.5 text-pastel-lavender" />
+              Creative Direction
+              <span className="text-neutral-600 normal-case tracking-normal">(optional)</span>
+            </label>
+            <textarea
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              placeholder="e.g. Focus on the free trial offer, use a question as the hook, mention 30-day money back guarantee..."
+              rows={2}
+              className="w-full px-2.5 py-1.5 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:border-pastel-lavender/40 focus:outline-none focus:ring-1 focus:ring-pastel-lavender/20 resize-none leading-relaxed"
+            />
           </div>
 
           {/* Error */}

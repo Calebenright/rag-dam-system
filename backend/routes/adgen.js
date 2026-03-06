@@ -193,7 +193,7 @@ ${emojiRule}
 /**
  * Build the structured prompt for ad generation.
  */
-function buildAdPrompt({ text, urlContent, imageAnalysis, searchResults, formatSpec, platform, variationCount, styleConfig, positiveWords, negativeWords }) {
+function buildAdPrompt({ text, urlContent, imageAnalysis, searchResults, formatSpec, platform, variationCount, styleConfig, positiveWords, negativeWords, customPrompt }) {
   // Build source context from top chunks
   let sourceContext = '';
   if (searchResults?.chunks?.length > 0) {
@@ -245,7 +245,7 @@ ${sourceContext || 'No source documents available - use your expertise and the p
 ${formatDesc}
 
 ${styleInstructions}
-${wordGuidelines}
+${wordGuidelines}${customPrompt ? `\n## Creative Direction (USER'S CUSTOM INSTRUCTIONS - FOLLOW CLOSELY):\n${customPrompt}\n` : ''}
 ## Instructions:
 1. Generate exactly ${variationCount} complete ad variations as JSON
 2. Each variation must fill ALL required fields
@@ -302,7 +302,7 @@ router.post('/:clientId', adUpload.array('images', 5), async (req, res) => {
   const tempFilePaths = [];
   try {
     const { clientId } = req.params;
-    const { text, url, platform = 'google', variationCount = 2, positiveWords, negativeWords } = req.body;
+    const { text, url, platform = 'google', variationCount = 2, positiveWords, negativeWords, customPrompt } = req.body;
     let styleConfig = null;
     try { styleConfig = req.body.styleConfig ? JSON.parse(req.body.styleConfig) : null; } catch {}
     const imageFiles = req.files || [];
@@ -338,6 +338,7 @@ router.post('/:clientId', adUpload.array('images', 5), async (req, res) => {
       styleConfig: styleConfig || getDefaultStyleConfig(),
       positiveWords: positiveWords || null,
       negativeWords: negativeWords || null,
+      customPrompt: customPrompt?.trim() || null,
     });
 
     // Call OpenAI
@@ -392,7 +393,7 @@ router.post('/:clientId', adUpload.array('images', 5), async (req, res) => {
  */
 router.post('/:clientId/regenerate', async (req, res) => {
   try {
-    const { field, currentValue, allFields, platform, direction, styleConfig, positiveWords, negativeWords } = req.body;
+    const { field, currentValue, allFields, platform, direction, styleConfig, positiveWords, negativeWords, customPrompt } = req.body;
 
     if (!field || !platform) {
       return res.status(400).json({ success: false, error: 'field and platform are required' });
@@ -416,6 +417,9 @@ router.post('/:clientId/regenerate', async (req, res) => {
     }
     if (negativeWords) {
       prompt += `\n\nMUST AVOID these words: ${negativeWords}`;
+    }
+    if (customPrompt?.trim()) {
+      prompt += `\n\nCreative direction from the user (follow closely): ${customPrompt.trim()}`;
     }
 
     prompt += '\n\nReturn ONLY the new value as a JSON object: { "newValue": "..." }';
