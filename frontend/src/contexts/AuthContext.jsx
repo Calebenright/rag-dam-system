@@ -54,14 +54,10 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Listen for auth messages from popup window (iframe flow)
+  // Listen for auth from popup window (iframe flow)
+  // Two mechanisms: postMessage (primary) + storage event (fallback)
   useEffect(() => {
-    const handleMessage = async (event) => {
-      // Only accept messages from our own origin
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'dodeka-auth-success') return;
-
-      // Popup sent us a token - refresh session from Supabase
+    const refreshSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const email = session.user?.email || '';
@@ -72,8 +68,27 @@ export function AuthProvider({ children }) {
       }
     };
 
+    // Primary: popup sends postMessage after OAuth completes
+    const handleMessage = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'dodeka-auth-success') return;
+      refreshSession();
+    };
+
+    // Fallback: detect localStorage changes from the popup window
+    // When the popup's Supabase client writes the session, this fires in the iframe
+    const handleStorage = (event) => {
+      if (event.key && event.key.includes('supabase') && event.key.includes('auth')) {
+        refreshSession();
+      }
+    };
+
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
