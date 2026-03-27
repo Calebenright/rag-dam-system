@@ -15,46 +15,46 @@ import clsx from 'clsx';
 // Color style mappings
 const colorStyles = {
   mint: {
-    bg: 'bg-pastel-mint',
-    bgLight: 'bg-pastel-mint/10',
-    bgLighter: 'bg-pastel-mint/15',
-    text: 'text-pastel-mint',
-    border: 'border-pastel-mint/20',
+    bg: 'bg-success-500',
+    bgLight: 'bg-success-500/10',
+    bgLighter: 'bg-success-500/15',
+    text: 'text-success-500',
+    border: 'border-success-500/20',
   },
   lavender: {
-    bg: 'bg-pastel-lavender',
-    bgLight: 'bg-pastel-lavender/10',
-    bgLighter: 'bg-pastel-lavender/15',
-    text: 'text-pastel-lavender',
-    border: 'border-pastel-lavender/20',
+    bg: 'bg-purple-300',
+    bgLight: 'bg-purple-300/10',
+    bgLighter: 'bg-purple-300/15',
+    text: 'text-purple-300',
+    border: 'border-purple-300/20',
   },
   sky: {
-    bg: 'bg-pastel-sky',
-    bgLight: 'bg-pastel-sky/10',
-    bgLighter: 'bg-pastel-sky/15',
-    text: 'text-pastel-sky',
-    border: 'border-pastel-sky/20',
+    bg: 'bg-blue-500',
+    bgLight: 'bg-blue-500/10',
+    bgLighter: 'bg-blue-500/15',
+    text: 'text-blue-500',
+    border: 'border-blue-500/20',
   },
   peach: {
-    bg: 'bg-pastel-peach',
-    bgLight: 'bg-pastel-peach/10',
-    bgLighter: 'bg-pastel-peach/15',
-    text: 'text-pastel-peach',
-    border: 'border-pastel-peach/20',
+    bg: 'bg-red-300',
+    bgLight: 'bg-red-300/10',
+    bgLighter: 'bg-red-300/15',
+    text: 'text-red-300',
+    border: 'border-red-300/20',
   },
   coral: {
-    bg: 'bg-pastel-coral',
-    bgLight: 'bg-pastel-coral/10',
-    bgLighter: 'bg-pastel-coral/15',
-    text: 'text-pastel-coral',
-    border: 'border-pastel-coral/20',
+    bg: 'bg-red-500',
+    bgLight: 'bg-red-500/10',
+    bgLighter: 'bg-red-500/15',
+    text: 'text-red-500',
+    border: 'border-red-500/20',
   },
   lemon: {
-    bg: 'bg-pastel-lemon',
-    bgLight: 'bg-pastel-lemon/10',
-    bgLighter: 'bg-pastel-lemon/15',
-    text: 'text-pastel-lemon',
-    border: 'border-pastel-lemon/20',
+    bg: 'bg-warning-500',
+    bgLight: 'bg-warning-500/10',
+    bgLighter: 'bg-warning-500/15',
+    text: 'text-warning-500',
+    border: 'border-warning-500/20',
   },
 };
 
@@ -563,8 +563,8 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64 texture-dots">
-        <Loader2 className="w-8 h-8 animate-spin text-pastel-lavender" />
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-300" />
       </div>
     );
   }
@@ -584,7 +584,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                   className="flex items-center gap-2 px-3 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 hover:bg-neutral-700/50 transition-all"
                 >
                   {selectedSources.size === totalFiltered && totalFiltered > 0 ? (
-                    <CheckSquare className="w-4 h-4 text-pastel-sky" />
+                    <CheckSquare className="w-4 h-4 text-blue-500" />
                   ) : (
                     <Square className="w-4 h-4" />
                   )}
@@ -599,7 +599,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                   className={clsx(
                     'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
                     selectedSources.size > 0
-                      ? 'bg-pastel-lavender/15 text-pastel-lavender hover:bg-pastel-lavender/25'
+                      ? 'bg-purple-300/15 text-purple-300 hover:bg-purple-300/25'
                       : 'bg-neutral-800/50 text-neutral-500 cursor-not-allowed'
                   )}
                 >
@@ -612,7 +612,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                   className={clsx(
                     'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
                     selectedSources.size > 0
-                      ? 'bg-pastel-coral/15 text-pastel-coral hover:bg-pastel-coral/25'
+                      ? 'bg-red-500/15 text-red-500 hover:bg-red-500/25'
                       : 'bg-neutral-800/50 text-neutral-500 cursor-not-allowed'
                   )}
                 >
@@ -652,7 +652,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search sources..."
-                    className="w-full pl-9 pr-4 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-pastel-sky focus:outline-none"
+                    className="w-full pl-9 pr-4 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-blue-500 focus:outline-none"
                   />
                   {searchQuery && (
                     <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300">
@@ -666,7 +666,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                   <select
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
-                    className="appearance-none pl-3 pr-8 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 focus:border-pastel-sky focus:outline-none cursor-pointer"
+                    className="appearance-none pl-3 pr-8 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 focus:border-blue-500 focus:outline-none cursor-pointer"
                   >
                     <option value="all">All Types</option>
                     {typeCategories.map(cat => (
@@ -681,7 +681,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                   <select
                     value={groupBy}
                     onChange={(e) => { setGroupBy(e.target.value); setFilterGroup('all'); }}
-                    className="appearance-none pl-8 pr-8 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 focus:border-pastel-sky focus:outline-none cursor-pointer"
+                    className="appearance-none pl-8 pr-8 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg text-sm text-neutral-300 focus:border-blue-500 focus:outline-none cursor-pointer"
                   >
                     <option value="custom">Custom Groups</option>
                     <option value="type">Group by Type</option>
@@ -699,8 +699,8 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                     className={clsx(
                       'flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all text-sm font-medium',
                       syncAllMutation.isPending
-                        ? 'bg-pastel-sky/15 text-pastel-sky'
-                        : 'bg-pastel-mint/15 text-pastel-mint hover:bg-pastel-mint/25'
+                        ? 'bg-blue-500/15 text-blue-500'
+                        : 'bg-success-500/15 text-success-500 hover:bg-success-500/25'
                     )}
                   >
                     <RefreshCw className={`w-4 h-4 ${syncAllMutation.isPending ? 'animate-spin' : ''}`} />
@@ -711,13 +711,13 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                 <div className="flex items-center bg-neutral-800/50 rounded-lg p-1 border border-neutral-700">
                   <button
                     onClick={() => setViewMode('list')}
-                    className={clsx('p-1.5 rounded transition-all', viewMode === 'list' ? 'bg-pastel-sky/20 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-300')}
+                    className={clsx('p-1.5 rounded transition-all', viewMode === 'list' ? 'bg-blue-500/20 text-blue-500' : 'text-neutral-400 hover:text-neutral-300')}
                   >
                     <List className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={clsx('p-1.5 rounded transition-all', viewMode === 'grid' ? 'bg-pastel-sky/20 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-300')}
+                    className={clsx('p-1.5 rounded transition-all', viewMode === 'grid' ? 'bg-blue-500/20 text-blue-500' : 'text-neutral-400 hover:text-neutral-300')}
                   >
                     <Grid className="w-4 h-4" />
                   </button>
@@ -728,8 +728,8 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                   className={clsx(
                     'flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium',
                     showUpload
-                      ? 'bg-pastel-peach/20 text-pastel-peach'
-                      : 'bg-pastel-lavender/15 text-pastel-lavender hover:bg-pastel-lavender/25'
+                      ? 'bg-red-300/20 text-red-300'
+                      : 'bg-purple-300/15 text-purple-300 hover:bg-purple-300/25'
                   )}
                 >
                   <Upload className="w-4 h-4" />
@@ -742,7 +742,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
           {syncAllResult && (
             <div className={clsx(
               'flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
-              syncAllResult.synced > 0 ? 'bg-pastel-mint/15 text-pastel-mint' : 'bg-pastel-sky/15 text-pastel-sky'
+              syncAllResult.synced > 0 ? 'bg-success-500/15 text-success-500' : 'bg-blue-500/15 text-blue-500'
             )}>
               <RefreshCw className="w-4 h-4" />
               <span>{syncAllResult.synced > 0 ? `${syncAllResult.synced} source${syncAllResult.synced > 1 ? 's' : ''} updated` : 'All sources up to date'}</span>
@@ -760,7 +760,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                 <button
                   onClick={() => setUploadTab('file')}
                   className={clsx('flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-                    uploadTab === 'file' ? 'bg-pastel-lavender/20 text-pastel-lavender' : 'text-neutral-400 hover:text-neutral-200'
+                    uploadTab === 'file' ? 'bg-purple-300/20 text-purple-300' : 'text-neutral-400 hover:text-neutral-200'
                   )}
                 >
                   <FileText className="w-4 h-4" />
@@ -769,7 +769,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                 <button
                   onClick={() => setUploadTab('google')}
                   className={clsx('flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-                    uploadTab === 'google' ? 'bg-pastel-sky/20 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-200'
+                    uploadTab === 'google' ? 'bg-blue-500/20 text-blue-500' : 'text-neutral-400 hover:text-neutral-200'
                   )}
                 >
                   <Link className="w-4 h-4" />
@@ -783,7 +783,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                     className={clsx(
                       'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
                       isGlobalUpload
-                        ? 'bg-pastel-sky/15 text-pastel-sky border-pastel-sky/30'
+                        ? 'bg-blue-500/15 text-blue-500 border-blue-500/30'
                         : 'text-neutral-500 hover:text-neutral-300 border-neutral-700 hover:border-neutral-600'
                     )}
                   >
@@ -794,7 +794,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
               </div>
 
               {isGlobalUpload && (
-                <div className="flex items-center gap-2 mb-3 px-2 py-1.5 rounded-lg bg-pastel-sky/10 border border-pastel-sky/20 text-xs text-pastel-sky">
+                <div className="flex items-center gap-2 mb-3 px-2 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-500">
                   <Globe className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>This source will be available across all clients as a global SOP/template.</span>
                 </div>
@@ -806,11 +806,11 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                     {...getRootProps()}
                     className={clsx(
                       'border-2 border-dashed rounded-xl p-6 transition-all cursor-pointer text-center',
-                      isDragActive ? 'border-pastel-sky bg-pastel-sky/10' : 'border-neutral-700 hover:border-pastel-lavender'
+                      isDragActive ? 'border-blue-500 bg-blue-500/10' : 'border-neutral-700 hover:border-purple-300'
                     )}
                   >
                     <input {...getInputProps()} />
-                    <Upload className={clsx('mx-auto h-8 w-8 mb-2', isDragActive ? 'text-pastel-sky' : 'text-neutral-500')} />
+                    <Upload className={clsx('mx-auto h-8 w-8 mb-2', isDragActive ? 'text-blue-500' : 'text-neutral-500')} />
                     <p className="text-sm text-neutral-300">{isDragActive ? 'Drop files here' : 'Drag & drop or click to browse'}</p>
                     <p className="text-xs text-neutral-500 mt-1">PDF, DOCX, TXT, XLSX, CSV, Images (max 10MB)</p>
                   </div>
@@ -819,18 +819,18 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                     <div className="mt-3 space-y-2">
                       {uploadingFiles.map((file) => (
                         <div key={file.name} className="flex items-center gap-3 p-2 bg-neutral-900/50 rounded-lg">
-                          <File className="w-5 h-5 text-pastel-lavender" />
+                          <File className="w-5 h-5 text-purple-300" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-neutral-200 truncate">{file.name}</p>
                             {file.status === 'uploading' && (
                               <div className="mt-1 bg-neutral-700 rounded-full h-1 overflow-hidden">
-                                <div className="bg-pastel-sky h-full transition-all" style={{ width: `${file.progress}%` }} />
+                                <div className="bg-blue-500 h-full transition-all" style={{ width: `${file.progress}%` }} />
                               </div>
                             )}
                           </div>
-                          {file.status === 'uploading' && <Loader2 className="w-4 h-4 animate-spin text-pastel-sky" />}
-                          {file.status === 'success' && <CheckCircle className="w-4 h-4 text-pastel-mint" />}
-                          {file.status === 'error' && <AlertCircle className="w-4 h-4 text-pastel-coral" />}
+                          {file.status === 'uploading' && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+                          {file.status === 'success' && <CheckCircle className="w-4 h-4 text-success-500" />}
+                          {file.status === 'error' && <AlertCircle className="w-4 h-4 text-red-500" />}
                         </div>
                       ))}
                     </div>
@@ -845,22 +845,22 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                         value={googleUrl}
                         onChange={(e) => setGoogleUrl(e.target.value)}
                         placeholder="https://docs.google.com/..."
-                        className="w-full px-3 py-2 bg-neutral-900/50 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-pastel-sky focus:outline-none"
+                        className="w-full px-3 py-2 bg-neutral-900/50 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                     <button
                       type="submit"
                       disabled={!googleUrl.trim() || googleMutation.isPending}
-                      className="flex items-center gap-2 px-4 py-2 bg-pastel-sky/20 text-pastel-sky rounded-lg hover:bg-pastel-sky/30 transition-all disabled:opacity-50 text-sm font-medium"
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-500 rounded-lg hover:bg-blue-500/30 transition-all disabled:opacity-50 text-sm font-medium"
                     >
                       {googleMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link className="w-4 h-4" />}
                       Add
                     </button>
                   </form>
-                  {urlType && <p className="mt-2 text-xs text-pastel-sky">Detected: Google {urlType === 'sheet' ? 'Sheets' : 'Docs'}</p>}
-                  {googleError && <p className="mt-2 text-xs text-pastel-coral">{googleError}</p>}
+                  {urlType && <p className="mt-2 text-xs text-blue-500">Detected: Google {urlType === 'sheet' ? 'Sheets' : 'Docs'}</p>}
+                  {googleError && <p className="mt-2 text-xs text-red-500">{googleError}</p>}
                   {addedDoc && (
-                    <div className="mt-2 flex items-center gap-2 text-pastel-mint text-sm">
+                    <div className="mt-2 flex items-center gap-2 text-success-500 text-sm">
                       <CheckCircle className="w-4 h-4" />
                       Added: {addedDoc.name}
                     </div>
@@ -880,7 +880,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
               className={clsx(
                 'px-2.5 py-1 text-xs font-medium rounded-lg transition-all',
                 filterGroup === 'all'
-                  ? 'bg-pastel-sky/15 text-pastel-sky border border-pastel-sky/30'
+                  ? 'bg-blue-500/15 text-blue-500 border border-blue-500/30'
                   : 'text-neutral-400 hover:text-neutral-200 bg-neutral-800/50 border border-neutral-700 hover:border-neutral-600'
               )}
             >
@@ -892,7 +892,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                 className={clsx(
                   'px-2.5 py-1 text-xs font-medium rounded-lg transition-all flex items-center gap-1',
                   filterGroup === 'global'
-                    ? 'bg-pastel-sky/15 text-pastel-sky border border-pastel-sky/30'
+                    ? 'bg-blue-500/15 text-blue-500 border border-blue-500/30'
                     : 'text-neutral-400 hover:text-neutral-200 bg-neutral-800/50 border border-neutral-700 hover:border-neutral-600'
                 )}
               >
@@ -909,7 +909,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                   className={clsx(
                     'px-2.5 py-1 text-xs font-medium rounded-lg transition-all flex items-center gap-1',
                     filterGroup === g
-                      ? 'bg-pastel-lavender/15 text-pastel-lavender border border-pastel-lavender/30'
+                      ? 'bg-purple-300/15 text-purple-300 border border-purple-300/30'
                       : 'text-neutral-400 hover:text-neutral-200 bg-neutral-800/50 border border-neutral-700 hover:border-neutral-600'
                   )}
                 >
@@ -936,11 +936,11 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
 
         {/* Sources display */}
         <div className={clsx("flex-1 flex overflow-hidden", selectedDoc && "")}>
-          <div className={clsx("flex-1 overflow-y-auto p-3 scrollbar-dark texture-grid", selectedDoc && "w-1/2")}>
+          <div className={clsx("flex-1 overflow-y-auto p-3 scrollbar-dark", selectedDoc && "w-1/2")}>
             {totalFiltered === 0 ? (
               <div className="text-center py-12">
-                <div className="p-4 bg-neutral-900/50 rounded-2xl inline-block mb-4 border border-neutral-800">
-                  <FileText className="h-12 w-12 text-pastel-lavender" />
+                <div className="hex p-4 bg-neutral-900/50 inline-block mb-4">
+                  <FileText className="h-12 w-12 text-purple-300" />
                 </div>
                 <h3 className="text-sm font-medium text-neutral-100">
                   {searchQuery || filterType !== 'all' ? 'No sources found' : 'No sources yet'}
@@ -968,8 +968,8 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                       {hasMultipleGroups && (
                         <div className={clsx(
                           'flex items-center gap-2 w-full px-2 py-2 rounded-lg transition-all group/header',
-                          category === 'Global' ? 'bg-pastel-sky/5 border border-pastel-sky/10' :
-                          isDragTarget ? 'bg-pastel-lavender/10 border border-dashed border-pastel-lavender/30' : 'hover:bg-neutral-800/50'
+                          category === 'Global' ? 'bg-blue-500/5 border border-blue-500/10' :
+                          isDragTarget ? 'bg-purple-300/10 border border-dashed border-purple-300/30' : 'hover:bg-neutral-800/50'
                         )}>
                           <button onClick={() => toggleGroupCollapsed(category)} className="flex items-center gap-2 flex-1 min-w-0">
                             {isCollapsed ? (
@@ -978,9 +978,9 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                               <ChevronDown className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
                             )}
                             {category === 'Global' ? (
-                              <Globe className="w-4 h-4 flex-shrink-0 text-pastel-sky" />
+                              <Globe className="w-4 h-4 flex-shrink-0 text-blue-500" />
                             ) : (
-                              <Folder className={clsx('w-4 h-4 flex-shrink-0', category === 'Ungrouped' ? 'text-neutral-600' : 'text-pastel-lavender')} />
+                              <Folder className={clsx('w-4 h-4 flex-shrink-0', category === 'Ungrouped' ? 'text-neutral-600' : 'text-purple-300')} />
                             )}
                             {isRenaming ? (
                               <input
@@ -988,7 +988,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                 value={renameGroupValue}
                                 onChange={(e) => { e.stopPropagation(); setRenameGroupValue(e.target.value); }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="px-2 py-0.5 text-sm bg-neutral-800 border border-neutral-600 rounded text-neutral-200 focus:ring-1 focus:ring-pastel-lavender/50 focus:outline-none w-40"
+                                className="px-2 py-0.5 text-sm bg-neutral-800 border border-neutral-600 rounded text-neutral-200 focus:ring-1 focus:ring-purple-300/50 focus:outline-none w-40"
                                 autoFocus
                                 onKeyDown={(e) => {
                                   e.stopPropagation();
@@ -999,13 +999,13 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                               />
                             ) : (
                               <span className={clsx('text-sm font-medium truncate',
-                                category === 'Global' ? 'text-pastel-sky' :
+                                category === 'Global' ? 'text-blue-500' :
                                 category === 'Ungrouped' ? 'text-neutral-500' : 'text-neutral-300')}>
                                 {category}
                               </span>
                             )}
                             <span className={clsx('text-xs px-2 py-0.5 rounded-full flex-shrink-0',
-                              category === 'Global' ? 'text-pastel-sky/70 bg-pastel-sky/10' : 'text-neutral-600 bg-neutral-800'
+                              category === 'Global' ? 'text-blue-500/70 bg-blue-500/10' : 'text-neutral-600 bg-neutral-800'
                             )}>
                               {docs.length}
                             </span>
@@ -1021,7 +1021,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                   setRenamingGroup(category);
                                   setRenameGroupValue(category);
                                 }}
-                                className="p-1 text-neutral-500 hover:text-pastel-sky hover:bg-pastel-sky/10 rounded transition-all"
+                                className="p-1 text-neutral-500 hover:text-blue-500 hover:bg-blue-500/10 rounded transition-all"
                                 title="Rename group"
                               >
                                 <Pencil className="w-3.5 h-3.5" />
@@ -1031,7 +1031,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                   e.stopPropagation();
                                   handleDeleteGroup(category);
                                 }}
-                                className="p-1 text-neutral-500 hover:text-pastel-coral hover:bg-pastel-coral/10 rounded transition-all"
+                                className="p-1 text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded transition-all"
                                 title="Remove group"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1068,8 +1068,8 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                 className={clsx(
                                   'bg-neutral-900/50 rounded-lg border p-3 cursor-pointer transition-all group',
                                   isDragging && 'opacity-40',
-                                  isSelected ? 'border-pastel-sky bg-pastel-sky/10' :
-                                  selectedDoc?.id === doc.id ? 'border-pastel-sky bg-pastel-sky/5' : 'border-neutral-800 hover:border-neutral-700'
+                                  isSelected ? 'border-blue-500 bg-blue-500/10' :
+                                  selectedDoc?.id === doc.id ? 'border-blue-500 bg-blue-500/5' : 'border-neutral-800 hover:border-neutral-700'
                                 )}
                               >
                                 <div className="flex items-center gap-3">
@@ -1083,7 +1083,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                       className="flex-shrink-0"
                                     >
                                       {isSelected ? (
-                                        <CheckSquare className="w-5 h-5 text-pastel-sky" />
+                                        <CheckSquare className="w-5 h-5 text-blue-500" />
                                       ) : (
                                         <Square className="w-5 h-5 text-neutral-500 hover:text-neutral-300" />
                                       )}
@@ -1102,14 +1102,14 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                       <h3 className="text-sm font-medium text-neutral-100 truncate">
                                         {doc.file_name}
                                       </h3>
-                                      {!doc.processed && <Loader2 className="w-4 h-4 animate-spin text-pastel-sky flex-shrink-0" />}
+                                      {!doc.processed && <Loader2 className="w-4 h-4 animate-spin text-blue-500 flex-shrink-0" />}
                                     </div>
                                     <div className="flex items-center gap-2 mt-1">
                                       <span className={clsx('text-xs px-1.5 py-0.5 rounded', styles.bgLight, styles.text)}>
                                         {getFileExtension(doc.file_name, doc.file_type)}
                                       </span>
                                       {isGlobalDoc && (
-                                        <span className="text-xs px-1.5 py-0.5 rounded bg-pastel-sky/10 text-pastel-sky border border-pastel-sky/20 flex items-center gap-1">
+                                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 flex items-center gap-1">
                                           <Globe className="w-3 h-3" />
                                           Global
                                         </span>
@@ -1117,7 +1117,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                       <span className="text-xs text-neutral-500">{new Date(doc.created_at).toLocaleDateString()}</span>
                                       {/* Show group badge when not in custom grouping mode */}
                                       {groupBy !== 'custom' && doc.custom_group && (
-                                        <span className="text-xs px-1.5 py-0.5 rounded bg-pastel-lavender/10 text-pastel-lavender border border-pastel-lavender/20">
+                                        <span className="text-xs px-1.5 py-0.5 rounded bg-purple-300/10 text-purple-300 border border-purple-300/20">
                                           {doc.custom_group}
                                         </span>
                                       )}
@@ -1136,8 +1136,8 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                           className={clsx(
                                             'p-2 rounded-lg transition-all',
                                             isEditingGroup
-                                              ? 'text-pastel-lavender bg-pastel-lavender/10'
-                                              : 'text-neutral-500 opacity-0 group-hover:opacity-100 hover:text-pastel-lavender hover:bg-pastel-lavender/10'
+                                              ? 'text-purple-300 bg-purple-300/10'
+                                              : 'text-neutral-500 opacity-0 group-hover:opacity-100 hover:text-purple-300 hover:bg-purple-300/10'
                                           )}
                                           title="Set group"
                                         >
@@ -1146,7 +1146,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                       )}
                                       <button
                                         onClick={(e) => handleDelete(doc.id, e)}
-                                        className="p-2 text-neutral-500 opacity-0 group-hover:opacity-100 hover:text-pastel-coral hover:bg-pastel-coral/10 rounded-lg transition-all"
+                                        className="p-2 text-neutral-500 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                                       >
                                         <Trash2 className="w-4 h-4" />
                                       </button>
@@ -1167,7 +1167,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                       onChange={(e) => setInlineGroupValue(e.target.value)}
                                       placeholder="Group name..."
                                       list={`inline-groups-${doc.id}`}
-                                      className="flex-1 px-2 py-1 text-xs bg-neutral-800 border border-neutral-700 rounded text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-lavender/50 focus:border-pastel-lavender/50 focus:outline-none"
+                                      className="flex-1 px-2 py-1 text-xs bg-neutral-800 border border-neutral-700 rounded text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-purple-300/50 focus:border-purple-300/50 focus:outline-none"
                                       autoFocus
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') handleInlineGroupSave(doc.id);
@@ -1180,7 +1180,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                     <button
                                       onClick={() => handleInlineGroupSave(doc.id)}
                                       disabled={singleGroupMutation.isPending}
-                                      className="p-1 text-pastel-mint hover:bg-pastel-mint/10 rounded disabled:opacity-50"
+                                      className="p-1 text-success-500 hover:bg-success-500/10 rounded disabled:opacity-50"
                                       title="Save"
                                     >
                                       <CheckCircle className="w-4 h-4" />
@@ -1220,8 +1220,8 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                       {hasMultipleGroups && (
                         <div className={clsx(
                           'flex items-center gap-2 w-full px-2 py-2 rounded-lg transition-all group/header',
-                          category === 'Global' ? 'bg-pastel-sky/5 border border-pastel-sky/10' :
-                          isDragTarget ? 'bg-pastel-lavender/10 border border-dashed border-pastel-lavender/30' : 'hover:bg-neutral-800/50'
+                          category === 'Global' ? 'bg-blue-500/5 border border-blue-500/10' :
+                          isDragTarget ? 'bg-purple-300/10 border border-dashed border-purple-300/30' : 'hover:bg-neutral-800/50'
                         )}>
                           <button onClick={() => toggleGroupCollapsed(category)} className="flex items-center gap-2 flex-1 min-w-0">
                             {isCollapsed ? (
@@ -1230,17 +1230,17 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                               <ChevronDown className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
                             )}
                             {category === 'Global' ? (
-                              <Globe className="w-4 h-4 flex-shrink-0 text-pastel-sky" />
+                              <Globe className="w-4 h-4 flex-shrink-0 text-blue-500" />
                             ) : (
-                              <Folder className={clsx('w-4 h-4 flex-shrink-0', category === 'Ungrouped' ? 'text-neutral-600' : 'text-pastel-lavender')} />
+                              <Folder className={clsx('w-4 h-4 flex-shrink-0', category === 'Ungrouped' ? 'text-neutral-600' : 'text-purple-300')} />
                             )}
                             <span className={clsx('text-sm font-medium truncate',
-                              category === 'Global' ? 'text-pastel-sky' :
+                              category === 'Global' ? 'text-blue-500' :
                               category === 'Ungrouped' ? 'text-neutral-500' : 'text-neutral-300')}>
                               {category}
                             </span>
                             <span className={clsx('text-xs px-2 py-0.5 rounded-full flex-shrink-0',
-                              category === 'Global' ? 'text-pastel-sky/70 bg-pastel-sky/10' : 'text-neutral-600 bg-neutral-800'
+                              category === 'Global' ? 'text-blue-500/70 bg-blue-500/10' : 'text-neutral-600 bg-neutral-800'
                             )}>
                               {docs.length}
                             </span>
@@ -1254,7 +1254,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                   setRenamingGroup(category);
                                   setRenameGroupValue(category);
                                 }}
-                                className="p-1 text-neutral-500 hover:text-pastel-sky hover:bg-pastel-sky/10 rounded transition-all"
+                                className="p-1 text-neutral-500 hover:text-blue-500 hover:bg-blue-500/10 rounded transition-all"
                                 title="Rename group"
                               >
                                 <Pencil className="w-3.5 h-3.5" />
@@ -1264,7 +1264,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                   e.stopPropagation();
                                   handleDeleteGroup(category);
                                 }}
-                                className="p-1 text-neutral-500 hover:text-pastel-coral hover:bg-pastel-coral/10 rounded transition-all"
+                                className="p-1 text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded transition-all"
                                 title="Remove group"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1288,14 +1288,14 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                   onClick={() => isSelectionMode ? toggleSourceSelection(doc.id) : setSelectedDoc(selectedDoc?.id === doc.id ? null : doc)}
                                   className={clsx(
                                     'bg-neutral-900/50 rounded-lg border p-2.5 cursor-pointer transition-all group relative overflow-hidden',
-                                    isSelected ? 'border-pastel-sky bg-pastel-sky/10' :
-                                    selectedDoc?.id === doc.id ? 'border-pastel-sky bg-pastel-sky/5' : 'border-neutral-800 hover:border-neutral-700'
+                                    isSelected ? 'border-blue-500 bg-blue-500/10' :
+                                    selectedDoc?.id === doc.id ? 'border-blue-500 bg-blue-500/5' : 'border-neutral-800 hover:border-neutral-700'
                                   )}
                                 >
                                   <div className={clsx('absolute top-0 left-0 right-0 h-0.5', styles.bg)} />
                                   {doc.is_global && !isSelectionMode && (
                                     <div className="absolute top-2 left-2 z-10">
-                                      <Globe className="w-3.5 h-3.5 text-pastel-sky" />
+                                      <Globe className="w-3.5 h-3.5 text-blue-500" />
                                     </div>
                                   )}
                                   {isSelectionMode && (
@@ -1304,7 +1304,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                       className="absolute top-2 right-2 z-10"
                                     >
                                       {isSelected ? (
-                                        <CheckSquare className="w-4 h-4 text-pastel-sky" />
+                                        <CheckSquare className="w-4 h-4 text-blue-500" />
                                       ) : (
                                         <Square className="w-4 h-4 text-neutral-500 hover:text-neutral-300" />
                                       )}
@@ -1325,7 +1325,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                                       <span className={clsx('text-[10px] px-1.5 py-0.5 rounded-full', styles.bgLighter, styles.text)}>
                                         {getFileExtension(doc.file_name, doc.file_type)}
                                       </span>
-                                      {!doc.processed && <Loader2 className="w-3 h-3 animate-spin text-pastel-sky" />}
+                                      {!doc.processed && <Loader2 className="w-3 h-3 animate-spin text-blue-500" />}
                                     </div>
                                   </div>
                                 </div>
@@ -1373,15 +1373,15 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                         <p className="text-sm text-neutral-500 mt-1">AI Title: {selectedDoc.title}</p>
                       )}
                       {!selectedDoc.processed && (
-                        <div className="flex items-center gap-2 mt-2 text-pastel-sky">
+                        <div className="flex items-center gap-2 mt-2 text-blue-500">
                           <Loader2 className="w-4 h-4 animate-spin" />
                           <span className="text-sm">Processing...</span>
                         </div>
                       )}
                       {selectedDoc.is_global && (
-                        <div className="flex items-center gap-1.5 mt-2 px-2 py-1 bg-pastel-sky/10 border border-pastel-sky/20 rounded-lg w-fit">
-                          <Globe className="w-3.5 h-3.5 text-pastel-sky" />
-                          <span className="text-xs text-pastel-sky font-medium">Global Source</span>
+                        <div className="flex items-center gap-1.5 mt-2 px-2 py-1 bg-blue-500/10 border border-blue-500/20 rounded-lg w-fit">
+                          <Globe className="w-3.5 h-3.5 text-blue-500" />
+                          <span className="text-xs text-blue-500 font-medium">Global Source</span>
                         </div>
                       )}
                     </div>
@@ -1423,7 +1423,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                         {!detailGroupEditing && (
                           <button
                             onClick={() => { setDetailGroupEditing(true); setDetailGroupValue(selectedDoc.custom_group || ''); }}
-                            className="p-1 text-neutral-600 hover:text-pastel-sky hover:bg-pastel-sky/10 rounded transition-all"
+                            className="p-1 text-neutral-600 hover:text-blue-500 hover:bg-blue-500/10 rounded transition-all"
                             title="Change group"
                           >
                             <Pencil className="w-3 h-3" />
@@ -1438,7 +1438,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                             onChange={(e) => setDetailGroupValue(e.target.value)}
                             placeholder="Group name..."
                             list="detail-groups"
-                            className="flex-1 px-2 py-1 text-sm bg-neutral-800 border border-neutral-700 rounded text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-lavender/50 focus:outline-none"
+                            className="flex-1 px-2 py-1 text-sm bg-neutral-800 border border-neutral-700 rounded text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-purple-300/50 focus:outline-none"
                             autoFocus
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleDetailGroupSave();
@@ -1451,7 +1451,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                           <button
                             onClick={handleDetailGroupSave}
                             disabled={singleGroupMutation.isPending}
-                            className="p-1 text-pastel-mint hover:bg-pastel-mint/10 rounded disabled:opacity-50"
+                            className="p-1 text-success-500 hover:bg-success-500/10 rounded disabled:opacity-50"
                           >
                             <CheckCircle className="w-4 h-4" />
                           </button>
@@ -1463,7 +1463,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                           </button>
                         </div>
                       ) : (
-                        <p className={clsx('text-sm', selectedDoc.custom_group ? 'text-pastel-lavender' : 'text-neutral-600 italic')}>
+                        <p className={clsx('text-sm', selectedDoc.custom_group ? 'text-purple-300' : 'text-neutral-600 italic')}>
                           {selectedDoc.custom_group || 'No group assigned'}
                         </p>
                       )}
@@ -1508,7 +1508,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                         {selectedDoc.sheet_tabs.map((tab, idx) => (
                           <span
                             key={idx}
-                            className="px-2 py-1 text-xs bg-pastel-mint/10 text-pastel-mint rounded border border-pastel-mint/20"
+                            className="px-2 py-1 text-xs bg-success-500/10 text-success-500 rounded border border-success-500/20"
                           >
                             {tab.title || tab}
                           </span>
@@ -1527,7 +1527,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                         <button
                           onClick={() => syncMutation.mutate(selectedDoc.id)}
                           disabled={syncMutation.isPending}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-pastel-sky/15 text-pastel-sky rounded-lg hover:bg-pastel-sky/25 transition-all disabled:opacity-50"
+                          className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/15 text-blue-500 rounded-lg hover:bg-blue-500/25 transition-all disabled:opacity-50"
                         >
                           <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
                           <span className="text-xs">Sync</span>
@@ -1542,7 +1542,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                         href={selectedDoc.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-pastel-sky/15 text-pastel-sky rounded-lg hover:bg-pastel-sky/25 transition-all font-medium"
+                        className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-blue-500/15 text-blue-500 rounded-lg hover:bg-blue-500/25 transition-all font-medium"
                       >
                         <ExternalLink className="w-4 h-4" />
                         {selectedDoc.source_type === 'google' ? 'Open in Google' : 'View Original'}
@@ -1550,7 +1550,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                     )}
                     <button
                       onClick={(e) => handleDelete(selectedDoc.id, e)}
-                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-pastel-coral/10 text-pastel-coral rounded-lg hover:bg-pastel-coral/20 transition-all font-medium"
+                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-all font-medium"
                     >
                       <Trash2 className="w-4 h-4" />
                       {selectedDoc.is_global ? 'Delete Global Source' : 'Delete Source'}
@@ -1596,7 +1596,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                       disabled={bulkGroupMutation.isPending}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg text-sm text-neutral-300 transition-all"
                     >
-                      <Folder className="w-4 h-4 text-pastel-lavender" />
+                      <Folder className="w-4 h-4 text-purple-300" />
                       {group}
                     </button>
                   ))}
@@ -1615,7 +1615,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
                   placeholder="Enter group name..."
-                  className="flex-1 px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-pastel-sky focus:outline-none"
+                  className="flex-1 px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-100 placeholder-neutral-500 focus:border-blue-500 focus:outline-none"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && newGroupName.trim()) {
                       bulkGroupMutation.mutate({ documentIds: Array.from(selectedSources), group: newGroupName.trim() });
@@ -1625,7 +1625,7 @@ export default function SourcesManager({ documents, clientId, isLoading, highlig
                 <button
                   onClick={() => bulkGroupMutation.mutate({ documentIds: Array.from(selectedSources), group: newGroupName.trim() })}
                   disabled={!newGroupName.trim() || bulkGroupMutation.isPending}
-                  className="flex items-center gap-2 px-4 py-2 bg-pastel-lavender/20 text-pastel-lavender rounded-lg hover:bg-pastel-lavender/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-300/20 text-purple-300 rounded-lg hover:bg-purple-300/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {bulkGroupMutation.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

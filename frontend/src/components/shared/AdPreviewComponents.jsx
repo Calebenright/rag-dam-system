@@ -62,7 +62,7 @@ export function CopyableField({ label, value, isRegenerating, onRegenerate, clas
   const isNearLimit = charLimit && !isOverLimit && charLimit - charCount < 10;
 
   return (
-    <div className={clsx('group relative rounded-xl border transition-colors', isOverLimit ? 'border-pastel-coral/30 bg-pastel-coral/5' : 'border-neutral-800 bg-neutral-800/20 hover:border-neutral-700', className)}>
+    <div className={clsx('group relative rounded-xl border transition-colors', isOverLimit ? 'border-red-500/30 bg-red-500/5' : 'border-neutral-800 bg-neutral-800/20 hover:border-neutral-700', className)}>
       {/* Header bar */}
       <div className="flex items-center justify-between px-3.5 py-2 border-b border-neutral-800/50">
         <div className="flex items-center gap-2.5">
@@ -70,7 +70,7 @@ export function CopyableField({ label, value, isRegenerating, onRegenerate, clas
           {charLimit && charLimit <= 200 && (
             <span className={clsx(
               'text-[10px] tabular-nums',
-              isOverLimit ? 'text-pastel-coral font-medium' : isNearLimit ? 'text-pastel-lemon' : 'text-neutral-600'
+              isOverLimit ? 'text-red-500 font-medium' : isNearLimit ? 'text-warning-500' : 'text-neutral-600'
             )}>
               {charCount}/{charLimit}
             </span>
@@ -84,7 +84,7 @@ export function CopyableField({ label, value, isRegenerating, onRegenerate, clas
                 disabled={isRegenerating}
                 className={clsx(
                   "p-1.5 rounded-md transition-all disabled:opacity-50",
-                  showDirectionInput ? "text-pastel-sky bg-pastel-sky/10" : "text-neutral-500 hover:text-pastel-sky hover:bg-neutral-800"
+                  showDirectionInput ? "text-blue-300 bg-blue-300/10" : "text-neutral-500 hover:text-blue-300 hover:bg-neutral-800"
                 )}
                 title="Regenerate with direction"
               >
@@ -93,11 +93,11 @@ export function CopyableField({ label, value, isRegenerating, onRegenerate, clas
               <button
                 onClick={() => onRegenerate(null)}
                 disabled={isRegenerating}
-                className="p-1.5 rounded-md text-neutral-500 hover:text-pastel-lavender hover:bg-neutral-800 transition-all disabled:opacity-50"
+                className="p-1.5 rounded-md text-neutral-500 hover:text-purple-300 hover:bg-neutral-800 transition-all disabled:opacity-50"
                 title="Regenerate this field"
               >
                 {isRegenerating ? (
-                  <Loader2 className="w-3 h-3 animate-spin text-pastel-lavender" />
+                  <Loader2 className="w-3 h-3 animate-spin text-purple-300" />
                 ) : (
                   <RefreshCw className="w-3 h-3" />
                 )}
@@ -106,7 +106,7 @@ export function CopyableField({ label, value, isRegenerating, onRegenerate, clas
           )}
           <button
             onClick={handleCopy}
-            className={clsx("p-1.5 rounded-md transition-all", copied ? "text-pastel-mint bg-pastel-mint/10" : "text-neutral-500 hover:text-pastel-mint hover:bg-neutral-800")}
+            className={clsx("p-1.5 rounded-md transition-all", copied ? "text-success-500 bg-success-500/10" : "text-neutral-500 hover:text-success-500 hover:bg-neutral-800")}
             title="Copy to clipboard"
           >
             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
@@ -137,12 +137,12 @@ export function CopyableField({ label, value, isRegenerating, onRegenerate, clas
               if (e.key === 'Escape') { setShowDirectionInput(false); setDirection(''); }
             }}
             placeholder="e.g. make it shorter, more urgent..."
-            className="flex-1 px-3 py-2 text-xs bg-neutral-900/60 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-600 focus:border-pastel-sky/50 focus:outline-none focus:ring-1 focus:ring-pastel-sky/20"
+            className="flex-1 px-3 py-2 text-xs bg-neutral-900/60 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-600 focus:border-blue-300/50 focus:outline-none focus:ring-1 focus:ring-blue-300/20"
           />
           <button
             onClick={handleRegenerateWithDirection}
             disabled={isRegenerating}
-            className="px-3 py-2 text-xs font-medium text-pastel-sky hover:bg-pastel-sky/10 rounded-lg transition-all disabled:opacity-50 flex-shrink-0 border border-pastel-sky/20"
+            className="px-3 py-2 text-xs font-medium text-blue-300 hover:bg-blue-300/10 rounded-lg transition-all disabled:opacity-50 flex-shrink-0 border border-blue-300/20"
           >
             {isRegenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Go'}
           </button>

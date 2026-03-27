@@ -533,7 +533,7 @@ function CopyableField({ label, value, isRegenerating, onRegenerate, className, 
                 disabled={isRegenerating}
                 className={clsx(
                   "flex items-center gap-1 text-[10px] transition-all px-1.5 py-0.5 rounded bg-neutral-800/80 disabled:opacity-50",
-                  showDirectionInput ? "text-pastel-sky" : "text-neutral-400 hover:text-pastel-sky"
+                  showDirectionInput ? "text-blue-300" : "text-neutral-400 hover:text-blue-300"
                 )}
                 title="Regenerate with direction"
               >
@@ -542,7 +542,7 @@ function CopyableField({ label, value, isRegenerating, onRegenerate, className, 
               <button
                 onClick={() => onRegenerate(null)}
                 disabled={isRegenerating}
-                className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-pastel-lavender transition-all px-1.5 py-0.5 rounded bg-neutral-800/80 disabled:opacity-50"
+                className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-purple-300 transition-all px-1.5 py-0.5 rounded bg-neutral-800/80 disabled:opacity-50"
                 title="Regenerate"
               >
                 {isRegenerating ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <RefreshCw className="w-2.5 h-2.5" />}
@@ -551,9 +551,9 @@ function CopyableField({ label, value, isRegenerating, onRegenerate, className, 
           )}
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-pastel-mint transition-all px-1.5 py-0.5 rounded bg-neutral-800/80"
+            className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-success-500 transition-all px-1.5 py-0.5 rounded bg-neutral-800/80"
           >
-            {copied ? <><Check className="w-2.5 h-2.5 text-pastel-mint" /> Copied</> : <><Copy className="w-2.5 h-2.5" /> Copy</>}
+            {copied ? <><Check className="w-2.5 h-2.5 text-success-500" /> Copied</> : <><Copy className="w-2.5 h-2.5" /> Copy</>}
           </button>
         </div>
       </div>
@@ -580,12 +580,12 @@ function CopyableField({ label, value, isRegenerating, onRegenerate, className, 
               if (e.key === 'Escape') { setShowDirectionInput(false); setDirection(''); }
             }}
             placeholder="e.g. more urgency, shorter..."
-            className="flex-1 px-2 py-1 text-xs bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-600 focus:border-pastel-sky/50 focus:outline-none focus:ring-1 focus:ring-pastel-sky/20"
+            className="flex-1 px-2 py-1 text-xs bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-600 focus:border-blue-300/50 focus:outline-none focus:ring-1 focus:ring-blue-300/20"
           />
           <button
             onClick={handleRegenerateWithDirection}
             disabled={isRegenerating}
-            className="px-2 py-1 text-xs font-medium text-pastel-sky hover:bg-pastel-sky/10 rounded-lg transition-all disabled:opacity-50 flex-shrink-0"
+            className="px-2 py-1 text-xs font-medium text-blue-300 hover:bg-blue-300/10 rounded-lg transition-all disabled:opacity-50 flex-shrink-0"
           >
             {isRegenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Go'}
           </button>
@@ -784,7 +784,7 @@ function SEOScorePanel({ lp, onImprove, isImproving, pendingFixes, onAcceptFixes
             <button
               onClick={(e) => { e.stopPropagation(); onImprove(failChecks); }}
               disabled={isImproving}
-              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-pastel-sky hover:bg-pastel-sky/10 rounded-lg transition-all disabled:opacity-50"
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-blue-300 hover:bg-blue-300/10 rounded-lg transition-all disabled:opacity-50"
               title="AI-improve weak areas"
             >
               {isImproving ? <Loader2 className="w-3 h-3 animate-spin" /> : <TrendingUp className="w-3 h-3" />}
@@ -797,10 +797,10 @@ function SEOScorePanel({ lp, onImprove, isImproving, pendingFixes, onAcceptFixes
 
       {/* Pending fixes review */}
       {hasPending && (
-        <div className="border-t border-pastel-sky/20 bg-pastel-sky/5 px-3 py-2.5">
+        <div className="border-t border-blue-300/20 bg-blue-300/5 px-3 py-2.5">
           <div className="flex items-center gap-1.5 mb-2">
-            <TrendingUp className="w-3 h-3 text-pastel-sky" />
-            <span className="text-[10px] font-medium text-pastel-sky">Proposed Improvements</span>
+            <TrendingUp className="w-3 h-3 text-blue-300" />
+            <span className="text-[10px] font-medium text-blue-300">Proposed Improvements</span>
             <span className="text-[10px] text-neutral-500 ml-auto">{Object.keys(pendingFixes).length} field{Object.keys(pendingFixes).length > 1 ? 's' : ''}</span>
           </div>
           <div className="space-y-2 mb-2.5">
@@ -818,7 +818,7 @@ function SEOScorePanel({ lp, onImprove, isImproving, pendingFixes, onAcceptFixes
               return (
                 <div key={key} className="rounded-md bg-neutral-800/60 px-2 py-1.5">
                   <span className="text-[9px] uppercase tracking-wider text-neutral-500 font-medium">{friendlyLabel}</span>
-                  <p className="text-[11px] text-pastel-sky/90 mt-0.5 leading-relaxed">{val}</p>
+                  <p className="text-[11px] text-blue-300/90 mt-0.5 leading-relaxed">{val}</p>
                 </div>
               );
             })}
@@ -860,7 +860,7 @@ function SEOScorePanel({ lp, onImprove, isImproving, pendingFixes, onAcceptFixes
                     <button
                       onClick={() => onImprove([check])}
                       disabled={isImproving}
-                      className="text-[9px] text-pastel-sky hover:text-pastel-sky/80 hover:bg-pastel-sky/10 px-1.5 py-0.5 rounded transition-all disabled:opacity-50 flex-shrink-0"
+                      className="text-[9px] text-blue-300 hover:text-blue-300/80 hover:bg-blue-300/10 px-1.5 py-0.5 rounded transition-all disabled:opacity-50 flex-shrink-0"
                     >
                       {isImproving ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : 'Fix'}
                     </button>
@@ -1079,8 +1079,8 @@ export default function LandingPagePanel({ message, onClose, clientId, conversat
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-neutral-900/50">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-pastel-sky/15 border border-pastel-sky/25 flex items-center justify-center">
-            <Layout className="w-4 h-4 text-pastel-sky" />
+          <div className="w-8 h-8 rounded-lg bg-blue-300/15 border border-blue-300/25 flex items-center justify-center">
+            <Layout className="w-4 h-4 text-blue-300" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-neutral-100">Landing Page</h3>
@@ -1090,9 +1090,9 @@ export default function LandingPagePanel({ message, onClose, clientId, conversat
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleCopyAll}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-neutral-400 hover:text-pastel-mint hover:bg-neutral-800 rounded-lg transition-all"
+            className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-neutral-400 hover:text-success-500 hover:bg-neutral-800 rounded-lg transition-all"
           >
-            {copiedAll ? <><Check className="w-3 h-3 text-pastel-mint" /> Copied All</> : <><Copy className="w-3 h-3" /> Copy All</>}
+            {copiedAll ? <><Check className="w-3 h-3 text-success-500" /> Copied All</> : <><Copy className="w-3 h-3" /> Copy All</>}
           </button>
           <button onClick={onClose} className="p-1.5 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800 rounded-lg transition-colors">
             <X className="w-4 h-4" />
@@ -1111,7 +1111,7 @@ export default function LandingPagePanel({ message, onClose, clientId, conversat
           {/* Hero Section */}
           {(lp.hero.headline || lp.hero.subheadline || lp.hero.cta) && (
             <div>
-              <SectionHeader name="hero" label="Hero / Above the Fold" icon={Zap} color="text-pastel-peach" />
+              <SectionHeader name="hero" label="Hero / Above the Fold" icon={Zap} color="text-red-300" />
               {!collapsedSections.has('hero') && (
                 <div className="pl-5 space-y-2 mt-1">
                   <CopyableField label="Headline" value={lp.hero.headline} isRegenerating={regeneratingField === 'hero.headline'} onRegenerate={(dir) => handleRegenerate('hero.headline', 'Headline', lp.hero.headline, dir)} />
@@ -1129,7 +1129,7 @@ export default function LandingPagePanel({ message, onClose, clientId, conversat
           {/* Social Proof */}
           {lp.socialProof.length > 0 && (
             <div>
-              <SectionHeader name="socialProof" label="Social Proof" icon={Star} color="text-pastel-lemon" />
+              <SectionHeader name="socialProof" label="Social Proof" icon={Star} color="text-warning-500" />
               {!collapsedSections.has('socialProof') && (
                 <div className="pl-5 space-y-2 mt-1">
                   {lp.socialProof.map((sp, i) => {
@@ -1145,7 +1145,7 @@ export default function LandingPagePanel({ message, onClose, clientId, conversat
           {/* Problem */}
           {(lp.problem.headline || lp.problem.body) && (
             <div>
-              <SectionHeader name="problem" label="Problem / Agitation" icon={Shield} color="text-pastel-coral" />
+              <SectionHeader name="problem" label="Problem / Agitation" icon={Shield} color="text-red-500" />
               {!collapsedSections.has('problem') && (
                 <div className="pl-5 space-y-2 mt-1">
                   <CopyableField label="Problem Headline" value={lp.problem.headline} isRegenerating={regeneratingField === 'problem.headline'} onRegenerate={(dir) => handleRegenerate('problem.headline', 'Problem Headline', lp.problem.headline, dir)} />
@@ -1158,7 +1158,7 @@ export default function LandingPagePanel({ message, onClose, clientId, conversat
           {/* Solution */}
           {(lp.solution.headline || lp.solution.body) && (
             <div>
-              <SectionHeader name="solution" label="Solution" icon={Zap} color="text-pastel-mint" />
+              <SectionHeader name="solution" label="Solution" icon={Zap} color="text-success-500" />
               {!collapsedSections.has('solution') && (
                 <div className="pl-5 space-y-2 mt-1">
                   <CopyableField label="Solution Headline" value={lp.solution.headline} isRegenerating={regeneratingField === 'solution.headline'} onRegenerate={(dir) => handleRegenerate('solution.headline', 'Solution Headline', lp.solution.headline, dir)} />
@@ -1171,7 +1171,7 @@ export default function LandingPagePanel({ message, onClose, clientId, conversat
           {/* Benefits */}
           {lp.benefits.length > 0 && (
             <div>
-              <SectionHeader name="benefits" label="Key Benefits" icon={CheckCircle} color="text-pastel-mint" />
+              <SectionHeader name="benefits" label="Key Benefits" icon={CheckCircle} color="text-success-500" />
               {!collapsedSections.has('benefits') && (
                 <div className="pl-5 space-y-2 mt-1">
                   {lp.benefits.map((b, i) => {
@@ -1187,7 +1187,7 @@ export default function LandingPagePanel({ message, onClose, clientId, conversat
           {/* How It Works */}
           {lp.howItWorks.length > 0 && (
             <div>
-              <SectionHeader name="howItWorks" label="How It Works" icon={ArrowRight} color="text-pastel-sky" />
+              <SectionHeader name="howItWorks" label="How It Works" icon={ArrowRight} color="text-blue-300" />
               {!collapsedSections.has('howItWorks') && (
                 <div className="pl-5 space-y-2 mt-1">
                   {lp.howItWorks.map((step, i) => {
@@ -1203,7 +1203,7 @@ export default function LandingPagePanel({ message, onClose, clientId, conversat
           {/* CTA Section */}
           {(lp.ctaSection.headline || lp.ctaSection.cta) && (
             <div>
-              <SectionHeader name="cta" label="Call to Action" icon={ArrowRight} color="text-pastel-lavender" />
+              <SectionHeader name="cta" label="Call to Action" icon={ArrowRight} color="text-purple-300" />
               {!collapsedSections.has('cta') && (
                 <div className="pl-5 space-y-2 mt-1">
                   <CopyableField label="CTA Headline" value={lp.ctaSection.headline} isRegenerating={regeneratingField === 'ctaSection.headline'} onRegenerate={(dir) => handleRegenerate('ctaSection.headline', 'CTA Headline', lp.ctaSection.headline, dir)} />
@@ -1217,7 +1217,7 @@ export default function LandingPagePanel({ message, onClose, clientId, conversat
           {/* Testimonials */}
           {lp.testimonials.length > 0 && (
             <div>
-              <SectionHeader name="testimonials" label="Testimonials" icon={Quote} color="text-pastel-peach" />
+              <SectionHeader name="testimonials" label="Testimonials" icon={Quote} color="text-red-300" />
               {!collapsedSections.has('testimonials') && (
                 <div className="pl-5 space-y-2 mt-1">
                   {lp.testimonials.map((t, i) => {

@@ -380,8 +380,8 @@ export default function DataboardManager({ clientId }) {
       <div className="p-4 border-b border-neutral-800 flex-shrink-0 bg-neutral-900/30">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-pastel-sky/20 flex items-center justify-center border border-pastel-mint/20">
-              <LayoutGrid className="w-5 h-5 text-pastel-mint" />
+            <div className="hex w-10 h-10 bg-gradient-to-br from-success-500/20 to-blue-300/20 flex items-center justify-center">
+              <LayoutGrid className="w-5 h-5 text-success-500" />
             </div>
             <div>
               <h3 className="font-semibold text-neutral-100 text-lg">Databoards</h3>
@@ -401,7 +401,7 @@ export default function DataboardManager({ clientId }) {
             </button>
             <button
               onClick={() => setShowDashboardModal(true)}
-              className="px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-pastel-mint to-pastel-sky rounded-lg hover:opacity-90 flex items-center gap-2 shadow-lg shadow-pastel-mint/20"
+              className="px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-success-500 to-blue-300 rounded-lg hover:opacity-90 flex items-center gap-2 shadow-lg shadow-success-500/20"
             >
               <Plus className="w-4 h-4" />
               New Databoard
@@ -418,7 +418,7 @@ export default function DataboardManager({ clientId }) {
                 className={clsx(
                   'flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all group',
                   selectedDashboardDerived?.id === dashboard.id
-                    ? 'bg-pastel-mint/15 text-pastel-mint border border-pastel-mint/30 shadow-sm'
+                    ? 'bg-success-500/15 text-success-500 border border-success-500/30 shadow-sm'
                     : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50 border border-transparent'
                 )}
               >
@@ -438,7 +438,7 @@ export default function DataboardManager({ clientId }) {
                   className={clsx(
                     'p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity',
                     selectedDashboardDerived?.id === dashboard.id
-                      ? 'hover:bg-pastel-mint/20 text-pastel-mint hover:text-red-400'
+                      ? 'hover:bg-success-500/20 text-success-500 hover:text-red-400'
                       : 'hover:bg-neutral-700 text-neutral-500 hover:text-red-400'
                   )}
                   title="Delete databoard"
@@ -468,7 +468,7 @@ export default function DataboardManager({ clientId }) {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <FileSpreadsheet className="w-4 h-4 text-pastel-mint" />
+                      <FileSpreadsheet className="w-4 h-4 text-success-500" />
                       <span className="text-sm font-medium text-neutral-200">{source.name}</span>
                     </div>
                     <div className="flex items-center gap-1">
@@ -540,7 +540,7 @@ export default function DataboardManager({ clientId }) {
                       className={clsx(
                         'px-2.5 py-1 rounded-md text-xs font-medium transition-all',
                         timeframe === preset.id
-                          ? 'bg-pastel-mint/20 text-pastel-mint shadow-sm'
+                          ? 'bg-success-500/20 text-success-500 shadow-sm'
                           : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/50'
                       )}
                     >
@@ -554,7 +554,7 @@ export default function DataboardManager({ clientId }) {
                   setEditingWidget(null);
                   setShowWidgetModal(true);
                 }}
-                className="px-3 py-1.5 text-sm font-medium text-pastel-mint bg-pastel-mint/15 rounded-lg hover:bg-pastel-mint/25 flex items-center gap-2 border border-pastel-mint/25"
+                className="px-3 py-1.5 text-sm font-medium text-success-500 bg-success-500/15 rounded-lg hover:bg-success-500/25 flex items-center gap-2 border border-success-500/25"
               >
                 <Plus className="w-4 h-4" />
                 Add Widget
@@ -598,7 +598,7 @@ export default function DataboardManager({ clientId }) {
                       </button>
                       <button
                         onClick={() => deleteWidgetMutation.mutate(widget.id)}
-                        className="p-1 text-neutral-500 hover:text-pastel-coral rounded"
+                        className="p-1 text-neutral-500 hover:text-red-500 rounded"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -614,7 +614,7 @@ export default function DataboardManager({ clientId }) {
 
             {(!selectedDashboardDerived.widgets || selectedDashboardDerived.widgets.length === 0) && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-neutral-800 flex items-center justify-center mb-4">
+                <div className="hex w-16 h-16 bg-neutral-800 flex items-center justify-center mb-4">
                   <BarChart3 className="w-8 h-8 text-neutral-600" />
                 </div>
                 <h4 className="text-lg font-medium text-neutral-300 mb-2">No widgets yet</h4>
@@ -623,7 +623,7 @@ export default function DataboardManager({ clientId }) {
                 </p>
                 <button
                   onClick={() => setShowWidgetModal(true)}
-                  className="px-4 py-2 text-sm font-medium text-pastel-mint bg-pastel-mint/15 rounded-lg hover:bg-pastel-mint/25 flex items-center gap-2"
+                  className="px-4 py-2 text-sm font-medium text-success-500 bg-success-500/15 rounded-lg hover:bg-success-500/25 flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   Add First Widget
@@ -633,8 +633,8 @@ export default function DataboardManager({ clientId }) {
           </div>
         ) : dashboards.length === 0 && sources.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-pastel-mint/20 to-pastel-sky/20 flex items-center justify-center mb-6 border border-pastel-mint/20">
-              <LayoutGrid className="w-12 h-12 text-pastel-mint" />
+            <div className="hex w-24 h-24 bg-gradient-to-br from-success-500/20 to-blue-300/20 flex items-center justify-center mb-6">
+              <LayoutGrid className="w-12 h-12 text-success-500" />
             </div>
             <h4 className="text-2xl font-semibold text-neutral-100 mb-3">Create Your First Databoard</h4>
             <p className="text-sm text-neutral-400 mb-8 max-w-lg leading-relaxed">
@@ -650,7 +650,7 @@ export default function DataboardManager({ clientId }) {
               </button>
               <button
                 onClick={() => setShowDashboardModal(true)}
-                className="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-pastel-mint to-pastel-sky rounded-lg hover:opacity-90 flex items-center gap-2 shadow-lg shadow-pastel-mint/20"
+                className="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-success-500 to-blue-300 rounded-lg hover:opacity-90 flex items-center gap-2 shadow-lg shadow-success-500/20"
               >
                 <Plus className="w-4 h-4" />
                 Create Databoard
@@ -717,12 +717,12 @@ export default function DataboardManager({ clientId }) {
           {/* Fullscreen Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800 bg-neutral-900/80 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pastel-mint/20 to-pastel-sky/20 flex items-center justify-center">
-                {fullscreenWidget.widget_type === 'line' ? <LineChartIcon className="w-4 h-4 text-pastel-mint" /> :
-                 fullscreenWidget.widget_type === 'donut' ? <PieChart className="w-4 h-4 text-pastel-mint" /> :
-                 fullscreenWidget.widget_type === 'heatmap' ? <Grid3X3 className="w-4 h-4 text-pastel-mint" /> :
-                 fullscreenWidget.widget_type === 'kpi' ? <Gauge className="w-4 h-4 text-pastel-mint" /> :
-                 <BarChart3 className="w-4 h-4 text-pastel-mint" />}
+              <div className="hex w-8 h-8 bg-gradient-to-br from-success-500/20 to-blue-300/20 flex items-center justify-center">
+                {fullscreenWidget.widget_type === 'line' ? <LineChartIcon className="w-4 h-4 text-success-500" /> :
+                 fullscreenWidget.widget_type === 'donut' ? <PieChart className="w-4 h-4 text-success-500" /> :
+                 fullscreenWidget.widget_type === 'heatmap' ? <Grid3X3 className="w-4 h-4 text-success-500" /> :
+                 fullscreenWidget.widget_type === 'kpi' ? <Gauge className="w-4 h-4 text-success-500" /> :
+                 <BarChart3 className="w-4 h-4 text-success-500" />}
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-neutral-100">{fullscreenWidget.title}</h3>
@@ -811,8 +811,8 @@ function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDelete
       <div className="bg-neutral-900 rounded-2xl border border-neutral-800 w-full max-w-2xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pastel-sky/20 to-pastel-lavender/20 flex items-center justify-center">
-              <Database className="w-5 h-5 text-pastel-sky" />
+            <div className="hex w-10 h-10 bg-gradient-to-br from-blue-300/20 to-purple-300/20 flex items-center justify-center">
+              <Database className="w-5 h-5 text-blue-300" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-neutral-100">Data Sources</h3>
@@ -832,7 +832,7 @@ function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDelete
               className={clsx(
                 'px-2.5 py-1 text-xs font-medium rounded-lg transition-all',
                 filterGroup === 'all'
-                  ? 'bg-pastel-sky/15 text-pastel-sky border border-pastel-sky/30'
+                  ? 'bg-blue-300/15 text-blue-300 border border-blue-300/30'
                   : 'text-neutral-400 hover:text-neutral-200 bg-neutral-800 border border-neutral-700 hover:border-neutral-600'
               )}
             >
@@ -847,7 +847,7 @@ function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDelete
                   className={clsx(
                     'px-2.5 py-1 text-xs font-medium rounded-lg transition-all flex items-center gap-1',
                     filterGroup === g
-                      ? 'bg-pastel-lavender/15 text-pastel-lavender border border-pastel-lavender/30'
+                      ? 'bg-purple-300/15 text-purple-300 border border-purple-300/30'
                       : 'text-neutral-400 hover:text-neutral-200 bg-neutral-800 border border-neutral-700 hover:border-neutral-600'
                   )}
                 >
@@ -895,7 +895,7 @@ function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDelete
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <FileSpreadsheet className="w-4 h-4 text-pastel-mint flex-shrink-0" />
+                              <FileSpreadsheet className="w-4 h-4 text-success-500 flex-shrink-0" />
                               <span className="text-sm font-medium text-neutral-200 truncate">{source.name}</span>
                             </div>
                             <p className="text-xs text-neutral-500 mb-2 truncate">{source.sheet_url}</p>
@@ -924,7 +924,7 @@ function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDelete
                                   onChange={(e) => setEditGroupValue(e.target.value)}
                                   placeholder="Group name..."
                                   list={`groups-${source.id}`}
-                                  className="flex-1 px-2 py-1 text-xs bg-neutral-800 border border-neutral-600 rounded text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-sky/50"
+                                  className="flex-1 px-2 py-1 text-xs bg-neutral-800 border border-neutral-600 rounded text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-blue-300/50"
                                   autoFocus
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleSaveGroup(source.id);
@@ -936,7 +936,7 @@ function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDelete
                                 </datalist>
                                 <button
                                   onClick={() => handleSaveGroup(source.id)}
-                                  className="p-1 text-pastel-mint hover:bg-pastel-mint/10 rounded"
+                                  className="p-1 text-success-500 hover:bg-success-500/10 rounded"
                                   title="Save group"
                                 >
                                   <Check className="w-3.5 h-3.5" />
@@ -1007,7 +1007,7 @@ function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDelete
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Marketing KPIs Sheet"
-                    className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-pastel-sky/50 focus:border-pastel-sky/50"
+                    className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-blue-300/50 focus:border-blue-300/50"
                   />
                 </div>
 
@@ -1020,7 +1020,7 @@ function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDelete
                       value={sheetUrl}
                       onChange={(e) => setSheetUrl(e.target.value)}
                       placeholder="https://docs.google.com/spreadsheets/d/..."
-                      className="w-full pl-10 pr-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-pastel-sky/50 focus:border-pastel-sky/50"
+                      className="w-full pl-10 pr-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-blue-300/50 focus:border-blue-300/50"
                     />
                   </div>
                   <p className="text-xs text-neutral-500 mt-2">
@@ -1038,7 +1038,7 @@ function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDelete
                       onChange={(e) => setGroup(e.target.value)}
                       placeholder="e.g. Marketing, Finance, Operations"
                       list="add-source-groups"
-                      className="w-full pl-10 pr-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-pastel-sky/50 focus:border-pastel-sky/50"
+                      className="w-full pl-10 pr-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-blue-300/50 focus:border-blue-300/50"
                     />
                     <datalist id="add-source-groups">
                       {groups.map(g => <option key={g} value={g} />)}
@@ -1058,7 +1058,7 @@ function SourcesManagerModal({ sources, clientId, onClose, onAddSource, onDelete
                   <button
                     onClick={handleAddSource}
                     disabled={!sheetUrl || isAdding}
-                    className="px-4 py-2 text-sm font-medium text-white bg-pastel-sky rounded-lg hover:bg-pastel-sky/90 disabled:opacity-50 flex items-center gap-2"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-300 rounded-lg hover:bg-blue-300/90 disabled:opacity-50 flex items-center gap-2"
                   >
                     {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                     Connect Source
@@ -1100,8 +1100,8 @@ function DashboardModal({ onClose, onSubmit, isLoading }) {
       <div className="bg-neutral-900 rounded-2xl border border-neutral-800 w-full max-w-md p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-pastel-sky/20 flex items-center justify-center">
-              <LayoutGrid className="w-5 h-5 text-pastel-mint" />
+            <div className="hex w-10 h-10 bg-gradient-to-br from-success-500/20 to-blue-300/20 flex items-center justify-center">
+              <LayoutGrid className="w-5 h-5 text-success-500" />
             </div>
             <h3 className="text-lg font-semibold text-neutral-100">Create Databoard</h3>
           </div>
@@ -1118,7 +1118,7 @@ function DashboardModal({ onClose, onSubmit, isLoading }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Weekly KPI Dashboard"
-              className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-pastel-mint/50 focus:border-pastel-mint/50"
+              className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-success-500/50 focus:border-success-500/50"
             />
           </div>
 
@@ -1129,7 +1129,7 @@ function DashboardModal({ onClose, onSubmit, isLoading }) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Overview of key performance metrics..."
               rows={3}
-              className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-pastel-mint/50 focus:border-pastel-mint/50 resize-none"
+              className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-success-500/50 focus:border-success-500/50 resize-none"
             />
           </div>
         </div>
@@ -1144,7 +1144,7 @@ function DashboardModal({ onClose, onSubmit, isLoading }) {
           <button
             onClick={() => onSubmit({ name, description })}
             disabled={!name || isLoading}
-            className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-pastel-mint to-pastel-sky rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-pastel-mint/20"
+            className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-success-500 to-blue-300 rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-success-500/20"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             Create Databoard
@@ -1294,8 +1294,8 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
         {/* Header */}
         <div className="px-6 py-4 border-b border-neutral-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-pastel-sky/20 flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-pastel-mint" />
+            <div className="hex w-10 h-10 bg-gradient-to-br from-success-500/20 to-blue-300/20 flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-success-500" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-neutral-100">
@@ -1319,8 +1319,8 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                   disabled={s > step}
                   className={clsx(
                     'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all',
-                    step === s ? 'bg-pastel-mint text-neutral-900' :
-                    step > s ? 'bg-pastel-mint/30 text-pastel-mint cursor-pointer hover:bg-pastel-mint/40' :
+                    step === s ? 'bg-success-500 text-neutral-900' :
+                    step > s ? 'bg-success-500/30 text-success-500 cursor-pointer hover:bg-success-500/40' :
                     'bg-neutral-800 text-neutral-500'
                   )}
                 >
@@ -1329,16 +1329,16 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                 {s < 3 && (
                   <div className={clsx(
                     'flex-1 h-0.5 mx-2',
-                    step > s ? 'bg-pastel-mint/30' : 'bg-neutral-800'
+                    step > s ? 'bg-success-500/30' : 'bg-neutral-800'
                   )} />
                 )}
               </div>
             ))}
           </div>
           <div className="flex justify-between mt-2">
-            <span className={clsx('text-xs', step === 1 ? 'text-pastel-mint' : 'text-neutral-500')}>Select Data</span>
-            <span className={clsx('text-xs', step === 2 ? 'text-pastel-mint' : 'text-neutral-500')}>Configure</span>
-            <span className={clsx('text-xs', step === 3 ? 'text-pastel-mint' : 'text-neutral-500')}>Customize</span>
+            <span className={clsx('text-xs', step === 1 ? 'text-success-500' : 'text-neutral-500')}>Select Data</span>
+            <span className={clsx('text-xs', step === 2 ? 'text-success-500' : 'text-neutral-500')}>Configure</span>
+            <span className={clsx('text-xs', step === 3 ? 'text-success-500' : 'text-neutral-500')}>Customize</span>
           </div>
         </div>
 
@@ -1354,7 +1354,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                   <select
                     value={sourceId}
                     onChange={(e) => { setSourceId(e.target.value); setSourceTab(''); setSheetData(null); }}
-                    className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-sm text-neutral-200 focus:ring-2 focus:ring-pastel-mint/50 focus:border-pastel-mint/50"
+                    className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-sm text-neutral-200 focus:ring-2 focus:ring-success-500/50 focus:border-success-500/50"
                   >
                     <option value="">Choose a connected sheet...</option>
                     {sources.map(source => (
@@ -1368,7 +1368,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                     value={sourceTab}
                     onChange={(e) => setSourceTab(e.target.value)}
                     disabled={!sourceId}
-                    className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-sm text-neutral-200 focus:ring-2 focus:ring-pastel-mint/50 focus:border-pastel-mint/50 disabled:opacity-50"
+                    className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-sm text-neutral-200 focus:ring-2 focus:ring-success-500/50 focus:border-success-500/50 disabled:opacity-50"
                   >
                     <option value="">Choose a tab...</option>
                     {availableTabs.map((tab, idx) => (
@@ -1383,7 +1383,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
               {/* Data Preview */}
               {loadingData && (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 animate-spin text-pastel-mint mr-2" />
+                  <Loader2 className="w-6 h-6 animate-spin text-success-500 mr-2" />
                   <span className="text-neutral-400">Loading sheet data...</span>
                 </div>
               )}
@@ -1404,16 +1404,16 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                         key={idx}
                         className={clsx(
                           'p-3 rounded-lg border transition-all',
-                          col.type === 'number' ? 'bg-pastel-mint/5 border-pastel-mint/20' :
-                          col.type === 'date' ? 'bg-pastel-sky/5 border-pastel-sky/20' :
+                          col.type === 'number' ? 'bg-success-500/5 border-success-500/20' :
+                          col.type === 'date' ? 'bg-blue-300/5 border-blue-300/20' :
                           'bg-neutral-800/50 border-neutral-700'
                         )}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span className={clsx(
                             'px-1.5 py-0.5 text-[10px] font-medium rounded',
-                            col.type === 'number' ? 'bg-pastel-mint/20 text-pastel-mint' :
-                            col.type === 'date' ? 'bg-pastel-sky/20 text-pastel-sky' :
+                            col.type === 'number' ? 'bg-success-500/20 text-success-500' :
+                            col.type === 'date' ? 'bg-blue-300/20 text-blue-300' :
                             'bg-neutral-700 text-neutral-400'
                           )}>
                             {col.type === 'number' ? '#' : col.type === 'date' ? '📅' : 'Aa'}
@@ -1489,7 +1489,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                         className={clsx(
                           'p-3 rounded-xl border text-center transition-all',
                           widgetType === type.id
-                            ? 'bg-pastel-mint/15 border-pastel-mint/40 text-pastel-mint'
+                            ? 'bg-success-500/15 border-success-500/40 text-success-500'
                             : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600 hover:text-neutral-300'
                         )}
                       >
@@ -1535,7 +1535,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                             className={clsx(
                               'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
                               aggregation === agg
-                                ? 'bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30'
+                                ? 'bg-success-500/20 text-success-500 border border-success-500/30'
                                 : 'bg-neutral-800 text-neutral-400 border border-neutral-700 hover:text-neutral-300'
                             )}
                           >
@@ -1661,7 +1661,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                             className={clsx(
                               'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
                               aggregation === agg
-                                ? 'bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30'
+                                ? 'bg-success-500/20 text-success-500 border border-success-500/30'
                                 : 'bg-neutral-800 text-neutral-400 border border-neutral-700 hover:text-neutral-300'
                             )}
                           >
@@ -1683,7 +1683,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                     {filters.map((f, idx) => (
                       <span
                         key={idx}
-                        className="inline-flex items-center gap-1.5 px-2 py-1 bg-pastel-sky/15 text-pastel-sky rounded-lg text-xs"
+                        className="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-300/15 text-blue-300 rounded-lg text-xs"
                       >
                         {f.column} = "{f.value}"
                         <button onClick={() => removeFilter(idx)} className="hover:text-white">
@@ -1738,7 +1738,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Monthly Revenue Growth"
-                  className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-pastel-mint/50"
+                  className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-sm text-neutral-200 placeholder-neutral-500 focus:ring-2 focus:ring-success-500/50"
                 />
               </div>
 
@@ -1757,7 +1757,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
                       className={clsx(
                         'flex-1 p-3 rounded-xl border text-center transition-all',
                         gridW === size.w
-                          ? 'bg-pastel-mint/15 border-pastel-mint/40 text-pastel-mint'
+                          ? 'bg-success-500/15 border-success-500/40 text-success-500'
                           : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-600'
                       )}
                     >
@@ -1813,7 +1813,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
             <button
               onClick={() => setStep(step + 1)}
               disabled={step === 1 ? !canProceedToStep2 : !canProceedToStep3}
-              className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-pastel-mint to-pastel-sky rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+              className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-success-500 to-blue-300 rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
             >
               Continue
               <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
@@ -1822,7 +1822,7 @@ function WidgetModal({ sources, widget, onClose, onSubmit, isLoading, fetchSourc
             <button
               onClick={handleSubmit}
               disabled={!title || isLoading}
-              className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-pastel-mint to-pastel-sky rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-pastel-mint/20"
+              className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-success-500 to-blue-300 rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-success-500/20"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {widget ? 'Update Widget' : 'Create Widget'}

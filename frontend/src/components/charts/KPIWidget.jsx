@@ -44,34 +44,34 @@ export default function KPIWidget({
 
   const colorClasses = {
     mint: {
-      bg: 'bg-pastel-mint/10',
-      border: 'border-pastel-mint/20',
-      text: 'text-pastel-mint',
-      accent: 'text-pastel-mint',
+      bg: 'bg-success-500/10',
+      border: 'border-success-500/20',
+      text: 'text-success-500',
+      accent: 'text-success-500',
     },
     sky: {
-      bg: 'bg-pastel-sky/10',
-      border: 'border-pastel-sky/20',
-      text: 'text-pastel-sky',
-      accent: 'text-pastel-sky',
+      bg: 'bg-blue-300/10',
+      border: 'border-blue-300/20',
+      text: 'text-blue-300',
+      accent: 'text-blue-300',
     },
     lavender: {
-      bg: 'bg-pastel-lavender/10',
-      border: 'border-pastel-lavender/20',
-      text: 'text-pastel-lavender',
-      accent: 'text-pastel-lavender',
+      bg: 'bg-purple-300/10',
+      border: 'border-purple-300/20',
+      text: 'text-purple-300',
+      accent: 'text-purple-300',
     },
     peach: {
-      bg: 'bg-pastel-peach/10',
-      border: 'border-pastel-peach/20',
-      text: 'text-pastel-peach',
-      accent: 'text-pastel-peach',
+      bg: 'bg-red-300/10',
+      border: 'border-red-300/20',
+      text: 'text-red-300',
+      accent: 'text-red-300',
     },
     coral: {
-      bg: 'bg-pastel-coral/10',
-      border: 'border-pastel-coral/20',
-      text: 'text-pastel-coral',
-      accent: 'text-pastel-coral',
+      bg: 'bg-red-500/10',
+      border: 'border-red-500/20',
+      text: 'text-red-500',
+      accent: 'text-red-500',
     },
   };
 
@@ -106,9 +106,9 @@ export default function KPIWidget({
       : Minus;
 
   const trendColor = calculatedTrend === 'up'
-    ? 'text-pastel-mint'
+    ? 'text-success-500'
     : calculatedTrend === 'down'
-      ? 'text-pastel-coral'
+      ? 'text-red-500'
       : 'text-neutral-500';
 
   return (

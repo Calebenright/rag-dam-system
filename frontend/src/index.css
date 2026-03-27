@@ -4,21 +4,37 @@
 
 @layer base {
   body {
-    @apply bg-neutral-950 text-neutral-200;
+    @apply bg-neutral-950 text-neutral-200 font-sans;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
+  /* Border policy: very subtle, near-invisible borders per design guide */
   * {
-    @apply border-neutral-800;
+    border-color: #1e2022;
   }
 
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
+
+  /* Typography from design guide */
+  h1, h2, h3 {
+    font-family: 'Funnel Sans', system-ui, -apple-system, sans-serif;
+    font-weight: 600; /* SemiBold */
+  }
+
+  h4, h5, h6 {
+    font-family: 'Funnel Sans', system-ui, -apple-system, sans-serif;
+    font-weight: 500; /* Medium */
+  }
 }
 
 @layer components {
+  /* ============================================
+     TEXTURES & PATTERNS
+     ============================================ */
+
   /* Noise texture overlay */
   .texture-noise {
     position: relative;
@@ -58,119 +74,442 @@
     );
   }
 
-  /* Card styles */
+  /* Hexagonal mesh pattern - from design guide */
+  .texture-hexagons {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66Z' fill='none' stroke='%23ffffff' stroke-width='0.6' opacity='0.08'/%3E%3Cpath d='M28 166L0 150L0 116L28 100L56 116L56 150L28 166Z' fill='none' stroke='%23ffffff' stroke-width='0.6' opacity='0.08'/%3E%3C/svg%3E");
+    background-size: 56px 100px;
+  }
+
+  /* Colored hexagonal pattern with brand colors */
+  .texture-hexagons-brand {
+    position: relative;
+  }
+  .texture-hexagons-brand::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66Z' fill='none' stroke='%23247af2' stroke-width='0.8' opacity='0.12'/%3E%3Cpath d='M28 166L0 150L0 116L28 100L56 116L56 150L28 166Z' fill='none' stroke='%23b53df2' stroke-width='0.8' opacity='0.12'/%3E%3C/svg%3E");
+    background-size: 56px 100px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Flow pattern - gradient wave background */
+  .texture-flow {
+    position: relative;
+    overflow: hidden;
+  }
+  .texture-flow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 80%, rgba(36, 122, 242, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(181, 61, 242, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(229, 48, 11, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ============================================
+     CARD STYLES - Design guide dark mode
+     ============================================ */
+
+  /* Cards use very subtle borders per design guide border policy */
   .card {
-    @apply bg-neutral-900 border border-neutral-800 rounded-xl;
+    @apply bg-neutral-900 rounded-xl;
+    border: 1px solid #1e2022;
+  }
+
+  /* Card inside card (nested) */
+  .card-inner {
+    @apply bg-neutral-850 rounded-lg;
+    border: 1px solid #1e2022;
   }
 
   .card-hover {
-    @apply transition-all duration-200 hover:bg-neutral-850 hover:border-neutral-700;
+    @apply transition-all duration-200;
+  }
+  .card-hover:hover {
+    background-color: #1e2022;
+    border-color: #292b2c;
   }
 
-  /* Gradient accent bar */
+  /* Card with gradient border accent (blue→purple) */
+  .card-gradient {
+    @apply bg-neutral-900 rounded-xl relative;
+    padding: 1px;
+  }
+  .card-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #247af2, #b53df2);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Card with red gradient border */
+  .card-gradient-red {
+    @apply bg-neutral-900 rounded-xl relative;
+    padding: 1px;
+  }
+  .card-gradient-red::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #e5300b, #b53df2);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Card with full brand gradient border (blue→purple→red) */
+  .card-gradient-brand {
+    @apply bg-neutral-900 rounded-xl relative;
+    padding: 1px;
+  }
+  .card-gradient-brand::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #247af2, #b53df2, #e5300b);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* ============================================
+     GRADIENT ACCENTS & BORDERS
+     ============================================ */
+
+  /* Gradient accent bar - brand colors */
   .gradient-bar {
-    background: linear-gradient(90deg,
-      theme('colors.pastel.mint'),
-      theme('colors.pastel.sky'),
-      theme('colors.pastel.lavender'),
-      theme('colors.pastel.peach')
-    );
+    background: linear-gradient(90deg, #247af2, #b53df2, #e5300b);
   }
 
   .gradient-bar-vertical {
-    background: linear-gradient(180deg,
-      theme('colors.pastel.mint'),
-      theme('colors.pastel.sky'),
-      theme('colors.pastel.lavender'),
-      theme('colors.pastel.peach')
-    );
+    background: linear-gradient(180deg, #247af2, #b53df2, #e5300b);
+  }
+
+  /* Blue→Red gradient (from design guide) */
+  .gradient-bar-bp {
+    background: linear-gradient(90deg, #247af2, #5b63f2, #b53df2, #d92a2a, #e5300b);
   }
 
   /* Colored top border accent */
   .border-top-accent {
     border-top: 2px solid;
-    border-image: linear-gradient(90deg,
-      theme('colors.pastel.mint'),
-      theme('colors.pastel.lavender')
-    ) 1;
+    border-image: linear-gradient(90deg, #247af2, #b53df2) 1;
   }
 
-  /* Color chip/pill styles */
+  /* Gradient bottom border */
+  .border-bottom-accent {
+    border-bottom: 2px solid;
+    border-image: linear-gradient(90deg, #247af2, #b53df2) 1;
+  }
+
+  /* Left gradient border accent */
+  .border-left-accent {
+    border-left: 2px solid;
+    border-image: linear-gradient(180deg, #247af2, #b53df2) 1;
+  }
+
+  /* Gradient border - full wrap using pseudo-element */
+  .border-gradient {
+    position: relative;
+  }
+  .border-gradient::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #247af2, #b53df2);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* ============================================
+     TAG PILLS - Design guide styles
+     ============================================ */
+
+  /* Gradient-filled pills (design guide primary style) */
+  .pill-blue {
+    @apply rounded-full px-3 py-1 text-sm font-medium text-white;
+    background: linear-gradient(135deg, #247af2, #074191);
+  }
+  .pill-purple {
+    @apply rounded-full px-3 py-1 text-sm font-medium text-white;
+    background: linear-gradient(135deg, #b53df2, #7317a2);
+  }
+  .pill-red {
+    @apply rounded-full px-3 py-1 text-sm font-medium text-white;
+    background: linear-gradient(135deg, #e5300b, #7d1c08);
+  }
+  .pill-success {
+    @apply rounded-full px-3 py-1 text-sm font-medium text-white;
+    background: linear-gradient(135deg, #17b26a, #074d31);
+  }
+  .pill-warning {
+    @apply rounded-full px-3 py-1 text-sm font-medium text-white;
+    background: linear-gradient(135deg, #f79009, #7a2e0e);
+  }
+  .pill-error {
+    @apply rounded-full px-3 py-1 text-sm font-medium text-white;
+    background: linear-gradient(135deg, #f04438, #7a271a);
+  }
+  .pill-brand {
+    @apply rounded-full px-3 py-1 text-sm font-medium text-white;
+    background: linear-gradient(135deg, #247af2, #b53df2);
+  }
+
+  /* Neutral gray pills (from design guide gray scale) */
+  .pill-neutral-light {
+    @apply rounded-full px-3 py-1 text-sm font-medium;
+    background: #e5e7eb;
+    color: #35393b;
+  }
+  .pill-neutral {
+    @apply rounded-full px-3 py-1 text-sm font-medium;
+    background: #5e6366;
+    color: #f3f4f6;
+  }
+  .pill-neutral-dark {
+    @apply rounded-full px-3 py-1 text-sm font-medium;
+    background: #292b2c;
+    color: #c0c5cb;
+  }
+
+  /* Outline pills */
+  .pill-outline-blue {
+    @apply rounded-full px-3 py-1 text-sm font-medium text-blue-300 bg-transparent;
+    border: 1px solid #247af2;
+  }
+  .pill-outline-purple {
+    @apply rounded-full px-3 py-1 text-sm font-medium text-purple-300 bg-transparent;
+    border: 1px solid #b53df2;
+  }
+  .pill-outline-red {
+    @apply rounded-full px-3 py-1 text-sm font-medium text-red-300 bg-transparent;
+    border: 1px solid #e5300b;
+  }
+
+  /* Subtle/soft pills (existing chip pattern but refined) */
+  .chip-blue {
+    @apply bg-blue-500/15 text-blue-300 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(36, 122, 242, 0.2);
+  }
+  .chip-purple {
+    @apply bg-purple-500/15 text-purple-300 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(181, 61, 242, 0.2);
+  }
+  .chip-red {
+    @apply bg-red-500/15 text-red-300 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(229, 48, 11, 0.2);
+  }
+  .chip-success {
+    @apply bg-success-500/15 text-success-500 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(23, 178, 106, 0.2);
+  }
+  .chip-warning {
+    @apply bg-warning-500/15 text-warning-500 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(247, 144, 9, 0.2);
+  }
+  .chip-error {
+    @apply bg-error-500/15 text-error-500 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(240, 68, 56, 0.2);
+  }
+
+  /* Backward-compatible chip names */
   .chip-mint {
-    @apply bg-pastel-mint/15 text-pastel-mint border border-pastel-mint/25;
+    @apply bg-success-500/15 text-success-500 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(23, 178, 106, 0.2);
   }
   .chip-lavender {
-    @apply bg-pastel-lavender/15 text-pastel-lavender border border-pastel-lavender/25;
+    @apply bg-purple-500/15 text-purple-300 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(181, 61, 242, 0.2);
   }
   .chip-sky {
-    @apply bg-pastel-sky/15 text-pastel-sky border border-pastel-sky/25;
+    @apply bg-blue-500/15 text-blue-300 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(36, 122, 242, 0.2);
   }
   .chip-peach {
-    @apply bg-pastel-peach/15 text-pastel-peach border border-pastel-peach/25;
+    @apply bg-red-300/15 text-red-300 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(255, 137, 113, 0.2);
   }
   .chip-coral {
-    @apply bg-pastel-coral/15 text-pastel-coral border border-pastel-coral/25;
+    @apply bg-red-500/15 text-red-300 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(229, 48, 11, 0.2);
   }
   .chip-lemon {
-    @apply bg-pastel-lemon/15 text-pastel-lemon border border-pastel-lemon/25;
+    @apply bg-warning-500/15 text-warning-500 rounded-full px-3 py-1 text-sm font-medium;
+    border: 1px solid rgba(247, 144, 9, 0.2);
   }
 
-  /* Button base */
+  /* ============================================
+     BUTTONS
+     ============================================ */
+
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
   }
 
   .btn-primary {
-    @apply bg-neutral-800 text-neutral-100 hover:bg-neutral-700 border border-neutral-700;
+    @apply bg-blue-500 text-white hover:bg-blue-600;
+    border: 1px solid #1560c7;
+  }
+
+  .btn-secondary {
+    @apply bg-neutral-700 text-neutral-100 hover:bg-neutral-600;
+    border: 1px solid #47494a;
   }
 
   .btn-accent {
-    @apply bg-pastel-mint/20 text-pastel-mint border border-pastel-mint/30 hover:bg-pastel-mint/30;
+    @apply bg-blue-500/20 text-blue-300 hover:bg-blue-500/30;
+    border: 1px solid rgba(36, 122, 242, 0.3);
   }
 
-  /* Input styles */
+  .btn-ghost {
+    @apply bg-transparent text-neutral-300 hover:bg-neutral-800 border border-transparent;
+  }
+
+  /* Gradient button */
+  .btn-gradient {
+    @apply text-white font-medium px-4 py-2 rounded-lg transition-all duration-200;
+    background: linear-gradient(135deg, #247af2, #b53df2);
+  }
+  .btn-gradient:hover {
+    background: linear-gradient(135deg, #1560c7, #932cc7);
+  }
+
+  /* ============================================
+     INPUTS
+     ============================================ */
+
   .input {
-    @apply bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-2 text-neutral-200
-           placeholder:text-neutral-500 focus:outline-none focus:border-neutral-600
-           focus:ring-1 focus:ring-neutral-600 transition-all;
+    @apply bg-neutral-900 rounded-lg px-4 py-2 text-neutral-200
+           placeholder:text-neutral-500 focus:outline-none focus:border-blue-500
+           focus:ring-1 focus:ring-blue-500/50 transition-all;
+    border: 1px solid #292b2c;
   }
 
-  /* Colored left border indicator */
+  /* ============================================
+     INDICATORS & STATUS
+     ============================================ */
+
+  .indicator-blue {
+    @apply border-l-2 border-l-blue-500;
+  }
+  .indicator-purple {
+    @apply border-l-2 border-l-purple-500;
+  }
+  .indicator-red {
+    @apply border-l-2 border-l-red-500;
+  }
+  .indicator-success {
+    @apply border-l-2 border-l-success-500;
+  }
+  .indicator-warning {
+    @apply border-l-2 border-l-warning-500;
+  }
+  .indicator-error {
+    @apply border-l-2 border-l-error-500;
+  }
+
+  /* Gradient left indicator */
+  .indicator-gradient {
+    border-left: 2px solid;
+    border-image: linear-gradient(180deg, #247af2, #b53df2) 1;
+  }
+
+  /* Backward-compatible indicator names */
   .indicator-mint {
-    @apply border-l-2 border-l-pastel-mint;
+    @apply border-l-2 border-l-success-500;
   }
   .indicator-lavender {
-    @apply border-l-2 border-l-pastel-lavender;
+    @apply border-l-2 border-l-purple-500;
   }
   .indicator-sky {
-    @apply border-l-2 border-l-pastel-sky;
+    @apply border-l-2 border-l-blue-500;
   }
   .indicator-peach {
-    @apply border-l-2 border-l-pastel-peach;
+    @apply border-l-2 border-l-red-300;
   }
   .indicator-coral {
-    @apply border-l-2 border-l-pastel-coral;
+    @apply border-l-2 border-l-red-500;
   }
 
   /* Status dot */
   .status-dot {
     @apply w-2 h-2 rounded-full;
   }
-  .status-dot-mint {
-    @apply bg-pastel-mint;
+  .status-dot-blue { @apply bg-blue-500; }
+  .status-dot-purple { @apply bg-purple-500; }
+  .status-dot-red { @apply bg-red-500; }
+  .status-dot-success { @apply bg-success-500; }
+  .status-dot-warning { @apply bg-warning-500; }
+  .status-dot-error { @apply bg-error-500; }
+
+  /* Backward-compatible status dot names */
+  .status-dot-mint { @apply bg-success-500; }
+  .status-dot-lavender { @apply bg-purple-500; }
+  .status-dot-sky { @apply bg-blue-500; }
+  .status-dot-peach { @apply bg-red-300; }
+
+  /* ============================================
+     SECTION DIVIDERS
+     ============================================ */
+
+  /* Gradient divider line */
+  .divider-gradient {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #247af2, #b53df2, transparent);
   }
-  .status-dot-lavender {
-    @apply bg-pastel-lavender;
-  }
-  .status-dot-sky {
-    @apply bg-pastel-sky;
-  }
-  .status-dot-peach {
-    @apply bg-pastel-peach;
+
+  /* Subtle divider */
+  .divider-subtle {
+    height: 1px;
+    background: #1e2022;
   }
 }
 
 @layer utilities {
+  /* Hexagon shape for icon containers */
+  .hex {
+    clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+    border-radius: 0 !important;
+  }
+
+  /* Active nav item with blue→red gradient border */
+  .nav-active {
+    position: relative;
+    background: transparent;
+  }
+  .nav-active::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #247af2, #b53df2, #e5300b);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -185,7 +524,7 @@
     height: 6px;
   }
   .scrollbar-dark::-webkit-scrollbar-track {
-    @apply bg-neutral-900;
+    @apply bg-neutral-950;
   }
   .scrollbar-dark::-webkit-scrollbar-thumb {
     @apply bg-neutral-700 rounded-full;
@@ -194,23 +533,20 @@
     @apply bg-neutral-600;
   }
 
-  /* Subtle accent highlights */
-  .accent-mint {
-    @apply text-pastel-mint;
-  }
-  .accent-lavender {
-    @apply text-pastel-lavender;
-  }
-  .accent-peach {
-    @apply text-pastel-peach;
-  }
-  .accent-sky {
-    @apply text-pastel-sky;
-  }
+  /* Accent text utilities */
+  .accent-blue { @apply text-blue-500; }
+  .accent-purple { @apply text-purple-500; }
+  .accent-red { @apply text-red-500; }
 
-  /* Subtle borders with pastel */
+  /* Backward-compatible accent names */
+  .accent-mint { @apply text-success-500; }
+  .accent-lavender { @apply text-purple-500; }
+  .accent-peach { @apply text-red-300; }
+  .accent-sky { @apply text-blue-500; }
+
+  /* Subtle borders with brand color */
   .border-accent {
-    @apply border-pastel-mint/30;
+    @apply border-blue-500/30;
   }
 
   /* Striped background */
@@ -222,5 +558,16 @@
       rgb(255 255 255 / 0.02) 4px,
       rgb(255 255 255 / 0.02) 8px
     );
+  }
+
+  /* Glow effects for brand colors */
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(36, 122, 242, 0.15), 0 0 40px rgba(36, 122, 242, 0.05);
+  }
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(181, 61, 242, 0.15), 0 0 40px rgba(181, 61, 242, 0.05);
+  }
+  .glow-red {
+    box-shadow: 0 0 20px rgba(229, 48, 11, 0.15), 0 0 40px rgba(229, 48, 11, 0.05);
   }
 }

@@ -271,14 +271,14 @@ export default function AdCopyGenerator({ clientId }) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-14 h-14 rounded-2xl bg-pastel-peach/15 border border-pastel-peach/25 flex items-center justify-center mx-auto mb-3">
-            <Sparkles className="w-7 h-7 text-pastel-peach animate-pulse" />
+          <div className="hex w-14 h-14 bg-red-300/15 flex items-center justify-center mx-auto mb-3">
+            <Sparkles className="w-7 h-7 text-red-300 animate-pulse" />
           </div>
           <h3 className="text-base font-semibold text-white mb-1">Generating Ad Copy</h3>
           <p className="text-xs text-neutral-400 mb-3">
             Analyzing sources and crafting {AD_FORMATS[platform]?.name || platform} variations...
           </p>
-          <Loader2 className="w-4 h-4 animate-spin text-pastel-peach mx-auto" />
+          <Loader2 className="w-4 h-4 animate-spin text-red-300 mx-auto" />
         </div>
       </div>
     );
@@ -314,7 +314,7 @@ export default function AdCopyGenerator({ clientId }) {
                       className={clsx(
                         'px-2.5 py-1 rounded text-[11px] font-medium transition-all',
                         activeVariation === i
-                          ? 'bg-pastel-peach/15 text-pastel-peach'
+                          ? 'bg-red-300/15 text-red-300'
                           : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
                       )}
                     >
@@ -332,14 +332,14 @@ export default function AdCopyGenerator({ clientId }) {
               className={clsx(
                 "flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-lg transition-all",
                 pushedToSheet
-                  ? "text-pastel-mint bg-pastel-mint/10"
-                  : "text-neutral-400 hover:text-pastel-sky hover:bg-neutral-800"
+                  ? "text-success-500 bg-success-500/10"
+                  : "text-neutral-400 hover:text-blue-300 hover:bg-neutral-800"
               )}
             >
               {pushingToSheet ? (
                 <><Loader2 className="w-3 h-3 animate-spin" /> Pushing...</>
               ) : pushedToSheet ? (
-                <><Check className="w-3 h-3 text-pastel-mint" /> Pushed</>
+                <><Check className="w-3 h-3 text-success-500" /> Pushed</>
               ) : (
                 <><Sheet className="w-3 h-3" /> Push To Spreadsheet</>
               )}
@@ -349,7 +349,7 @@ export default function AdCopyGenerator({ clientId }) {
                 href="https://docs.google.com/spreadsheets/d/1pWA99dxzx-8FyhulLBg00Or5tlwUJMLDlUknSaQUk4c/edit"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 px-2 py-1 text-[11px] text-pastel-sky hover:text-pastel-sky/80 transition-all"
+                className="flex items-center gap-1 px-2 py-1 text-[11px] text-blue-300 hover:text-blue-300/80 transition-all"
               >
                 View <ExternalLink className="w-2.5 h-2.5" />
               </a>
@@ -357,10 +357,10 @@ export default function AdCopyGenerator({ clientId }) {
             <div className="w-px h-3.5 bg-neutral-800" />
             <button
               onClick={handleCopyAll}
-              className="flex items-center gap-1 px-2.5 py-1 text-[11px] text-neutral-400 hover:text-pastel-mint hover:bg-neutral-800 rounded-lg transition-all"
+              className="flex items-center gap-1 px-2.5 py-1 text-[11px] text-neutral-400 hover:text-success-500 hover:bg-neutral-800 rounded-lg transition-all"
             >
               {copiedAll ? (
-                <><Check className="w-3 h-3 text-pastel-mint" /> Copied</>
+                <><Check className="w-3 h-3 text-success-500" /> Copied</>
               ) : (
                 <><Copy className="w-3 h-3" /> Copy All</>
               )}
@@ -405,7 +405,7 @@ export default function AdCopyGenerator({ clientId }) {
                       <select
                         value={value}
                         onChange={(e) => setOverrides(prev => ({ ...prev, [`${activeVariation}-${fieldKey}`]: e.target.value }))}
-                        className="w-full px-3 py-2 text-[13px] bg-neutral-900/60 border border-neutral-700 rounded-lg text-neutral-200 focus:border-pastel-peach/50 focus:outline-none focus:ring-1 focus:ring-pastel-peach/20 cursor-pointer appearance-none"
+                        className="w-full px-3 py-2 text-[13px] bg-neutral-900/60 border border-neutral-700 rounded-lg text-neutral-200 focus:border-red-300/50 focus:outline-none focus:ring-1 focus:ring-red-300/20 cursor-pointer appearance-none"
                         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
                       >
                         {spec.enum.map(opt => (
@@ -459,7 +459,7 @@ export default function AdCopyGenerator({ clientId }) {
                       className={clsx(
                         "flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-colors",
                         variation?.sourcesCited?.includes(source.title)
-                          ? "bg-pastel-peach/5 border-pastel-peach/20"
+                          ? "bg-red-300/5 border-red-300/20"
                           : "bg-neutral-800/30 border-neutral-800"
                       )}
                     >
@@ -467,13 +467,13 @@ export default function AdCopyGenerator({ clientId }) {
                       <span className="text-[11px] text-neutral-300 truncate flex-1">{source.title}</span>
                       <span className={clsx(
                         "text-[9px] font-medium px-1 py-0.5 rounded",
-                        source.similarity >= 70 ? "text-pastel-mint bg-pastel-mint/10" :
-                        source.similarity >= 50 ? "text-pastel-sky bg-pastel-sky/10" :
+                        source.similarity >= 70 ? "text-success-500 bg-success-500/10" :
+                        source.similarity >= 50 ? "text-blue-300 bg-blue-300/10" :
                         "text-neutral-500 bg-neutral-800"
                       )}>
                         {source.similarity}%
                       </span>
-                      {source.isGlobal && <Globe className="w-2.5 h-2.5 text-pastel-sky flex-shrink-0" />}
+                      {source.isGlobal && <Globe className="w-2.5 h-2.5 text-blue-300 flex-shrink-0" />}
                     </div>
                   ))}
                 </div>
@@ -491,8 +491,8 @@ export default function AdCopyGenerator({ clientId }) {
       {/* Compact header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-800 bg-neutral-900/50 flex-shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-pastel-peach/15 border border-pastel-peach/25 flex items-center justify-center">
-            <Megaphone className="w-3.5 h-3.5 text-pastel-peach" />
+          <div className="w-8 h-8 hex bg-red-300/15 flex items-center justify-center">
+            <Megaphone className="w-3.5 h-3.5 text-red-300" />
           </div>
           <div>
             <h2 className="text-sm font-semibold text-white leading-tight">Ad Copy Generator</h2>
@@ -509,7 +509,7 @@ export default function AdCopyGenerator({ clientId }) {
                 className={clsx(
                   'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all',
                   platform === p.id
-                    ? 'bg-pastel-peach/15 text-pastel-peach'
+                    ? 'bg-red-300/15 text-red-300'
                     : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
                 )}
               >
@@ -525,7 +525,7 @@ export default function AdCopyGenerator({ clientId }) {
                 onClick={() => setShowHistory(!showHistory)}
                 className={clsx(
                   'flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all',
-                  showHistory ? 'bg-pastel-sky/15 text-pastel-sky' : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
+                  showHistory ? 'bg-blue-300/15 text-blue-300' : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50'
                 )}
                 title="Past generations"
               >
@@ -562,7 +562,7 @@ export default function AdCopyGenerator({ clientId }) {
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteFromHistory(entry.id); }}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-600 hover:text-pastel-coral transition-all"
+                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-600 hover:text-red-500 transition-all"
                       title="Delete"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -591,7 +591,7 @@ export default function AdCopyGenerator({ clientId }) {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com/product"
-                className="w-full px-3 py-2 text-sm bg-neutral-800/60 border border-neutral-700 rounded-xl text-neutral-100 placeholder-neutral-500 focus:border-pastel-peach/40 focus:outline-none focus:ring-1 focus:ring-pastel-peach/20"
+                className="w-full px-3 py-2 text-sm bg-neutral-800/60 border border-neutral-700 rounded-xl text-neutral-100 placeholder-neutral-500 focus:border-red-300/40 focus:outline-none focus:ring-1 focus:ring-red-300/20"
               />
             </div>
             <div className="w-[160px] flex-shrink-0">
@@ -629,7 +629,7 @@ export default function AdCopyGenerator({ clientId }) {
                   className={clsx(
                     "border border-dashed rounded-xl py-2 text-center cursor-pointer transition-all",
                     isDragActive
-                      ? "border-pastel-peach/50 bg-pastel-peach/5"
+                      ? "border-red-300/50 bg-red-300/5"
                       : "border-neutral-700 hover:border-neutral-600 hover:bg-neutral-800/30"
                   )}
                 >
@@ -647,7 +647,7 @@ export default function AdCopyGenerator({ clientId }) {
               <SlidersHorizontal className="w-3 h-3 text-neutral-400" />
               <span className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium">Ad Style</span>
               {customStyleCount > 0 && (
-                <span className="text-[9px] bg-pastel-peach/15 text-pastel-peach px-1.5 py-0.5 rounded-full font-semibold">
+                <span className="text-[9px] bg-red-300/15 text-red-300 px-1.5 py-0.5 rounded-full font-semibold">
                   {customStyleCount} custom
                 </span>
               )}
@@ -659,7 +659,7 @@ export default function AdCopyGenerator({ clientId }) {
                   <select
                     value={styleConfig[key] || ''}
                     onChange={(e) => setStyleConfig(prev => ({ ...prev, [key]: e.target.value }))}
-                    className="w-full px-2.5 py-2 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 focus:border-pastel-peach/40 focus:outline-none focus:ring-1 focus:ring-pastel-peach/20 cursor-pointer appearance-none"
+                    className="w-full px-2.5 py-2 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 focus:border-red-300/40 focus:outline-none focus:ring-1 focus:ring-red-300/20 cursor-pointer appearance-none"
                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
                   >
                     {config.options.map(opt => (
@@ -676,7 +676,7 @@ export default function AdCopyGenerator({ clientId }) {
                 className={clsx(
                   'flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[11px] font-medium transition-all',
                   styleConfig.emoji
-                    ? 'bg-pastel-peach/10 border-pastel-peach/30 text-pastel-peach'
+                    ? 'bg-red-300/10 border-red-300/30 text-red-300'
                     : 'bg-neutral-800/40 border-neutral-700 text-neutral-400 hover:text-neutral-300 hover:border-neutral-600'
                 )}
               >
@@ -692,7 +692,7 @@ export default function AdCopyGenerator({ clientId }) {
                     className={clsx(
                       'px-2.5 py-1 rounded-md text-[11px] font-medium transition-all',
                       styleConfig.funnel === stage
-                        ? 'bg-pastel-sky/15 text-pastel-sky'
+                        ? 'bg-blue-300/15 text-blue-300'
                         : 'text-neutral-500 hover:text-neutral-300'
                     )}
                   >
@@ -717,7 +717,7 @@ export default function AdCopyGenerator({ clientId }) {
                     className={clsx(
                       'flex-1 py-2 rounded-lg text-xs font-medium transition-all',
                       variationCount === n
-                        ? 'bg-pastel-peach/15 text-pastel-peach border border-pastel-peach/30'
+                        ? 'bg-red-300/15 text-red-300 border border-red-300/30'
                         : 'text-neutral-400 hover:text-neutral-200 bg-neutral-800/40 border border-neutral-800 hover:bg-neutral-800/60'
                     )}
                   >
@@ -728,7 +728,7 @@ export default function AdCopyGenerator({ clientId }) {
             </div>
             <div className="flex-1">
               <label className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1.5 flex items-center gap-1">
-                <ThumbsUp className="w-2.5 h-2.5 text-pastel-mint" />
+                <ThumbsUp className="w-2.5 h-2.5 text-success-500" />
                 Use Words
               </label>
               <input
@@ -736,12 +736,12 @@ export default function AdCopyGenerator({ clientId }) {
                 value={positiveWords}
                 onChange={(e) => setPositiveWords(e.target.value)}
                 placeholder="free, premium, proven..."
-                className="w-full px-2.5 py-2 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:border-pastel-mint/40 focus:outline-none focus:ring-1 focus:ring-pastel-mint/20"
+                className="w-full px-2.5 py-2 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:border-success-500/40 focus:outline-none focus:ring-1 focus:ring-success-500/20"
               />
             </div>
             <div className="flex-1">
               <label className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1.5 flex items-center gap-1">
-                <ThumbsDown className="w-2.5 h-2.5 text-pastel-coral" />
+                <ThumbsDown className="w-2.5 h-2.5 text-red-500" />
                 Avoid Words
               </label>
               <input
@@ -749,7 +749,7 @@ export default function AdCopyGenerator({ clientId }) {
                 value={negativeWords}
                 onChange={(e) => setNegativeWords(e.target.value)}
                 placeholder="cheap, basic, simple..."
-                className="w-full px-2.5 py-2 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:border-pastel-coral/40 focus:outline-none focus:ring-1 focus:ring-pastel-coral/20"
+                className="w-full px-2.5 py-2 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:border-red-500/40 focus:outline-none focus:ring-1 focus:ring-red-500/20"
               />
             </div>
           </div>
@@ -757,7 +757,7 @@ export default function AdCopyGenerator({ clientId }) {
           {/* Creative direction prompt */}
           <div>
             <label className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium mb-1.5 flex items-center gap-1">
-              <FileText className="w-2.5 h-2.5 text-pastel-lavender" />
+              <FileText className="w-2.5 h-2.5 text-purple-300" />
               Creative Direction
               <span className="text-neutral-600 normal-case tracking-normal">(optional)</span>
             </label>
@@ -766,14 +766,14 @@ export default function AdCopyGenerator({ clientId }) {
               onChange={(e) => setCustomPrompt(e.target.value)}
               placeholder="e.g. Focus on the free trial offer, use a question as the hook, mention 30-day money back guarantee..."
               rows={2}
-              className="w-full px-2.5 py-1.5 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:border-pastel-lavender/40 focus:outline-none focus:ring-1 focus:ring-pastel-lavender/20 resize-none leading-relaxed"
+              className="w-full px-2.5 py-1.5 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:border-purple-300/40 focus:outline-none focus:ring-1 focus:ring-purple-300/20 resize-none leading-relaxed"
             />
           </div>
 
           {/* Error */}
           {error && (
-            <div className="px-3 py-2 rounded-lg bg-pastel-coral/10 border border-pastel-coral/20">
-              <p className="text-xs text-pastel-coral">{error}</p>
+            <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+              <p className="text-xs text-red-500">{error}</p>
             </div>
           )}
 
@@ -784,7 +784,7 @@ export default function AdCopyGenerator({ clientId }) {
             className={clsx(
               "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all",
               hasInput
-                ? "bg-pastel-peach text-neutral-950 hover:bg-pastel-peach/90 shadow-lg shadow-pastel-peach/20"
+                ? "bg-red-300 text-neutral-950 hover:bg-red-300/90 shadow-lg shadow-red-300/20"
                 : "bg-neutral-800 text-neutral-600 cursor-not-allowed"
             )}
           >

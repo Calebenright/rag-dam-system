@@ -6,13 +6,13 @@ import clsx from 'clsx';
 
 // Pod color configuration
 const POD_COLORS = {
-  1: { name: 'Mint', color: 'pastel-mint', bg: 'bg-pastel-mint', bgLight: 'bg-pastel-mint/20', text: 'text-pastel-mint', border: 'border-pastel-mint' },
-  2: { name: 'Sky', color: 'pastel-sky', bg: 'bg-pastel-sky', bgLight: 'bg-pastel-sky/20', text: 'text-pastel-sky', border: 'border-pastel-sky' },
-  3: { name: 'Lemon', color: 'pastel-lemon', bg: 'bg-pastel-lemon', bgLight: 'bg-pastel-lemon/20', text: 'text-pastel-lemon', border: 'border-pastel-lemon' },
-  4: { name: 'Lavender', color: 'pastel-lavender', bg: 'bg-pastel-lavender', bgLight: 'bg-pastel-lavender/20', text: 'text-pastel-lavender', border: 'border-pastel-lavender' },
+  1: { name: 'Mint', color: 'success-500', bg: 'bg-success-500', bgLight: 'bg-success-500/20', text: 'text-success-500', border: 'border-success-500' },
+  2: { name: 'Sky', color: 'blue-500', bg: 'bg-blue-500', bgLight: 'bg-blue-500/20', text: 'text-blue-500', border: 'border-blue-500' },
+  3: { name: 'Lemon', color: 'warning-500', bg: 'bg-warning-500', bgLight: 'bg-warning-500/20', text: 'text-warning-500', border: 'border-warning-500' },
+  4: { name: 'Lavender', color: 'purple-500', bg: 'bg-purple-500', bgLight: 'bg-purple-500/20', text: 'text-purple-500', border: 'border-purple-500' },
 };
 
-const SUPERCLIENT_COLOR = { name: 'Coral', color: 'pastel-coral', bg: 'bg-pastel-coral', bgLight: 'bg-pastel-coral/20', text: 'text-pastel-coral', border: 'border-pastel-coral' };
+const SUPERCLIENT_COLOR = { name: 'Coral', color: 'red-500', bg: 'bg-red-500', bgLight: 'bg-red-500/20', text: 'text-red-500', border: 'border-red-500' };
 
 export function getPodColor(client) {
   if (client?.is_superclient) return SUPERCLIENT_COLOR;
@@ -303,7 +303,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
                         className={clsx(
                           "w-8 h-8 rounded-lg border transition-all",
                           thumbnailBgColor === color
-                            ? "border-pastel-mint ring-2 ring-pastel-mint/30"
+                            ? "border-success-500 ring-2 ring-success-500/30"
                             : "border-neutral-700 hover:border-neutral-500"
                         )}
                         style={{ backgroundColor: color }}
@@ -374,9 +374,9 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
               )}
 
               {client?.is_superclient && (
-                <div className="bg-pastel-coral/10 border border-pastel-coral/20 rounded-lg p-4">
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
                   <p className="text-sm text-neutral-300">
-                    <span className="text-pastel-coral font-medium">Superclient:</span> This client has special privileges and uses the coral color theme.
+                    <span className="text-red-500 font-medium">Superclient:</span> This client has special privileges and uses the coral color theme.
                   </p>
                 </div>
               )}
@@ -409,7 +409,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
               {/* API Key */}
               <section className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Code className="w-4 h-4 text-pastel-mint" />
+                  <Code className="w-4 h-4 text-success-500" />
                   <h3 className="text-sm font-medium text-neutral-200">API Key</h3>
                 </div>
                 <div className="flex items-center gap-2">
@@ -418,7 +418,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
                   </div>
                   <button
                     onClick={() => copyToClipboard('dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c')}
-                    className="px-3 py-3 text-neutral-400 hover:text-pastel-mint hover:bg-neutral-800 rounded-lg transition-all"
+                    className="px-3 py-3 text-neutral-400 hover:text-success-500 hover:bg-neutral-800 rounded-lg transition-all"
                   >
                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
@@ -428,7 +428,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
               {/* Client ID */}
               <section className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-pastel-sky" />
+                  <User className="w-4 h-4 text-blue-500" />
                   <h3 className="text-sm font-medium text-neutral-200">Client ID</h3>
                 </div>
                 <div className="flex items-center gap-2">
@@ -441,7 +441,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
                     className={clsx(
                       "px-3 py-3 rounded-lg transition-all",
                       client?.id
-                        ? "text-neutral-400 hover:text-pastel-mint hover:bg-neutral-800"
+                        ? "text-neutral-400 hover:text-success-500 hover:bg-neutral-800"
                         : "text-neutral-600 cursor-not-allowed"
                     )}
                   >
@@ -449,7 +449,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
                   </button>
                 </div>
                 <p className="text-xs text-neutral-500">
-                  Use this ID with the <code className="text-pastel-sky">clientId</code> parameter in API requests
+                  Use this ID with the <code className="text-blue-500">clientId</code> parameter in API requests
                 </p>
               </section>
 
@@ -459,14 +459,14 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
               {/* API Documentation */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Code className="w-4 h-4 text-pastel-sky" />
+                  <Code className="w-4 h-4 text-blue-500" />
                   <h3 className="text-sm font-medium text-neutral-200">Upload Source</h3>
                 </div>
 
                 {/* Endpoint */}
                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-pastel-mint/20 text-pastel-mint rounded text-xs font-medium">POST</span>
+                    <span className="px-2 py-0.5 bg-success-500/20 text-success-500 rounded text-xs font-medium">POST</span>
                     <code className="text-sm text-neutral-300">{baseUrl}/api/sources/upload</code>
                   </div>
                 </div>
@@ -500,7 +500,7 @@ X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9
   -H "Content-Type: application/json" \\
   -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c" \\
   -d '{"url": "https://docs.google.com/document/d/your-doc-id/edit", "client": "${client?.name || 'Client Name'}"}'`)}
-                      className="text-xs text-neutral-500 hover:text-pastel-mint transition-colors flex items-center gap-1"
+                      className="text-xs text-neutral-500 hover:text-success-500 transition-colors flex items-center gap-1"
                     >
                       <Copy className="w-3 h-3" />
                       Copy
@@ -521,11 +521,11 @@ X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9
                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 space-y-2">
                   <p className="text-xs text-neutral-500 uppercase tracking-wide font-medium mb-3">Client Field</p>
                   <p className="text-sm text-neutral-400">
-                    The <code className="text-pastel-sky">client</code> field accepts:
+                    The <code className="text-blue-500">client</code> field accepts:
                   </p>
                   <ul className="text-sm text-neutral-400 list-disc list-inside space-y-1 mt-2">
-                    <li>Client name (case-insensitive): <code className="text-pastel-mint">"{client?.name || 'My Client'}"</code></li>
-                    <li>Client UUID: <code className="text-pastel-mint">"{client?.id || 'uuid-here'}"</code></li>
+                    <li>Client name (case-insensitive): <code className="text-success-500">"{client?.name || 'My Client'}"</code></li>
+                    <li>Client UUID: <code className="text-success-500">"{client?.id || 'uuid-here'}"</code></li>
                   </ul>
                 </div>
 
@@ -546,14 +546,14 @@ X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9
               {/* Create Client API */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-pastel-lavender" />
+                  <User className="w-4 h-4 text-purple-500" />
                   <h3 className="text-sm font-medium text-neutral-200">Create Client</h3>
                 </div>
 
                 {/* Endpoint */}
                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-pastel-mint/20 text-pastel-mint rounded text-xs font-medium">POST</span>
+                    <span className="px-2 py-0.5 bg-success-500/20 text-success-500 rounded text-xs font-medium">POST</span>
                     <code className="text-sm text-neutral-300">{baseUrl}/api/sources/create-client</code>
                   </div>
                 </div>
@@ -579,7 +579,7 @@ X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9
   -H "Content-Type: application/json" \\
   -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c" \\
   -d '{"name": "New Client", "description": "Client description", "pod_number": 2}'`)}
-                      className="text-xs text-neutral-500 hover:text-pastel-mint transition-colors flex items-center gap-1"
+                      className="text-xs text-neutral-500 hover:text-success-500 transition-colors flex items-center gap-1"
                     >
                       <Copy className="w-3 h-3" />
                       Copy
@@ -616,14 +616,14 @@ X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9
               {/* List Sources API */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-pastel-peach" />
+                  <FileText className="w-4 h-4 text-red-300" />
                   <h3 className="text-sm font-medium text-neutral-200">List Sources</h3>
                 </div>
 
                 {/* Endpoints */}
                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 space-y-3">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-pastel-sky/20 text-pastel-sky rounded text-xs font-medium">GET</span>
+                    <span className="px-2 py-0.5 bg-blue-500/20 text-blue-500 rounded text-xs font-medium">GET</span>
                     <code className="text-sm text-neutral-300">{baseUrl}/api/sources/clients</code>
                   </div>
                   <p className="text-xs text-neutral-500">List all clients</p>
@@ -631,7 +631,7 @@ X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9
 
                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 space-y-3">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-pastel-sky/20 text-pastel-sky rounded text-xs font-medium">GET</span>
+                    <span className="px-2 py-0.5 bg-blue-500/20 text-blue-500 rounded text-xs font-medium">GET</span>
                     <code className="text-sm text-neutral-300">{baseUrl}/api/sources/{'{clientId}'}</code>
                   </div>
                   <p className="text-xs text-neutral-500">List all sources for a client</p>
@@ -644,7 +644,7 @@ X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9
                     <button
                       onClick={() => copyToClipboard(`curl -X GET "${baseUrl}/api/sources/${client?.id || 'client-uuid'}" \\
   -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c"`)}
-                      className="text-xs text-neutral-500 hover:text-pastel-mint transition-colors flex items-center gap-1"
+                      className="text-xs text-neutral-500 hover:text-success-500 transition-colors flex items-center gap-1"
                     >
                       <Copy className="w-3 h-3" />
                       Copy
@@ -684,14 +684,14 @@ X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9
               {/* Agent API */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Bot className="w-4 h-4 text-pastel-coral" />
+                  <Bot className="w-4 h-4 text-red-500" />
                   <h3 className="text-sm font-medium text-neutral-200">AI Agent Query</h3>
                 </div>
 
                 {/* Endpoint */}
                 <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-pastel-mint/20 text-pastel-mint rounded text-xs font-medium">POST</span>
+                    <span className="px-2 py-0.5 bg-success-500/20 text-success-500 rounded text-xs font-medium">POST</span>
                     <code className="text-sm text-neutral-300">{baseUrl}/api/agent/query</code>
                   </div>
                 </div>
@@ -717,7 +717,7 @@ X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9
   -H "Content-Type: application/json" \\
   -H "X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c" \\
   -d '{"prompt": "What documents do we have?", "clientId": "${client?.id || 'client-uuid'}"}'`)}
-                      className="text-xs text-neutral-500 hover:text-pastel-mint transition-colors flex items-center gap-1"
+                      className="text-xs text-neutral-500 hover:text-success-500 transition-colors flex items-center gap-1"
                     >
                       <Copy className="w-3 h-3" />
                       Copy
@@ -758,12 +758,12 @@ X-API-Key: dk_global_a7f3e9c2b8d14506923f1e8a4b7c6d0e5f2a1b9c8d7e6f5a4b3c2d1e0f9
                   <p className="text-xs text-neutral-500 uppercase tracking-wide font-medium">Other Agent Endpoints</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-pastel-sky/20 text-pastel-sky rounded text-xs font-medium">GET</span>
+                      <span className="px-2 py-0.5 bg-blue-500/20 text-blue-500 rounded text-xs font-medium">GET</span>
                       <code className="text-neutral-300">/api/agent/clients</code>
                       <span className="text-neutral-500 text-xs ml-auto">List all clients</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-pastel-sky/20 text-pastel-sky rounded text-xs font-medium">GET</span>
+                      <span className="px-2 py-0.5 bg-blue-500/20 text-blue-500 rounded text-xs font-medium">GET</span>
                       <code className="text-neutral-300">/api/agent/clients/:id/context</code>
                       <span className="text-neutral-500 text-xs ml-auto">Get client context</span>
                     </div>

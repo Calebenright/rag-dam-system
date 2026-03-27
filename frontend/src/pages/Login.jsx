@@ -11,7 +11,7 @@ export default function Login() {
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-pastel-lavender" />
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     );
   }
@@ -31,12 +31,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 texture-dots flex items-center justify-center">
-      <div className="w-full max-w-md p-8">
-        <div className="bg-neutral-900/80 rounded-2xl border border-neutral-800 p-8 text-center">
+    <div className="min-h-screen bg-neutral-950 flex items-center justify-center texture-flow">
+      <div className="w-full max-w-md p-8 relative z-10">
+        <div className="bg-neutral-900/90 rounded-2xl p-8 text-center card-gradient backdrop-blur-sm">
           {/* Logo */}
-          <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-pastel-lavender/20 flex items-center justify-center border border-neutral-700">
-            <Sparkles className="w-8 h-8 text-pastel-lavender" />
+          <div className="w-16 h-16 mx-auto mb-6 hex flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(36,122,242,0.25), rgba(181,61,242,0.25))' }}>
+            <Sparkles className="w-8 h-8 text-purple-300" />
           </div>
 
           <h1 className="text-2xl font-semibold text-neutral-50 mb-2">

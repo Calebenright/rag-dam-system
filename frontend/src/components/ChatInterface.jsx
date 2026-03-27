@@ -138,8 +138,8 @@ export default function ChatInterface({ clientId, client }) {
       <div className="flex items-center justify-between px-5 py-3 border-b border-neutral-700 bg-neutral-800/30">
         <div>
           <h3 className="text-base font-medium text-neutral-50 flex items-center gap-2">
-            <div className="p-1.5 bg-pastel-lavender/20 rounded-lg">
-              <Bot className="w-4 h-4 text-pastel-lavender" />
+            <div className="p-1.5 bg-purple-300/20 rounded-lg">
+              <Bot className="w-4 h-4 text-purple-300" />
             </div>
             AI Assistant
           </h3>
@@ -191,14 +191,14 @@ export default function ChatInterface({ clientId, client }) {
                 <div
                   className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
                     msg.role === 'user'
-                      ? 'bg-pastel-sky/20'
-                      : 'bg-pastel-lavender/20'
+                      ? 'bg-blue-300/20'
+                      : 'bg-purple-300/20'
                   }`}
                 >
                   {msg.role === 'user' ? (
-                    <User className="w-4 h-4 text-pastel-sky" />
+                    <User className="w-4 h-4 text-blue-300" />
                   ) : (
-                    <Bot className="w-4 h-4 text-pastel-lavender" />
+                    <Bot className="w-4 h-4 text-purple-300" />
                   )}
                 </div>
 
@@ -249,11 +249,11 @@ export default function ChatInterface({ clientId, client }) {
         {sendMutation.isPending && (
           <div className="flex justify-start">
             <div className="flex items-start space-x-3 max-w-3xl">
-              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-pastel-lavender/20 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-pastel-lavender" />
+              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-purple-300/20 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-purple-300" />
               </div>
               <div className="rounded-xl px-4 py-3 bg-neutral-800/50 border border-neutral-700">
-                <Loader2 className="w-4 h-4 animate-spin text-pastel-lavender" />
+                <Loader2 className="w-4 h-4 animate-spin text-purple-300" />
               </div>
             </div>
           </div>
@@ -294,7 +294,7 @@ export default function ChatInterface({ clientId, client }) {
                 type="checkbox"
                 checked={includeSourceImages}
                 onChange={(e) => setIncludeSourceImages(e.target.checked)}
-                className="rounded border-neutral-600 bg-neutral-800 text-pastel-mint focus:ring-pastel-mint/30"
+                className="rounded border-neutral-600 bg-neutral-800 text-success-500 focus:ring-success-500/30"
               />
               <span className="ml-2 text-xs text-neutral-500 flex items-center">
                 <FolderImage className="w-3.5 h-3.5 mr-1" />
@@ -320,7 +320,7 @@ export default function ChatInterface({ clientId, client }) {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={selectedImages.length >= 5}
-            className="flex-shrink-0 p-2.5 bg-pastel-peach/10 text-pastel-peach hover:bg-pastel-peach/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-pastel-peach/20"
+            className="flex-shrink-0 p-2.5 bg-red-300/10 text-red-300 hover:bg-red-300/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-red-300/20"
             title="Attach images (max 5)"
           >
             <ImagePlus className="w-5 h-5" />
@@ -353,7 +353,7 @@ export default function ChatInterface({ clientId, client }) {
           <button
             type="submit"
             disabled={!message.trim() || sendMutation.isPending}
-            className="flex-shrink-0 p-2.5 bg-pastel-mint/15 text-pastel-mint rounded-lg hover:bg-pastel-mint/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-pastel-mint/25"
+            className="flex-shrink-0 p-2.5 bg-success-500/15 text-success-500 rounded-lg hover:bg-success-500/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-success-500/25"
           >
             <Send className="w-5 h-5" />
           </button>

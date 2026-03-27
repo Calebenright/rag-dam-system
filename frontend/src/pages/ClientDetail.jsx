@@ -53,20 +53,20 @@ export default function ClientDetail() {
 
   if (isLoadingClient) {
     return (
-      <div className="flex items-center justify-center h-screen bg-neutral-950 texture-dots">
-        <Loader2 className="w-6 h-6 animate-spin text-pastel-lavender" />
+      <div className="flex items-center justify-center h-screen bg-neutral-950">
+        <Loader2 className="w-6 h-6 animate-spin text-purple-300" />
       </div>
     );
   }
 
   if (!client) {
     return (
-      <div className="flex items-center justify-center h-screen bg-neutral-950 texture-dots">
+      <div className="flex items-center justify-center h-screen bg-neutral-950">
         <div className="text-center">
           <h2 className="text-xl font-medium text-neutral-200">Client not found</h2>
           <button
             onClick={() => navigate('/')}
-            className="mt-4 text-pastel-sky hover:text-pastel-sky/80 transition-colors"
+            className="mt-4 text-blue-300 hover:text-blue-300/80 transition-colors"
           >
             Return to dashboard
           </button>
@@ -82,10 +82,10 @@ export default function ClientDetail() {
   return (
     <div className="h-screen bg-neutral-950 flex flex-col">
       {/* Gradient accent bar at top */}
-      <div className="h-1 gradient-bar flex-shrink-0" />
+      <div className="h-0.5 gradient-bar-bp flex-shrink-0" />
 
       {/* Top Header */}
-      <header className="bg-neutral-900/80 backdrop-blur-sm border-b border-neutral-800 px-4 py-3 flex-shrink-0">
+      <header className="bg-neutral-900/80 backdrop-blur-sm px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid #1e2022' }}>
         <div className="flex items-center justify-between">
           {/* Left: Back + Client Info */}
           <div className="flex items-center gap-4">
@@ -133,7 +133,7 @@ export default function ClientDetail() {
           {/* Right: Settings */}
           <button
             onClick={() => setShowSettings(true)}
-            className="p-2 text-neutral-500 hover:text-pastel-peach hover:bg-neutral-800 rounded-lg transition-all"
+            className="p-2 text-neutral-500 hover:text-red-300 hover:bg-neutral-800 rounded-lg transition-all"
           >
             <Settings className="w-5 h-5" />
           </button>
@@ -144,7 +144,7 @@ export default function ClientDetail() {
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <aside className={clsx(
-          "bg-neutral-900/50 border-r border-neutral-800 flex flex-col flex-shrink-0 texture-dots transition-all duration-200",
+          "bg-neutral-900/50 border-r border-neutral-800 flex flex-col flex-shrink-0 transition-all duration-200",
           sidebarCollapsed ? "w-14" : "w-52"
         )}>
           <nav className={clsx("flex-1", sidebarCollapsed ? "p-2" : "p-3")}>
@@ -155,7 +155,7 @@ export default function ClientDetail() {
                   'w-full flex items-center rounded-lg text-sm font-medium transition-all',
                   sidebarCollapsed ? 'px-2.5 py-2.5 justify-center' : 'px-3 py-2.5',
                   agentTab === 'chat'
-                    ? 'bg-pastel-lavender/15 text-pastel-lavender border-l-2 border-l-pastel-lavender'
+                    ? 'nav-active bg-white/5 text-white'
                     : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                 )}
                 title={sidebarCollapsed ? 'Client Agent' : undefined}
@@ -165,7 +165,7 @@ export default function ClientDetail() {
                   <>
                     Client Agent
                     {agentTab === 'chat' && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-lavender" />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />
                     )}
                   </>
                 )}
@@ -177,7 +177,7 @@ export default function ClientDetail() {
                   'w-full flex items-center rounded-lg text-sm font-medium transition-all',
                   sidebarCollapsed ? 'px-2.5 py-2.5 justify-center' : 'px-3 py-2.5',
                   agentTab === 'adgen'
-                    ? 'bg-pastel-peach/15 text-pastel-peach border-l-2 border-l-pastel-peach'
+                    ? 'nav-active bg-white/5 text-white'
                     : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                 )}
                 title={sidebarCollapsed ? 'Ad Copy' : undefined}
@@ -187,7 +187,7 @@ export default function ClientDetail() {
                   <>
                     Ad Copy
                     {agentTab === 'adgen' && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-peach" />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />
                     )}
                   </>
                 )}
@@ -199,7 +199,7 @@ export default function ClientDetail() {
                   'w-full flex items-center rounded-lg text-sm font-medium transition-all',
                   sidebarCollapsed ? 'px-2.5 py-2.5 justify-center' : 'px-3 py-2.5',
                   agentTab === 'sources'
-                    ? 'bg-pastel-sky/15 text-pastel-sky border-l-2 border-l-pastel-sky'
+                    ? 'nav-active bg-white/5 text-white'
                     : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                 )}
                 title={sidebarCollapsed ? `Sources (${documents.length})` : undefined}
@@ -211,7 +211,7 @@ export default function ClientDetail() {
                     <span className={clsx(
                       "ml-auto text-xs px-2 py-0.5 rounded-full font-medium",
                       agentTab === 'sources'
-                        ? 'bg-pastel-sky/25 text-pastel-sky'
+                        ? 'bg-white/15 text-white'
                         : 'bg-neutral-800 text-neutral-500'
                     )}>
                       {documents.length}
@@ -226,7 +226,7 @@ export default function ClientDetail() {
                   'w-full flex items-center rounded-lg text-sm font-medium transition-all',
                   sidebarCollapsed ? 'px-2.5 py-2.5 justify-center' : 'px-3 py-2.5',
                   agentTab === 'databoards'
-                    ? 'bg-pastel-mint/15 text-pastel-mint border-l-2 border-l-pastel-mint'
+                    ? 'nav-active bg-white/5 text-white'
                     : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                 )}
                 title={sidebarCollapsed ? 'Databoards' : undefined}
@@ -236,7 +236,7 @@ export default function ClientDetail() {
                   <>
                     Databoards
                     {agentTab === 'databoards' && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-mint" />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />
                     )}
                   </>
                 )}
@@ -249,7 +249,7 @@ export default function ClientDetail() {
                     'w-full flex items-center rounded-lg text-sm font-medium transition-all',
                     sidebarCollapsed ? 'px-2.5 py-2.5 justify-center' : 'px-3 py-2.5',
                     agentTab === 'leads'
-                      ? 'bg-pastel-coral/15 text-pastel-coral border-l-2 border-l-pastel-coral'
+                      ? 'nav-active bg-white/5 text-white'
                       : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200'
                   )}
                   title={sidebarCollapsed ? 'Leads (Local only)' : 'Leads feature requires local environment'}
@@ -262,7 +262,7 @@ export default function ClientDetail() {
                         <span className="text-[10px] text-neutral-500 font-normal">Local only</span>
                       </span>
                       {agentTab === 'leads' && (
-                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-pastel-coral" />
+                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />
                       )}
                     </>
                   )}
@@ -278,10 +278,10 @@ export default function ClientDetail() {
               {!sidebarCollapsed && (
                 <div className="flex items-center gap-2 text-xs text-neutral-500">
                   <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-pastel-mint" />
-                    <span className="w-2 h-2 rounded-full bg-pastel-sky" />
-                    <span className="w-2 h-2 rounded-full bg-pastel-lavender" />
-                    <span className="w-2 h-2 rounded-full bg-pastel-coral" />
+                    <span className="w-2 h-2 rounded-full bg-success-500" />
+                    <span className="w-2 h-2 rounded-full bg-blue-300" />
+                    <span className="w-2 h-2 rounded-full bg-purple-300" />
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
                   </div>
                   <span>RAG System</span>
                 </div>
@@ -305,7 +305,7 @@ export default function ClientDetail() {
         </aside>
 
         {/* Content */}
-        <main className="flex-1 flex overflow-hidden bg-neutral-950 texture-grid">
+        <main className="flex-1 flex overflow-hidden bg-neutral-950">
           {agentTab === 'chat' ? (
             <>
               <div className="flex-1 flex flex-col overflow-hidden">

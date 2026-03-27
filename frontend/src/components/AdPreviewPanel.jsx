@@ -282,8 +282,8 @@ export default function AdPreviewPanel({ message, onClose, clientId, conversatio
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-neutral-900/50">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-pastel-peach/15 border border-pastel-peach/25 flex items-center justify-center">
-            <Megaphone className="w-4 h-4 text-pastel-peach" />
+          <div className="w-8 h-8 rounded-lg bg-red-300/15 border border-red-300/25 flex items-center justify-center">
+            <Megaphone className="w-4 h-4 text-red-300" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-neutral-100">Ad Preview</h3>
@@ -293,10 +293,10 @@ export default function AdPreviewPanel({ message, onClose, clientId, conversatio
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleCopyAll}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-neutral-400 hover:text-pastel-mint hover:bg-neutral-800 rounded-lg transition-all"
+            className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-neutral-400 hover:text-success-500 hover:bg-neutral-800 rounded-lg transition-all"
           >
             {copiedAll ? (
-              <><Check className="w-3 h-3 text-pastel-mint" /> Copied All</>
+              <><Check className="w-3 h-3 text-success-500" /> Copied All</>
             ) : (
               <><Copy className="w-3 h-3" /> Copy All</>
             )}
@@ -321,7 +321,7 @@ export default function AdPreviewPanel({ message, onClose, clientId, conversatio
               className={clsx(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
                 activeFormat === f.id
-                  ? 'bg-pastel-peach/15 text-pastel-peach border border-pastel-peach/25'
+                  ? 'bg-red-300/15 text-red-300 border border-red-300/25'
                   : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/60'
               )}
             >

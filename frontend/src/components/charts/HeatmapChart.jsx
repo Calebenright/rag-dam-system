@@ -13,7 +13,7 @@ export default function HeatmapChart({
   title,
   rowLabel = 'Rows',
   colLabel = 'Columns',
-  colorScale = ['#1a1a1a', '#a7f3d0'], // Dark to pastel-mint
+  colorScale = ['#1a1a1a', '#a7f3d0'], // Dark to success-500
 }) {
   const canvasRef = useRef(null);
 

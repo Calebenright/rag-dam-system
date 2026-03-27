@@ -69,7 +69,7 @@ export default function ChatHistory({
       <div className="border-l border-neutral-800 bg-neutral-900/30 flex flex-col items-center py-3 px-1">
         <button
           onClick={onToggle}
-          className="p-2 text-neutral-500 hover:text-pastel-lavender hover:bg-neutral-800 rounded-lg transition-all"
+          className="p-2 text-neutral-500 hover:text-purple-300 hover:bg-neutral-800 rounded-lg transition-all"
           title="Chat history"
         >
           <History className="w-4 h-4" />
@@ -83,7 +83,7 @@ export default function ChatHistory({
       {/* Header */}
       <div className="p-3 border-b border-neutral-800 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium text-neutral-300">
-          <History className="w-4 h-4 text-pastel-lavender" />
+          <History className="w-4 h-4 text-purple-300" />
           <span>History</span>
         </div>
         <button
@@ -99,7 +99,7 @@ export default function ChatHistory({
       <div className="p-2 border-b border-neutral-800">
         <button
           onClick={onNewConversation}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-pastel-lavender bg-pastel-lavender/10 hover:bg-pastel-lavender/20 rounded-lg transition-all"
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-purple-300 bg-purple-300/10 hover:bg-purple-300/20 rounded-lg transition-all"
         >
           <Plus className="w-4 h-4" />
           New Chat
@@ -126,7 +126,7 @@ export default function ChatHistory({
               className={clsx(
                 "group relative px-3 py-2 rounded-lg cursor-pointer transition-all text-sm",
                 conv.id === currentConversationId
-                  ? "bg-pastel-lavender/15 text-pastel-lavender"
+                  ? "bg-purple-300/15 text-purple-300"
                   : "text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200"
               )}
             >

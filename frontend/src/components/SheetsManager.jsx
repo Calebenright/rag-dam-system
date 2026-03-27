@@ -10,22 +10,22 @@ import clsx from 'clsx';
 // Color styles
 const colorStyles = {
   mint: {
-    bg: 'bg-pastel-mint',
-    bgLight: 'bg-pastel-mint/10',
-    text: 'text-pastel-mint',
-    border: 'border-pastel-mint/30',
+    bg: 'bg-success-500',
+    bgLight: 'bg-success-500/10',
+    text: 'text-success-500',
+    border: 'border-success-500/30',
   },
   sky: {
-    bg: 'bg-pastel-sky',
-    bgLight: 'bg-pastel-sky/10',
-    text: 'text-pastel-sky',
-    border: 'border-pastel-sky/30',
+    bg: 'bg-blue-300',
+    bgLight: 'bg-blue-300/10',
+    text: 'text-blue-300',
+    border: 'border-blue-300/30',
   },
   lavender: {
-    bg: 'bg-pastel-lavender',
-    bgLight: 'bg-pastel-lavender/10',
-    text: 'text-pastel-lavender',
-    border: 'border-pastel-lavender/30',
+    bg: 'bg-purple-300',
+    bgLight: 'bg-purple-300/10',
+    text: 'text-purple-300',
+    border: 'border-purple-300/30',
   },
 };
 
@@ -98,12 +98,12 @@ export default function SheetsManager({ clientId, onSelectSheet, selectedSheetId
       <div className="p-4 border-b border-neutral-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-pastel-mint" />
+            <FileSpreadsheet className="w-5 h-5 text-success-500" />
             <h3 className="font-semibold text-neutral-200">Google Sheets</h3>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="p-1.5 bg-pastel-mint/10 text-pastel-mint rounded-lg hover:bg-pastel-mint/20 transition-all border border-pastel-mint/20"
+            className="p-1.5 bg-success-500/10 text-success-500 rounded-lg hover:bg-success-500/20 transition-all border border-success-500/20"
             title="Connect a sheet"
           >
             <Plus className="w-4 h-4" />
@@ -118,7 +118,7 @@ export default function SheetsManager({ clientId, onSelectSheet, selectedSheetId
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-pastel-lavender" />
+            <Loader2 className="w-5 h-5 animate-spin text-purple-300" />
           </div>
         ) : sheets.length === 0 ? (
           <div className="text-center py-8">
@@ -128,7 +128,7 @@ export default function SheetsManager({ clientId, onSelectSheet, selectedSheetId
             <p className="text-sm text-neutral-500">No sheets connected</p>
             <button
               onClick={() => setShowAddModal(true)}
-              className="mt-3 text-xs text-pastel-mint hover:text-pastel-mint/80"
+              className="mt-3 text-xs text-success-500 hover:text-success-500/80"
             >
               + Connect your first sheet
             </button>
@@ -171,7 +171,7 @@ export default function SheetsManager({ clientId, onSelectSheet, selectedSheetId
                         e.stopPropagation();
                         refreshMutation.mutate(sheet.spreadsheet_id);
                       }}
-                      className="p-1 text-neutral-500 hover:text-pastel-sky rounded transition-all"
+                      className="p-1 text-neutral-500 hover:text-blue-300 rounded transition-all"
                       title="Refresh"
                     >
                       <RefreshCw className={clsx(
@@ -184,14 +184,14 @@ export default function SheetsManager({ clientId, onSelectSheet, selectedSheetId
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="p-1 text-neutral-500 hover:text-pastel-mint rounded transition-all"
+                      className="p-1 text-neutral-500 hover:text-success-500 rounded transition-all"
                       title="Open in Google Sheets"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                     <button
                       onClick={(e) => handleDisconnect(sheet.spreadsheet_id, e)}
-                      className="p-1 text-neutral-500 hover:text-pastel-coral rounded transition-all"
+                      className="p-1 text-neutral-500 hover:text-red-500 rounded transition-all"
                       title="Disconnect"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -249,7 +249,7 @@ export default function SheetsManager({ clientId, onSelectSheet, selectedSheetId
                   value={sheetUrl}
                   onChange={(e) => setSheetUrl(e.target.value)}
                   placeholder="https://docs.google.com/spreadsheets/d/..."
-                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-mint/50 focus:border-pastel-mint text-sm"
+                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-success-500/50 focus:border-success-500 text-sm"
                   required
                 />
                 <p className="text-xs text-neutral-500 mt-1">
@@ -266,14 +266,14 @@ export default function SheetsManager({ clientId, onSelectSheet, selectedSheetId
                   value={sheetName}
                   onChange={(e) => setSheetName(e.target.value)}
                   placeholder="My Sales Data"
-                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-mint/50 focus:border-pastel-mint text-sm"
+                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-success-500/50 focus:border-success-500 text-sm"
                 />
               </div>
 
               {connectMutation.isError && (
-                <div className="flex items-center gap-2 p-3 bg-pastel-coral/10 border border-pastel-coral/20 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-pastel-coral flex-shrink-0" />
-                  <p className="text-sm text-pastel-coral">
+                <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                  <p className="text-sm text-red-500">
                     {connectMutation.error?.response?.data?.error || 'Failed to connect sheet'}
                   </p>
                 </div>
@@ -290,7 +290,7 @@ export default function SheetsManager({ clientId, onSelectSheet, selectedSheetId
                 <button
                   type="submit"
                   disabled={connectMutation.isPending || !sheetUrl.trim()}
-                  className="px-4 py-2 bg-pastel-mint/15 text-pastel-mint rounded-lg hover:bg-pastel-mint/25 transition-all disabled:opacity-50 text-sm font-medium flex items-center gap-2 border border-pastel-mint/25"
+                  className="px-4 py-2 bg-success-500/15 text-success-500 rounded-lg hover:bg-success-500/25 transition-all disabled:opacity-50 text-sm font-medium flex items-center gap-2 border border-success-500/25"
                 >
                   {connectMutation.isPending ? (
                     <>

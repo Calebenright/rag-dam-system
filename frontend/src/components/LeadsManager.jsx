@@ -11,34 +11,34 @@ import clsx from 'clsx';
 // Color styles matching the app theme
 const colorStyles = {
   coral: {
-    bg: 'bg-pastel-coral',
-    bgLight: 'bg-pastel-coral/10',
-    text: 'text-pastel-coral',
-    border: 'border-pastel-coral/30',
+    bg: 'bg-red-500',
+    bgLight: 'bg-red-500/10',
+    text: 'text-red-500',
+    border: 'border-red-500/30',
   },
   mint: {
-    bg: 'bg-pastel-mint',
-    bgLight: 'bg-pastel-mint/10',
-    text: 'text-pastel-mint',
-    border: 'border-pastel-mint/30',
+    bg: 'bg-success-500',
+    bgLight: 'bg-success-500/10',
+    text: 'text-success-500',
+    border: 'border-success-500/30',
   },
   sky: {
-    bg: 'bg-pastel-sky',
-    bgLight: 'bg-pastel-sky/10',
-    text: 'text-pastel-sky',
-    border: 'border-pastel-sky/30',
+    bg: 'bg-blue-300',
+    bgLight: 'bg-blue-300/10',
+    text: 'text-blue-300',
+    border: 'border-blue-300/30',
   },
   lavender: {
-    bg: 'bg-pastel-lavender',
-    bgLight: 'bg-pastel-lavender/10',
-    text: 'text-pastel-lavender',
-    border: 'border-pastel-lavender/30',
+    bg: 'bg-purple-300',
+    bgLight: 'bg-purple-300/10',
+    text: 'text-purple-300',
+    border: 'border-purple-300/30',
   },
   peach: {
-    bg: 'bg-pastel-peach',
-    bgLight: 'bg-pastel-peach/10',
-    text: 'text-pastel-peach',
-    border: 'border-pastel-peach/30',
+    bg: 'bg-red-300',
+    bgLight: 'bg-red-300/10',
+    text: 'text-red-300',
+    border: 'border-red-300/30',
   },
 };
 
@@ -48,8 +48,8 @@ function StatusBadge({ available, label, onStart, onStop, isLoading }) {
     <div className={clsx(
       'flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-all',
       available
-        ? 'bg-pastel-mint/15 text-pastel-mint border border-pastel-mint/20'
-        : 'bg-pastel-coral/15 text-pastel-coral border border-pastel-coral/20'
+        ? 'bg-success-500/15 text-success-500 border border-success-500/20'
+        : 'bg-red-500/15 text-red-500 border border-red-500/20'
     )}>
       {isLoading ? (
         <Loader2 className="w-3 h-3 animate-spin" />
@@ -65,8 +65,8 @@ function StatusBadge({ available, label, onStart, onStop, isLoading }) {
         className={clsx(
           'ml-1 p-0.5 rounded transition-all',
           available
-            ? 'hover:bg-pastel-coral/20 text-pastel-mint hover:text-pastel-coral'
-            : 'hover:bg-pastel-mint/20 text-pastel-coral hover:text-pastel-mint',
+            ? 'hover:bg-red-500/20 text-success-500 hover:text-red-500'
+            : 'hover:bg-success-500/20 text-red-500 hover:text-success-500',
           isLoading && 'opacity-50 cursor-not-allowed'
         )}
         title={available ? `Stop ${label}` : `Start ${label}`}
@@ -95,7 +95,7 @@ function ColumnSelector({ columns, selected, onChange, label, icon: Icon }) {
         className={clsx(
           'w-full flex items-center justify-between px-3 py-2 bg-neutral-800 border rounded-lg text-sm transition-all',
           selected
-            ? 'border-pastel-lavender/50 text-neutral-200'
+            ? 'border-purple-300/50 text-neutral-200'
             : 'border-neutral-700 text-neutral-500'
         )}
       >
@@ -132,7 +132,7 @@ function ColumnSelector({ columns, selected, onChange, label, icon: Icon }) {
               }}
               className={clsx(
                 'w-full px-3 py-2 text-left hover:bg-neutral-700/50 transition-colors',
-                selected?.letter === col.letter && 'bg-pastel-lavender/10'
+                selected?.letter === col.letter && 'bg-purple-300/10'
               )}
             >
               <div className="flex items-center justify-between">
@@ -177,9 +177,9 @@ function ProgressBar({ current, total, label, color = 'lavender' }) {
 // Verification log item
 function LogItem({ type, value, status, statusCode }) {
   const getStatusColor = () => {
-    if (statusCode === 'verified' || statusCode === 'valid' || statusCode === 'mobile') return 'text-pastel-mint';
-    if (statusCode === 'risky' || statusCode === 'catch_all' || statusCode === 'voip') return 'text-pastel-peach';
-    if (statusCode === 'invalid' || statusCode === 'error' || statusCode === 'not_in_service') return 'text-pastel-coral';
+    if (statusCode === 'verified' || statusCode === 'valid' || statusCode === 'mobile') return 'text-success-500';
+    if (statusCode === 'risky' || statusCode === 'catch_all' || statusCode === 'voip') return 'text-red-300';
+    if (statusCode === 'invalid' || statusCode === 'error' || statusCode === 'not_in_service') return 'text-red-500';
     return 'text-neutral-400';
   };
 
@@ -187,9 +187,9 @@ function LogItem({ type, value, status, statusCode }) {
     <div className="flex items-center justify-between py-1.5 px-2 text-xs border-b border-neutral-800/50 last:border-0">
       <div className="flex items-center gap-2 min-w-0">
         {type === 'email' ? (
-          <Mail className="w-3 h-3 text-pastel-sky flex-shrink-0" />
+          <Mail className="w-3 h-3 text-blue-300 flex-shrink-0" />
         ) : (
-          <Phone className="w-3 h-3 text-pastel-mint flex-shrink-0" />
+          <Phone className="w-3 h-3 text-success-500 flex-shrink-0" />
         )}
         <span className="text-neutral-300 truncate">{value || '(empty)'}</span>
       </div>
@@ -446,8 +446,8 @@ export default function LeadsManager() {
       <div className="p-4 border-b border-neutral-800 bg-neutral-900/30">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-pastel-coral/15 flex items-center justify-center border border-pastel-coral/20">
-              <Users className="w-5 h-5 text-pastel-coral" />
+            <div className="hex w-10 h-10 bg-red-500/15 flex items-center justify-center">
+              <Users className="w-5 h-5 text-red-500" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-neutral-100">Leads Verification</h2>
@@ -490,7 +490,7 @@ export default function LeadsManager() {
               <h3 className="text-sm font-medium text-neutral-300">Leads Sheets</h3>
               <button
                 onClick={() => setShowConnectModal(true)}
-                className="p-1.5 bg-pastel-mint/10 text-pastel-mint rounded-lg hover:bg-pastel-mint/20 transition-all border border-pastel-mint/20"
+                className="p-1.5 bg-success-500/10 text-success-500 rounded-lg hover:bg-success-500/20 transition-all border border-success-500/20"
                 title="Connect a sheet"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -499,7 +499,7 @@ export default function LeadsManager() {
 
             {isLoadingSheets ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 animate-spin text-pastel-lavender" />
+                <Loader2 className="w-5 h-5 animate-spin text-purple-300" />
               </div>
             ) : sheets.length === 0 ? (
               <div className="text-center py-6">
@@ -509,7 +509,7 @@ export default function LeadsManager() {
                 <p className="text-sm text-neutral-500 mb-2">No leads sheets connected</p>
                 <button
                   onClick={() => setShowConnectModal(true)}
-                  className="text-xs text-pastel-mint hover:text-pastel-mint/80"
+                  className="text-xs text-success-500 hover:text-success-500/80"
                 >
                   + Connect a Google Sheet
                 </button>
@@ -549,7 +549,7 @@ export default function LeadsManager() {
                               e.stopPropagation();
                               refreshMutation.mutate(sheet.spreadsheet_id);
                             }}
-                            className="p-1 text-neutral-500 hover:text-pastel-sky rounded transition-all"
+                            className="p-1 text-neutral-500 hover:text-blue-300 rounded transition-all"
                             title="Refresh"
                           >
                             <RefreshCw className={clsx(
@@ -559,7 +559,7 @@ export default function LeadsManager() {
                           </button>
                           <button
                             onClick={(e) => handleDisconnect(sheet.spreadsheet_id, e)}
-                            className="p-1 text-neutral-500 hover:text-pastel-coral rounded transition-all"
+                            className="p-1 text-neutral-500 hover:text-red-500 rounded transition-all"
                             title="Disconnect"
                           >
                             <Trash2 className="w-3 h-3" />
@@ -584,7 +584,7 @@ export default function LeadsManager() {
                       className={clsx(
                         'px-2 py-1 text-xs rounded-md transition-all',
                         selectedTab === tab.title
-                          ? 'bg-pastel-lavender/20 text-pastel-lavender border border-pastel-lavender/30'
+                          ? 'bg-purple-300/20 text-purple-300 border border-purple-300/30'
                           : 'bg-neutral-800 text-neutral-400 hover:text-neutral-300'
                       )}
                     >
@@ -603,7 +603,7 @@ export default function LeadsManager() {
 
               {isLoadingPreview ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-pastel-lavender" />
+                  <Loader2 className="w-5 h-5 animate-spin text-purple-300" />
                 </div>
               ) : preview?.columns ? (
                 <div className="space-y-4">
@@ -630,13 +630,13 @@ export default function LeadsManager() {
                         id="useNumVerify"
                         checked={useNumVerify}
                         onChange={(e) => setUseNumVerify(e.target.checked)}
-                        className="w-4 h-4 rounded border-neutral-600 bg-neutral-800 text-pastel-lavender focus:ring-pastel-lavender/50"
+                        className="w-4 h-4 rounded border-neutral-600 bg-neutral-800 text-purple-300 focus:ring-purple-300/50"
                       />
                       <label htmlFor="useNumVerify" className="flex-1">
                         <span className="text-sm text-neutral-300">Use NumVerify API</span>
                         <p className="text-xs text-neutral-500">Get carrier & line type info (slower)</p>
                       </label>
-                      <Zap className="w-4 h-4 text-pastel-peach" />
+                      <Zap className="w-4 h-4 text-red-300" />
                     </div>
                   )}
 
@@ -660,7 +660,7 @@ export default function LeadsManager() {
                   'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all',
                   isVerifying
                     ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
-                    : 'bg-pastel-coral/15 text-pastel-coral hover:bg-pastel-coral/25 border border-pastel-coral/25'
+                    : 'bg-red-500/15 text-red-500 hover:bg-red-500/25 border border-red-500/25'
                 )}
               >
                 {isVerifying ? (
@@ -677,7 +677,7 @@ export default function LeadsManager() {
               </button>
 
               {(!backendStatus?.email?.available || !backendStatus?.phone?.available) && (
-                <p className="mt-2 text-xs text-pastel-coral/80 text-center">
+                <p className="mt-2 text-xs text-red-500/80 text-center">
                   Some backends are offline
                 </p>
               )}
@@ -738,14 +738,14 @@ export default function LeadsManager() {
                   {verificationLog.map((log, idx) => {
                     if (log.type === 'info') {
                       return (
-                        <div key={idx} className="py-1.5 px-2 text-xs text-pastel-sky">
+                        <div key={idx} className="py-1.5 px-2 text-xs text-blue-300">
                           {log.message}
                         </div>
                       );
                     }
                     if (log.type === 'success') {
                       return (
-                        <div key={idx} className="py-1.5 px-2 text-xs text-pastel-mint flex items-center gap-1.5">
+                        <div key={idx} className="py-1.5 px-2 text-xs text-success-500 flex items-center gap-1.5">
                           <CheckCircle2 className="w-3 h-3" />
                           {log.message}
                         </div>
@@ -753,7 +753,7 @@ export default function LeadsManager() {
                     }
                     if (log.type === 'error') {
                       return (
-                        <div key={idx} className="py-1.5 px-2 text-xs text-pastel-coral flex items-center gap-1.5">
+                        <div key={idx} className="py-1.5 px-2 text-xs text-red-500 flex items-center gap-1.5">
                           <AlertCircle className="w-3 h-3" />
                           {log.message}
                         </div>
@@ -761,7 +761,7 @@ export default function LeadsManager() {
                     }
                     if (log.type === 'warning') {
                       return (
-                        <div key={idx} className="py-1.5 px-2 text-xs text-pastel-peach flex items-center gap-1.5">
+                        <div key={idx} className="py-1.5 px-2 text-xs text-red-300 flex items-center gap-1.5">
                           <AlertCircle className="w-3 h-3" />
                           {log.message}
                         </div>
@@ -823,7 +823,7 @@ export default function LeadsManager() {
                   value={sheetUrl}
                   onChange={(e) => setSheetUrl(e.target.value)}
                   placeholder="https://docs.google.com/spreadsheets/d/..."
-                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-coral/50 focus:border-pastel-coral text-sm"
+                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-red-500/50 focus:border-red-500 text-sm"
                   required
                 />
                 <p className="text-xs text-neutral-500 mt-1">
@@ -840,14 +840,14 @@ export default function LeadsManager() {
                   value={sheetName}
                   onChange={(e) => setSheetName(e.target.value)}
                   placeholder="My Leads Sheet"
-                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-coral/50 focus:border-pastel-coral text-sm"
+                  className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-red-500/50 focus:border-red-500 text-sm"
                 />
               </div>
 
               {connectMutation.isError && (
-                <div className="flex items-center gap-2 p-3 bg-pastel-coral/10 border border-pastel-coral/20 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-pastel-coral flex-shrink-0" />
-                  <p className="text-sm text-pastel-coral">
+                <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                  <p className="text-sm text-red-500">
                     {connectMutation.error?.response?.data?.error || 'Failed to connect sheet'}
                   </p>
                 </div>
@@ -864,7 +864,7 @@ export default function LeadsManager() {
                 <button
                   type="submit"
                   disabled={connectMutation.isPending || !sheetUrl.trim()}
-                  className="px-4 py-2 bg-pastel-coral/15 text-pastel-coral rounded-lg hover:bg-pastel-coral/25 transition-all disabled:opacity-50 text-sm font-medium flex items-center gap-2 border border-pastel-coral/25"
+                  className="px-4 py-2 bg-red-500/15 text-red-500 rounded-lg hover:bg-red-500/25 transition-all disabled:opacity-50 text-sm font-medium flex items-center gap-2 border border-red-500/25"
                 >
                   {connectMutation.isPending ? (
                     <>

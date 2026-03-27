@@ -10,11 +10,11 @@ import SettingsModal from '../components/SettingsModal';
 // Pod filter options
 const POD_FILTERS = [
   { value: 'all', label: 'All', color: null },
-  { value: 'superclient', label: 'Superclient', color: 'bg-pastel-coral', textColor: 'text-pastel-coral' },
-  { value: '1', label: 'Pod 1', color: 'bg-pastel-mint', textColor: 'text-pastel-mint' },
-  { value: '2', label: 'Pod 2', color: 'bg-pastel-sky', textColor: 'text-pastel-sky' },
-  { value: '3', label: 'Pod 3', color: 'bg-pastel-lemon', textColor: 'text-pastel-lemon' },
-  { value: '4', label: 'Pod 4', color: 'bg-pastel-lavender', textColor: 'text-pastel-lavender' },
+  { value: 'superclient', label: 'Superclient', color: 'bg-red-500', textColor: 'text-red-500' },
+  { value: '1', label: 'Pod 1', color: 'bg-success-500', textColor: 'text-success-500' },
+  { value: '2', label: 'Pod 2', color: 'bg-blue-300', textColor: 'text-blue-300' },
+  { value: '3', label: 'Pod 3', color: 'bg-warning-500', textColor: 'text-warning-500' },
+  { value: '4', label: 'Pod 4', color: 'bg-purple-300', textColor: 'text-purple-300' },
 ];
 
 export default function ClientsView() {
@@ -94,18 +94,18 @@ export default function ClientsView() {
   const superclientExists = clients.some(c => c.is_superclient);
 
   return (
-    <div className="min-h-screen bg-neutral-950 texture-dots">
+    <div className="min-h-screen bg-neutral-950">
       {/* Gradient accent bar at top */}
-      <div className="h-1 gradient-bar" />
+      <div className="h-0.5 gradient-bar-bp" />
 
       {/* Header */}
-      <header className="bg-neutral-900/80 backdrop-blur-sm border-b border-neutral-800 sticky top-0 z-10">
+      <header className="bg-neutral-900/80 backdrop-blur-sm sticky top-0 z-10" style={{ borderBottom: '1px solid #1e2022' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {/* Logo/Brand accent */}
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pastel-mint/20 to-pastel-lavender/20 flex items-center justify-center border border-neutral-700">
-                <Sparkles className="w-5 h-5 text-pastel-lavender" />
+              <div className="w-11 h-11 hex flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(36,122,242,0.2), rgba(181,61,242,0.2))' }}>
+                <Sparkles className="w-5 h-5 text-purple-300" />
               </div>
               <div>
                 <h1 className="text-2xl font-semibold text-neutral-50">
@@ -118,7 +118,7 @@ export default function ClientsView() {
             </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex items-center px-4 py-2.5 bg-pastel-mint/15 hover:bg-pastel-mint/25 text-pastel-mint font-medium rounded-lg transition-all border border-pastel-mint/25"
+              className="inline-flex items-center px-4 py-2.5 bg-success-500/15 hover:bg-success-500/25 text-success-500 font-medium rounded-lg transition-all border border-success-500/25"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Client
@@ -134,7 +134,7 @@ export default function ClientsView() {
                 placeholder="Search clients..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-neutral-800/50 border border-neutral-700 rounded-lg focus:ring-1 focus:ring-pastel-sky/50 focus:border-pastel-sky text-neutral-200 placeholder-neutral-500 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-neutral-800/50 border border-neutral-700 rounded-lg focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500 text-neutral-200 placeholder-neutral-500 transition-all"
               />
             </div>
           </div>
@@ -168,15 +168,15 @@ export default function ClientsView() {
           {/* Stats bar */}
           <div className="mt-4 flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800/50 rounded-lg border border-neutral-700">
-              <span className="w-2 h-2 rounded-full bg-pastel-sky" />
+              <span className="w-2 h-2 rounded-full bg-blue-300" />
               <span className="text-neutral-400">Total:</span>
-              <span className="text-pastel-sky font-medium">{clients.length}</span>
+              <span className="text-blue-300 font-medium">{clients.length}</span>
             </div>
             {(searchQuery || podFilter !== 'all') && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800/50 rounded-lg border border-neutral-700">
-                <span className="w-2 h-2 rounded-full bg-pastel-lavender" />
+                <span className="w-2 h-2 rounded-full bg-purple-300" />
                 <span className="text-neutral-400">Showing:</span>
-                <span className="text-pastel-lavender font-medium">{filteredClients.length}</span>
+                <span className="text-purple-300 font-medium">{filteredClients.length}</span>
               </div>
             )}
           </div>
@@ -188,15 +188,15 @@ export default function ClientsView() {
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-pastel-lavender mx-auto" />
+              <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
               <p className="mt-3 text-sm text-neutral-500">Loading clients...</p>
             </div>
           </div>
         ) : filteredClients.length === 0 ? (
           <div className="text-center py-16">
-            <div className="inline-block p-8 bg-neutral-900/50 rounded-2xl border border-neutral-800 texture-grid">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-pastel-lavender/10 flex items-center justify-center border border-pastel-lavender/20">
-                <FolderOpen className="h-8 w-8 text-pastel-lavender" />
+            <div className="inline-block p-8 bg-neutral-900/50 rounded-2xl card-gradient">
+              <div className="w-16 h-16 mx-auto mb-4 hex bg-purple-500/10 flex items-center justify-center">
+                <FolderOpen className="h-8 w-8 text-purple-500" />
               </div>
               <h3 className="text-lg font-medium text-neutral-200">
                 {searchQuery || podFilter !== 'all' ? 'No clients found' : 'No clients yet'}
@@ -209,7 +209,7 @@ export default function ClientsView() {
               {!searchQuery && podFilter === 'all' && (
                 <button
                   onClick={() => setIsCreateModalOpen(true)}
-                  className="mt-6 inline-flex items-center px-5 py-2.5 bg-pastel-mint/15 hover:bg-pastel-mint/25 text-pastel-mint font-medium rounded-lg transition-all border border-pastel-mint/20"
+                  className="mt-6 inline-flex items-center px-5 py-2.5 bg-success-500/15 hover:bg-success-500/25 text-success-500 font-medium rounded-lg transition-all border border-success-500/20"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Your First Client

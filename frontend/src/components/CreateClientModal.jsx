@@ -6,10 +6,10 @@ import clsx from 'clsx';
 
 // Pod color configuration
 const POD_COLORS = {
-  1: { name: 'Mint', bg: 'bg-pastel-mint', bgLight: 'bg-pastel-mint/20', text: 'text-pastel-mint', border: 'border-pastel-mint' },
-  2: { name: 'Sky', bg: 'bg-pastel-sky', bgLight: 'bg-pastel-sky/20', text: 'text-pastel-sky', border: 'border-pastel-sky' },
-  3: { name: 'Lemon', bg: 'bg-pastel-lemon', bgLight: 'bg-pastel-lemon/20', text: 'text-pastel-lemon', border: 'border-pastel-lemon' },
-  4: { name: 'Lavender', bg: 'bg-pastel-lavender', bgLight: 'bg-pastel-lavender/20', text: 'text-pastel-lavender', border: 'border-pastel-lavender' },
+  1: { name: 'Mint', bg: 'bg-success-500', bgLight: 'bg-success-500/20', text: 'text-success-500', border: 'border-success-500' },
+  2: { name: 'Sky', bg: 'bg-blue-300', bgLight: 'bg-blue-300/20', text: 'text-blue-300', border: 'border-blue-300' },
+  3: { name: 'Lemon', bg: 'bg-warning-500', bgLight: 'bg-warning-500/20', text: 'text-warning-500', border: 'border-warning-500' },
+  4: { name: 'Lavender', bg: 'bg-purple-300', bgLight: 'bg-purple-300/20', text: 'text-purple-300', border: 'border-purple-300' },
 };
 
 export default function CreateClientModal({ isOpen, onClose }) {
@@ -121,7 +121,7 @@ export default function CreateClientModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const currentPodColor = isSuperclient
-    ? { bg: 'bg-pastel-coral', bgLight: 'bg-pastel-coral/20', text: 'text-pastel-coral', border: 'border-pastel-coral' }
+    ? { bg: 'bg-red-500', bgLight: 'bg-red-500/20', text: 'text-red-500', border: 'border-red-500' }
     : POD_COLORS[podNumber];
 
   return (
@@ -205,7 +205,7 @@ export default function CreateClientModal({ isOpen, onClose }) {
                   )}
                 </div>
                 <label className="cursor-pointer">
-                  <span className="inline-flex items-center px-3 py-2 bg-pastel-lavender/10 hover:bg-pastel-lavender/20 text-pastel-lavender rounded-lg transition-all border border-pastel-lavender/20 text-sm">
+                  <span className="inline-flex items-center px-3 py-2 bg-purple-300/10 hover:bg-purple-300/20 text-purple-300 rounded-lg transition-all border border-purple-300/20 text-sm">
                     <Upload className="w-4 h-4 mr-2" />
                     Choose Image
                   </span>
@@ -273,7 +273,7 @@ export default function CreateClientModal({ isOpen, onClose }) {
                     className={clsx(
                       "w-8 h-8 rounded-lg border transition-all",
                       thumbnailBgColor === color
-                        ? "border-pastel-mint ring-2 ring-pastel-mint/30"
+                        ? "border-success-500 ring-2 ring-success-500/30"
                         : "border-neutral-700 hover:border-neutral-500"
                     )}
                     style={{ backgroundColor: color }}
@@ -320,17 +320,17 @@ export default function CreateClientModal({ isOpen, onClose }) {
 
             {/* Superclient Option */}
             {!superclientExists && (
-              <div className="flex items-center gap-3 p-3 bg-pastel-coral/5 rounded-lg border border-pastel-coral/20">
+              <div className="flex items-center gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/20">
                 <input
                   type="checkbox"
                   id="isSuperclient"
                   checked={isSuperclient}
                   onChange={(e) => setIsSuperclient(e.target.checked)}
-                  className="w-4 h-4 rounded border-neutral-600 bg-neutral-800 text-pastel-coral focus:ring-pastel-coral/50"
+                  className="w-4 h-4 rounded border-neutral-600 bg-neutral-800 text-red-500 focus:ring-red-500/50"
                 />
                 <label htmlFor="isSuperclient" className="flex-1 cursor-pointer">
                   <div className="flex items-center gap-2">
-                    <Crown className="w-4 h-4 text-pastel-coral" />
+                    <Crown className="w-4 h-4 text-red-500" />
                     <span className="text-sm font-medium text-neutral-200">Make Superclient</span>
                   </div>
                   <p className="text-xs text-neutral-500 mt-0.5">

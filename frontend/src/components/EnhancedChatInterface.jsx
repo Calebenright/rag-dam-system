@@ -54,10 +54,10 @@ const PROMPT_ICONS = {
 
 // Quick prompt color styles
 const promptColorStyles = {
-  lavender: { bg: 'bg-pastel-lavender/10', border: 'border-pastel-lavender/20', text: 'text-pastel-lavender', iconBg: 'bg-pastel-lavender/20', hoverBg: 'hover:bg-pastel-lavender/20' },
-  mint: { bg: 'bg-pastel-mint/10', border: 'border-pastel-mint/20', text: 'text-pastel-mint', iconBg: 'bg-pastel-mint/20', hoverBg: 'hover:bg-pastel-mint/20' },
-  peach: { bg: 'bg-pastel-peach/10', border: 'border-pastel-peach/20', text: 'text-pastel-peach', iconBg: 'bg-pastel-peach/20', hoverBg: 'hover:bg-pastel-peach/20' },
-  sky: { bg: 'bg-pastel-sky/10', border: 'border-pastel-sky/20', text: 'text-pastel-sky', iconBg: 'bg-pastel-sky/20', hoverBg: 'hover:bg-pastel-sky/20' },
+  lavender: { bg: 'bg-purple-300/10', border: 'border-purple-300/20', text: 'text-purple-300', iconBg: 'bg-purple-300/20', hoverBg: 'hover:bg-purple-300/20', dot: 'bg-purple-300' },
+  mint: { bg: 'bg-success-500/10', border: 'border-success-500/20', text: 'text-success-500', iconBg: 'bg-success-500/20', hoverBg: 'hover:bg-success-500/20', dot: 'bg-success-500' },
+  peach: { bg: 'bg-red-300/10', border: 'border-red-300/20', text: 'text-red-300', iconBg: 'bg-red-300/20', hoverBg: 'hover:bg-red-300/20', dot: 'bg-red-300' },
+  sky: { bg: 'bg-blue-300/10', border: 'border-blue-300/20', text: 'text-blue-300', iconBg: 'bg-blue-300/20', hoverBg: 'hover:bg-blue-300/20', dot: 'bg-blue-300' },
 };
 
 // Helper to get/set quick prompts from localStorage
@@ -123,7 +123,7 @@ function EditQuickPromptsModal({ isOpen, onClose, prompts, onSave }) {
                         onClick={() => updatePrompt(idx, 'color', color)}
                         className={clsx(
                           'w-5 h-5 rounded-full border-2 transition-all',
-                          `bg-pastel-${color}`,
+                          (promptColorStyles[color] || promptColorStyles.lavender).dot,
                           prompt.color === color ? 'border-white scale-110' : 'border-transparent opacity-50 hover:opacity-80'
                         )}
                       />
@@ -153,7 +153,7 @@ function EditQuickPromptsModal({ isOpen, onClose, prompts, onSave }) {
                   onChange={e => updatePrompt(idx, 'prompt', e.target.value)}
                   placeholder="What should the agent do when this button is clicked?"
                   rows={2}
-                  className="w-full px-3 py-2 bg-neutral-800/60 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-sky/50 focus:border-pastel-sky resize-none scrollbar-hide"
+                  className="w-full px-3 py-2 bg-neutral-800/60 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-blue-300/50 focus:border-blue-300 resize-none scrollbar-hide"
                 />
               </div>
             );
@@ -177,7 +177,7 @@ function EditQuickPromptsModal({ isOpen, onClose, prompts, onSave }) {
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm bg-pastel-lavender/20 text-pastel-lavender hover:bg-pastel-lavender/30 rounded-lg transition-colors font-medium"
+              className="px-4 py-2 text-sm bg-purple-300/20 text-purple-300 hover:bg-purple-300/30 rounded-lg transition-colors font-medium"
             >
               Save
             </button>
@@ -191,32 +191,32 @@ function EditQuickPromptsModal({ isOpen, onClose, prompts, onSave }) {
 // Color style mappings - explicit classes for Tailwind to detect
 const citationColorStyles = {
   mint: {
-    bg: 'bg-pastel-mint',
-    bgLight: 'bg-pastel-mint/10',
-    bgMedium: 'bg-pastel-mint/60',
-    text: 'text-pastel-mint',
-    border: 'border-pastel-mint/30',
+    bg: 'bg-success-500',
+    bgLight: 'bg-success-500/10',
+    bgMedium: 'bg-success-500/60',
+    text: 'text-success-500',
+    border: 'border-success-500/30',
   },
   sky: {
-    bg: 'bg-pastel-sky',
-    bgLight: 'bg-pastel-sky/10',
-    bgMedium: 'bg-pastel-sky/60',
-    text: 'text-pastel-sky',
-    border: 'border-pastel-sky/30',
+    bg: 'bg-blue-300',
+    bgLight: 'bg-blue-300/10',
+    bgMedium: 'bg-blue-300/60',
+    text: 'text-blue-300',
+    border: 'border-blue-300/30',
   },
   lavender: {
-    bg: 'bg-pastel-lavender',
-    bgLight: 'bg-pastel-lavender/10',
-    bgMedium: 'bg-pastel-lavender/60',
-    text: 'text-pastel-lavender',
-    border: 'border-pastel-lavender/30',
+    bg: 'bg-purple-300',
+    bgLight: 'bg-purple-300/10',
+    bgMedium: 'bg-purple-300/60',
+    text: 'text-purple-300',
+    border: 'border-purple-300/30',
   },
   peach: {
-    bg: 'bg-pastel-peach',
-    bgLight: 'bg-pastel-peach/10',
-    bgMedium: 'bg-pastel-peach/60',
-    text: 'text-pastel-peach',
-    border: 'border-pastel-peach/30',
+    bg: 'bg-red-300',
+    bgLight: 'bg-red-300/10',
+    bgMedium: 'bg-red-300/60',
+    text: 'text-red-300',
+    border: 'border-red-300/30',
   },
 };
 
@@ -330,7 +330,7 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
     },
     blockquote({ children }) {
       return (
-        <blockquote className="border-l-2 border-pastel-lavender/40 pl-4 my-3 py-2 bg-pastel-lavender/5 rounded-r-lg text-neutral-400 italic">
+        <blockquote className="border-l-2 border-purple-300/40 pl-4 my-3 py-2 bg-purple-300/5 rounded-r-lg text-neutral-400 italic">
           {children}
         </blockquote>
       );
@@ -345,16 +345,16 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
         return (
           <div className="relative group my-3 rounded-lg overflow-hidden border border-neutral-700">
             <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-800 border-b border-neutral-700">
-              <span className="text-xs font-medium text-pastel-lavender">{language}</span>
+              <span className="text-xs font-medium text-purple-300">{language}</span>
               <div className="flex gap-2">
                 <button
                   onClick={() => onCopyCode(codeString, codeId)}
-                  className="px-2 py-0.5 text-neutral-400 hover:text-pastel-mint rounded text-xs flex items-center gap-1 transition-all"
+                  className="px-2 py-0.5 text-neutral-400 hover:text-success-500 rounded text-xs flex items-center gap-1 transition-all"
                 >
                   {copiedCode === codeId ? (
                     <>
-                      <Check className="w-3 h-3 text-pastel-mint" />
-                      <span className="text-pastel-mint">Copied</span>
+                      <Check className="w-3 h-3 text-success-500" />
+                      <span className="text-success-500">Copied</span>
                     </>
                   ) : (
                     <>
@@ -365,7 +365,7 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
                 </button>
                 <button
                   onClick={() => onExportText(codeString, `code.${language}`)}
-                  className="px-2 py-0.5 text-neutral-400 hover:text-pastel-sky rounded text-xs flex items-center gap-1 transition-all"
+                  className="px-2 py-0.5 text-neutral-400 hover:text-blue-300 rounded text-xs flex items-center gap-1 transition-all"
                 >
                   <Download className="w-3 h-3" />
                   Save
@@ -391,7 +391,7 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
       }
 
       return (
-        <code className="bg-pastel-peach/15 text-pastel-peach px-1.5 py-0.5 rounded text-[13px] font-mono border border-pastel-peach/20" {...props}>
+        <code className="bg-red-300/15 text-red-300 px-1.5 py-0.5 rounded text-[13px] font-mono border border-red-300/20" {...props}>
           {children}
         </code>
       );
@@ -406,7 +406,7 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
       );
     },
     thead({ children }) {
-      return <thead className="bg-pastel-sky/8">{children}</thead>;
+      return <thead className="bg-blue-300/8">{children}</thead>;
     },
     tbody({ children }) {
       return <tbody className="divide-y divide-neutral-800">{children}</tbody>;
@@ -416,7 +416,7 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
     },
     th({ children }) {
       return (
-        <th className="px-3 py-2.5 text-left text-xs font-semibold text-pastel-sky uppercase tracking-wider border-b border-neutral-700">
+        <th className="px-3 py-2.5 text-left text-xs font-semibold text-blue-300 uppercase tracking-wider border-b border-neutral-700">
           {children}
         </th>
       );
@@ -434,7 +434,7 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-pastel-sky hover:text-pastel-mint underline transition-colors"
+          className="text-blue-300 hover:text-success-500 underline transition-colors"
         >
           {children}
         </a>
@@ -469,16 +469,16 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
         {/* Avatar */}
         <div
           className={clsx(
-            'flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center border transition-transform hover:scale-105',
+            'flex-shrink-0 w-8 h-8 hex flex items-center justify-center transition-transform hover:scale-105',
             isUser
-              ? 'bg-pastel-sky/15 border-pastel-sky/25'
-              : 'bg-pastel-lavender/15 border-pastel-lavender/25'
+              ? 'bg-blue-300/15'
+              : 'bg-purple-300/15'
           )}
         >
           {isUser ? (
-            <User className="w-4 h-4 text-pastel-sky" />
+            <User className="w-4 h-4 text-blue-300" />
           ) : (
-            <Bot className="w-4 h-4 text-pastel-lavender" />
+            <Bot className="w-4 h-4 text-purple-300" />
           )}
         </div>
 
@@ -487,7 +487,7 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
           className={clsx(
             'rounded-xl px-4 py-3 transition-all',
             isUser
-              ? 'bg-pastel-sky/10 text-neutral-100 border border-pastel-sky/20'
+              ? 'bg-blue-300/10 text-neutral-100 border border-blue-300/20'
               : 'bg-neutral-900/70 text-neutral-200 border border-neutral-800'
           )}
         >
@@ -527,8 +527,8 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
                 className={clsx(
                   'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all',
                   isAdSelected
-                    ? 'bg-pastel-peach/20 text-pastel-peach border border-pastel-peach/30'
-                    : 'text-neutral-500 hover:text-pastel-peach hover:bg-pastel-peach/10'
+                    ? 'bg-red-300/20 text-red-300 border border-red-300/30'
+                    : 'text-neutral-500 hover:text-red-300 hover:bg-red-300/10'
                 )}
                 title="Preview as Ad"
               >
@@ -540,8 +540,8 @@ function ChatMessage({ msg, idx, isNew, onCopyCode, copiedCode, onExportCSV, onE
                 className={clsx(
                   'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all',
                   isLPSelected
-                    ? 'bg-pastel-sky/20 text-pastel-sky border border-pastel-sky/30'
-                    : 'text-neutral-500 hover:text-pastel-sky hover:bg-pastel-sky/10'
+                    ? 'bg-blue-300/20 text-blue-300 border border-blue-300/30'
+                    : 'text-neutral-500 hover:text-blue-300 hover:bg-blue-300/10'
                 )}
                 title="Preview as Landing Page"
               >
@@ -771,15 +771,15 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
       <div className="flex items-center justify-between px-5 py-3 border-b border-neutral-800 bg-neutral-900/50">
         <div className="flex items-center gap-3">
           <div className={clsx(
-            'w-9 h-9 rounded-xl flex items-center justify-center border',
+            'w-9 h-9 hex flex items-center justify-center',
             selectedSheetId
-              ? 'bg-pastel-mint/15 border-pastel-mint/20'
-              : 'bg-pastel-lavender/15 border-pastel-lavender/20'
+              ? 'bg-success-500/15'
+              : 'bg-purple-300/15'
           )}>
             {selectedSheetId ? (
-              <FileSpreadsheet className="w-5 h-5 text-pastel-mint" />
+              <FileSpreadsheet className="w-5 h-5 text-success-500" />
             ) : (
-              <Sparkles className="w-5 h-5 text-pastel-lavender" />
+              <Sparkles className="w-5 h-5 text-purple-300" />
             )}
           </div>
           <div>
@@ -787,7 +787,7 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
               {selectedSheetId ? 'Sheet Editor' : 'AI Assistant'}
               <span className={clsx(
                 'w-2 h-2 rounded-full animate-pulse',
-                selectedSheetId ? 'bg-pastel-mint' : 'bg-pastel-mint'
+                selectedSheetId ? 'bg-success-500' : 'bg-success-500'
               )} />
             </h3>
             <p className="text-xs text-neutral-500">
@@ -800,14 +800,14 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
         </div>
         <div className="flex items-center gap-2">
           {selectedSheetId && (
-            <span className="px-2 py-1 text-[10px] bg-pastel-mint/10 text-pastel-mint rounded-full border border-pastel-mint/20">
+            <span className="px-2 py-1 text-[10px] bg-success-500/10 text-success-500 rounded-full border border-success-500/20">
               Sheet Mode
             </span>
           )}
           <button
             onClick={handleClearHistory}
             disabled={messages.length === 0}
-            className="p-2 text-neutral-500 hover:text-pastel-coral hover:bg-pastel-coral/10 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             title="Clear history"
           >
             <Trash2 className="w-4 h-4" />
@@ -819,12 +819,12 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-dark">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-6 h-6 animate-spin text-pastel-lavender" />
+            <Loader2 className="w-6 h-6 animate-spin text-purple-300" />
           </div>
         ) : messages.length === 0 && !pendingMessage ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="p-5 bg-neutral-900/50 rounded-2xl mb-4 border border-neutral-800">
-              <Bot className="w-14 h-14 text-pastel-lavender" />
+              <Bot className="w-14 h-14 text-purple-300" />
             </div>
             <h3 className="text-lg font-semibold text-neutral-200 mb-2">
               Start a conversation
@@ -889,13 +889,13 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
             {pendingMessage && (
               <div className="flex justify-end animate-fade-in-up">
                 <div className="flex items-start gap-3 max-w-3xl flex-row-reverse">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center border bg-pastel-sky/15 border-pastel-sky/25">
-                    <User className="w-4 h-4 text-pastel-sky" />
+                  <div className="flex-shrink-0 w-8 h-8 hex flex items-center justify-center bg-blue-300/15">
+                    <User className="w-4 h-4 text-blue-300" />
                   </div>
-                  <div className="rounded-xl px-4 py-3 bg-pastel-sky/10 text-neutral-100 border border-pastel-sky/20">
+                  <div className="rounded-xl px-4 py-3 bg-blue-300/10 text-neutral-100 border border-blue-300/20">
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{pendingMessage.content}</p>
                     {pendingMessage.hasImage && (
-                      <div className="mt-2 text-xs text-pastel-peach flex items-center gap-1">
+                      <div className="mt-2 text-xs text-red-300 flex items-center gap-1">
                         <ImageIcon className="w-3 h-3" />
                         Image attached
                       </div>
@@ -909,15 +909,15 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
             {sendMutation.isPending && (
               <div className="flex justify-start animate-fade-in-up">
                 <div className="flex items-start gap-3 max-w-3xl">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-pastel-lavender/15 flex items-center justify-center border border-pastel-lavender/25">
-                    <Bot className="w-4 h-4 text-pastel-lavender" />
+                  <div className="flex-shrink-0 w-8 h-8 hex bg-purple-300/15 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-purple-300" />
                   </div>
                   <div className="rounded-xl px-4 py-3 bg-neutral-900/70 border border-neutral-800">
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
-                        <span className="w-2 h-2 bg-pastel-lavender rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-2 h-2 bg-pastel-lavender rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-2 h-2 bg-pastel-lavender rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <span className="w-2 h-2 bg-purple-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-2 h-2 bg-purple-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-2 h-2 bg-purple-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
                       <span className="text-sm text-neutral-400 ml-1">Thinking...</span>
                     </div>
@@ -930,11 +930,11 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
             {sendMutation.isError && (
               <div className="flex justify-start animate-fade-in-up">
                 <div className="flex items-start gap-3 max-w-3xl">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-pastel-coral/15 flex items-center justify-center border border-pastel-coral/25">
-                    <AlertCircle className="w-4 h-4 text-pastel-coral" />
+                  <div className="flex-shrink-0 w-8 h-8 hex bg-red-500/15 flex items-center justify-center">
+                    <AlertCircle className="w-4 h-4 text-red-500" />
                   </div>
-                  <div className="rounded-xl px-4 py-3 bg-pastel-coral/5 border border-pastel-coral/20">
-                    <p className="text-sm text-pastel-coral font-medium">Failed to send message</p>
+                  <div className="rounded-xl px-4 py-3 bg-red-500/5 border border-red-500/20">
+                    <p className="text-sm text-red-500 font-medium">Failed to send message</p>
                     <p className="text-xs text-neutral-400 mt-1">
                       {sendMutation.error?.response?.data?.error || sendMutation.error?.message || 'Please check your connection and try again.'}
                     </p>
@@ -943,7 +943,7 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
                         sendMutation.reset();
                         setPendingMessage(null);
                       }}
-                      className="mt-2 text-xs text-pastel-sky hover:text-pastel-sky/80 underline"
+                      className="mt-2 text-xs text-blue-300 hover:text-blue-300/80 underline"
                     >
                       Dismiss
                     </button>
@@ -965,11 +965,11 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
             <img
               src={imagePreview}
               alt="Preview"
-              className="h-16 rounded-lg border-2 border-pastel-peach/30"
+              className="h-16 rounded-lg border-2 border-red-300/30"
             />
             <button
               onClick={removeImage}
-              className="absolute -top-2 -right-2 p-1 bg-pastel-coral text-white rounded-full hover:bg-pastel-coral/80 transition-all"
+              className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-500/80 transition-all"
             >
               <X className="w-3 h-3" />
             </button>
@@ -998,7 +998,7 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
               placeholder="Ask a question..."
               rows={1}
               disabled={sendMutation.isPending}
-              className="w-full px-4 py-3 bg-neutral-800/50 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-xl focus:ring-1 focus:ring-pastel-sky/50 focus:border-pastel-sky resize-none transition-all disabled:opacity-50 scrollbar-hide"
+              className="w-full px-4 py-3 bg-neutral-800/50 border border-neutral-700 text-neutral-100 placeholder-neutral-500 rounded-xl focus:ring-1 focus:ring-blue-300/50 focus:border-blue-300 resize-none transition-all disabled:opacity-50 scrollbar-hide"
               style={{
                 minHeight: '48px',
                 maxHeight: '120px',
@@ -1018,7 +1018,7 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={sendMutation.isPending}
-            className="flex-shrink-0 p-3 bg-pastel-peach/10 text-pastel-peach rounded-xl hover:bg-pastel-peach/20 transition-all border border-pastel-peach/20 disabled:opacity-50"
+            className="flex-shrink-0 p-3 bg-red-300/10 text-red-300 rounded-xl hover:bg-red-300/20 transition-all border border-red-300/20 disabled:opacity-50"
             title="Upload image"
           >
             <ImageIcon className="w-5 h-5" />
@@ -1028,7 +1028,7 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
           <button
             type="submit"
             disabled={(!message.trim() && !selectedImage) || sendMutation.isPending}
-            className="flex-shrink-0 p-3 bg-pastel-mint/15 text-pastel-mint rounded-xl hover:bg-pastel-mint/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-pastel-mint/25"
+            className="flex-shrink-0 p-3 bg-success-500/15 text-success-500 rounded-xl hover:bg-success-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-success-500/25"
           >
             {sendMutation.isPending ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -1038,7 +1038,7 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
           </button>
         </form>
         <p className="mt-2 text-xs text-neutral-600 text-center">
-          <span className="text-pastel-sky">Enter</span> to send · <span className="text-pastel-lavender">Shift+Enter</span> for new line
+          <span className="text-blue-300">Enter</span> to send · <span className="text-purple-300">Shift+Enter</span> for new line
         </p>
       </div>
 

@@ -15,11 +15,11 @@ const CHART_TYPES = [
 
 // Color palette for charts
 const CHART_COLORS = [
-  '#a7f3d0', // pastel-mint
-  '#93c5fd', // pastel-sky
-  '#c4b5fd', // pastel-lavender
-  '#fcd9bd', // pastel-peach
-  '#fca5a5', // pastel-coral
+  '#a7f3d0', // success-500
+  '#93c5fd', // blue-300
+  '#c4b5fd', // purple-300
+  '#fcd9bd', // red-300
+  '#fca5a5', // red-500
   '#fde68a', // yellow
   '#6ee7b7', // emerald
   '#f9a8d4', // pink
@@ -394,8 +394,8 @@ export default function DataVisualizer({ clientId }) {
       {/* Header */}
       <div className="p-4 border-b border-neutral-800 flex-shrink-0">
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pastel-lavender/20 to-pastel-sky/20 flex items-center justify-center">
-            <TrendingUp className="w-4 h-4 text-pastel-lavender" />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-300/20 to-blue-300/20 flex items-center justify-center">
+            <TrendingUp className="w-4 h-4 text-purple-300" />
           </div>
           <div>
             <h3 className="font-semibold text-neutral-200">Data Visualizer</h3>
@@ -412,14 +412,14 @@ export default function DataVisualizer({ clientId }) {
               value={sheetUrl}
               onChange={(e) => setSheetUrl(e.target.value)}
               placeholder="Paste public Google Sheet URL..."
-              className="w-full pl-10 pr-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-pastel-lavender/50 focus:border-pastel-lavender"
+              className="w-full pl-10 pr-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 placeholder-neutral-500 focus:ring-1 focus:ring-purple-300/50 focus:border-purple-300"
               onKeyDown={(e) => e.key === 'Enter' && fetchSheetData()}
             />
           </div>
           <button
             onClick={fetchSheetData}
             disabled={isLoading || !sheetUrl.trim()}
-            className="px-4 py-2 bg-pastel-lavender/15 text-pastel-lavender rounded-lg hover:bg-pastel-lavender/25 transition-all disabled:opacity-50 text-sm font-medium flex items-center gap-2 border border-pastel-lavender/25"
+            className="px-4 py-2 bg-purple-300/15 text-purple-300 rounded-lg hover:bg-purple-300/25 transition-all disabled:opacity-50 text-sm font-medium flex items-center gap-2 border border-purple-300/25"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -437,9 +437,9 @@ export default function DataVisualizer({ clientId }) {
 
       {/* Error Message */}
       {error && (
-        <div className="mx-4 mt-4 flex items-center gap-2 p-3 bg-pastel-coral/10 border border-pastel-coral/20 rounded-lg">
-          <AlertCircle className="w-4 h-4 text-pastel-coral flex-shrink-0" />
-          <p className="text-sm text-pastel-coral">{error}</p>
+        <div className="mx-4 mt-4 flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+          <p className="text-sm text-red-500">{error}</p>
         </div>
       )}
 
@@ -459,7 +459,7 @@ export default function DataVisualizer({ clientId }) {
                     className={clsx(
                       'px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2',
                       chartType === type.id
-                        ? 'bg-pastel-lavender/20 text-pastel-lavender'
+                        ? 'bg-purple-300/20 text-purple-300'
                         : 'text-neutral-400 hover:text-neutral-200'
                     )}
                   >
@@ -476,7 +476,7 @@ export default function DataVisualizer({ clientId }) {
               <select
                 value={labelColumn}
                 onChange={(e) => setLabelColumn(e.target.value)}
-                className="px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 focus:ring-1 focus:ring-pastel-sky/50"
+                className="px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 focus:ring-1 focus:ring-blue-300/50"
               >
                 {headers.map((header) => (
                   <option key={header} value={header}>{header}</option>
@@ -491,7 +491,7 @@ export default function DataVisualizer({ clientId }) {
                 className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded-lg text-sm text-neutral-200 hover:border-neutral-600"
               >
                 <span className="text-xs text-neutral-500">Values:</span>
-                <span className="text-pastel-mint">{valueColumns.length} selected</span>
+                <span className="text-success-500">{valueColumns.length} selected</span>
                 <ChevronDown className="w-4 h-4 text-neutral-500" />
               </button>
 
@@ -503,11 +503,11 @@ export default function DataVisualizer({ clientId }) {
                       onClick={() => toggleValueColumn(header)}
                       className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-700 flex items-center justify-between"
                     >
-                      <span className={valueColumns.includes(header) ? 'text-pastel-mint' : 'text-neutral-300'}>
+                      <span className={valueColumns.includes(header) ? 'text-success-500' : 'text-neutral-300'}>
                         {header}
                       </span>
                       {valueColumns.includes(header) && (
-                        <Check className="w-4 h-4 text-pastel-mint" />
+                        <Check className="w-4 h-4 text-success-500" />
                       )}
                     </button>
                   ))}
@@ -573,8 +573,8 @@ export default function DataVisualizer({ clientId }) {
       ) : !isLoading && !error ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md px-4">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-pastel-lavender/20 to-pastel-sky/20 flex items-center justify-center">
-              <BarChart3 className="w-8 h-8 text-pastel-lavender" />
+            <div className="hex w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-300/20 to-blue-300/20 flex items-center justify-center">
+              <BarChart3 className="w-8 h-8 text-purple-300" />
             </div>
             <h3 className="text-lg font-semibold text-neutral-200 mb-2">Visualize Your Data</h3>
             <p className="text-sm text-neutral-500 mb-4">
@@ -593,7 +593,7 @@ export default function DataVisualizer({ clientId }) {
       {isLoading && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-pastel-lavender mx-auto mb-3" />
+            <Loader2 className="w-8 h-8 animate-spin text-purple-300 mx-auto mb-3" />
             <p className="text-sm text-neutral-400">Loading sheet data...</p>
           </div>
         </div>

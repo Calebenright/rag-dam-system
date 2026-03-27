@@ -14,10 +14,11 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
   return (
     <div
       onClick={onClick}
-      className="group relative bg-neutral-900/50 rounded-xl border border-neutral-800 overflow-hidden cursor-pointer transition-all duration-200 hover:border-neutral-700 hover:bg-neutral-900/80"
+      className="group relative bg-neutral-900/50 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:bg-neutral-900/80"
+      style={{ border: '1px solid #1e2022' }}
     >
       {/* Colored top accent bar */}
-      <div className={`h-1 ${accent.bg}`} />
+      <div className={`h-0.5 ${accent.bg}`} />
 
       {/* Thumbnail */}
       <div
@@ -33,8 +34,8 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
             />
           </div>
         ) : (
-          <div className={`flex items-center justify-center h-full ${accent.bgLight} texture-grid`}>
-            <div className={`w-16 h-16 rounded-2xl ${accent.bgLight} flex items-center justify-center border ${accent.border}`}>
+          <div className={`flex items-center justify-center h-full ${accent.bgLight}`}>
+            <div className={`hex w-16 h-16 ${accent.bgLight} flex items-center justify-center`}>
               <FolderOpen className={`w-8 h-8 ${accent.text}`} />
             </div>
           </div>
@@ -43,11 +44,11 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
         {/* Hover overlay with quick stats */}
         <div className="absolute inset-0 bg-neutral-950/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-4">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-900/80 rounded-lg border border-neutral-700">
-            <FileText className="w-4 h-4 text-pastel-sky" />
+            <FileText className="w-4 h-4 text-blue-300" />
             <span className="text-xs text-neutral-300">Sources</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-900/80 rounded-lg border border-neutral-700">
-            <MessageSquare className="w-4 h-4 text-pastel-lavender" />
+            <MessageSquare className="w-4 h-4 text-purple-300" />
             <span className="text-xs text-neutral-300">Chat</span>
           </div>
         </div>
@@ -57,7 +58,7 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
           {onEdit && (
             <button
               onClick={onEdit}
-              className="p-1.5 bg-neutral-900/80 backdrop-blur-sm text-neutral-400 rounded-lg hover:text-pastel-sky hover:bg-pastel-sky/10"
+              className="p-1.5 bg-neutral-900/80 backdrop-blur-sm text-neutral-400 rounded-lg hover:text-blue-300 hover:bg-blue-300/10"
               title="Settings"
             >
               <Settings className="w-4 h-4" />
@@ -66,7 +67,7 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
           {!client.is_superclient && !superclientExists && onMakeSuperclient && (
             <button
               onClick={onMakeSuperclient}
-              className="p-1.5 bg-neutral-900/80 backdrop-blur-sm text-neutral-400 rounded-lg hover:text-pastel-coral hover:bg-pastel-coral/10"
+              className="p-1.5 bg-neutral-900/80 backdrop-blur-sm text-neutral-400 rounded-lg hover:text-red-500 hover:bg-red-500/10"
               title="Make Superclient"
             >
               <Crown className="w-4 h-4" />
@@ -74,7 +75,7 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
           )}
           <button
             onClick={onDelete}
-            className="p-1.5 bg-neutral-900/80 backdrop-blur-sm text-neutral-400 rounded-lg hover:text-pastel-coral hover:bg-pastel-coral/10"
+            className="p-1.5 bg-neutral-900/80 backdrop-blur-sm text-neutral-400 rounded-lg hover:text-red-500 hover:bg-red-500/10"
             title="Delete"
           >
             <Trash2 className="w-4 h-4" />
@@ -83,9 +84,9 @@ export default function ClientCard({ client, index = 0, onClick, onDelete, onMak
 
         {/* Superclient badge */}
         {client.is_superclient && (
-          <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 bg-pastel-coral/20 backdrop-blur-sm rounded-lg border border-pastel-coral/30">
-            <Crown className="w-3 h-3 text-pastel-coral" />
-            <span className="text-xs font-medium text-pastel-coral">Superclient</span>
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 bg-red-500/20 backdrop-blur-sm rounded-lg border border-red-500/30">
+            <Crown className="w-3 h-3 text-red-500" />
+            <span className="text-xs font-medium text-red-500">Superclient</span>
           </div>
         )}
       </div>

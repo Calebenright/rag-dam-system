@@ -1,10 +1,10 @@
 // Chart color palette matching the app's design
 export const CHART_COLORS = [
-  '#a7f3d0', // pastel-mint
-  '#93c5fd', // pastel-sky
-  '#c4b5fd', // pastel-lavender
-  '#fcd9bd', // pastel-peach
-  '#fca5a5', // pastel-coral
+  '#a7f3d0', // success-500
+  '#93c5fd', // blue-300
+  '#c4b5fd', // purple-300
+  '#fcd9bd', // red-300
+  '#fca5a5', // red-500
   '#fde68a', // yellow
   '#6ee7b7', // emerald
   '#f9a8d4', // pink
