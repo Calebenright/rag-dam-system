@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo.png" />
@@ -10,6 +10,12 @@
     <title>Dodeka</title>
   </head>
   <body>
+    <script>
+      // Prevent flash of wrong theme
+      const t = localStorage.getItem('dodeka-theme') || 'dark';
+      document.documentElement.classList.add(t);
+      document.documentElement.classList.remove(t === 'dark' ? 'light' : 'dark');
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

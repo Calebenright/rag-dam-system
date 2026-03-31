@@ -6,7 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    <div className="min-h-screen bg-dark-950">
+    <div className="min-h-screen bg-neutral-950">
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route

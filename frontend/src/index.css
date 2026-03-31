@@ -3,14 +3,73 @@
 @tailwind utilities;
 
 @layer base {
+  /* ============================================
+     THEME VARIABLES
+     ============================================ */
+  :root, .dark {
+    --color-bg-body: #0a0c0d;
+    --color-bg-surface: #151819;
+    --color-bg-elevated: #1e2022;
+    --color-bg-hover: #292b2c;
+    --color-bg-input: #151819;
+    --color-text-primary: #e5e7eb;
+    --color-text-secondary: #c0c5cb;
+    --color-text-muted: #848586;
+    --color-text-faint: #5e6366;
+    --color-border: #1e2022;
+    --color-border-strong: #292b2c;
+    --color-scrollbar-track: #0a0c0d;
+    --color-scrollbar-thumb: #35393b;
+    --color-scrollbar-hover: #47494a;
+    --color-texture-dot: rgb(255 255 255 / 0.03);
+    --color-texture-line: rgb(255 255 255 / 0.02);
+    --color-texture-stripe: rgb(255 255 255 / 0.015);
+    --color-overlay: rgba(0, 0, 0, 0.25);
+    --color-overlay-lg: rgba(0, 0, 0, 0.35);
+    --color-chip-text-blue: #72adff;
+    --color-chip-text-purple: #dc96ff;
+    --color-chip-text-red: #ff8971;
+    --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.25);
+    --shadow-soft-lg: 0 4px 16px rgba(0, 0, 0, 0.35);
+  }
+
+  .light {
+    --color-bg-body: #c5c9cf;
+    --color-bg-surface: #e2e4e8;
+    --color-bg-elevated: #babfc5;
+    --color-bg-hover: #aeb3ba;
+    --color-bg-input: #e2e4e8;
+    --color-text-primary: #0a0c0e;
+    --color-text-secondary: #1c2024;
+    --color-text-muted: #363b40;
+    --color-text-faint: #555a60;
+    --color-border: #a8adb4;
+    --color-border-strong: #959ba2;
+    --color-scrollbar-track: #babfc5;
+    --color-scrollbar-thumb: #959ba2;
+    --color-scrollbar-hover: #555a60;
+    --color-texture-dot: rgb(0 0 0 / 0.06);
+    --color-texture-line: rgb(0 0 0 / 0.04);
+    --color-texture-stripe: rgb(0 0 0 / 0.03);
+    --color-overlay: rgba(0, 0, 0, 0.14);
+    --color-overlay-lg: rgba(0, 0, 0, 0.22);
+    --color-chip-text-blue: #0e4da3;
+    --color-chip-text-purple: #5e1185;
+    --color-chip-text-red: #961f07;
+    --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.14);
+    --shadow-soft-lg: 0 4px 16px rgba(0, 0, 0, 0.22);
+  }
+
   body {
-    @apply bg-neutral-950 text-neutral-200 font-sans;
+    background-color: var(--color-bg-body);
+    color: var(--color-text-primary);
+    @apply font-sans;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Border policy: very subtle, near-invisible borders per design guide */
+  /* Border policy */
   * {
-    border-color: #1e2022;
+    border-color: var(--color-border);
   }
 
   /* Smooth scrolling */
@@ -21,12 +80,12 @@
   /* Typography from design guide */
   h1, h2, h3 {
     font-family: 'Funnel Sans', system-ui, -apple-system, sans-serif;
-    font-weight: 600; /* SemiBold */
+    font-weight: 600;
   }
 
   h4, h5, h6 {
     font-family: 'Funnel Sans', system-ui, -apple-system, sans-serif;
-    font-weight: 500; /* Medium */
+    font-weight: 500;
   }
 }
 
@@ -35,7 +94,6 @@
      TEXTURES & PATTERNS
      ============================================ */
 
-  /* Noise texture overlay */
   .texture-noise {
     position: relative;
   }
@@ -49,38 +107,33 @@
     z-index: 1;
   }
 
-  /* Dot pattern texture */
   .texture-dots {
-    background-image: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.03) 1px, transparent 0);
+    background-image: radial-gradient(circle at 1px 1px, var(--color-texture-dot) 1px, transparent 0);
     background-size: 24px 24px;
   }
 
-  /* Grid pattern texture */
   .texture-grid {
     background-image:
-      linear-gradient(to right, rgb(255 255 255 / 0.02) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(255 255 255 / 0.02) 1px, transparent 1px);
+      linear-gradient(to right, var(--color-texture-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-texture-line) 1px, transparent 1px);
     background-size: 32px 32px;
   }
 
-  /* Diagonal lines texture */
   .texture-lines {
     background-image: repeating-linear-gradient(
       -45deg,
       transparent,
       transparent 8px,
-      rgb(255 255 255 / 0.015) 8px,
-      rgb(255 255 255 / 0.015) 9px
+      var(--color-texture-stripe) 8px,
+      var(--color-texture-stripe) 9px
     );
   }
 
-  /* Hexagonal mesh pattern - from design guide */
   .texture-hexagons {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66Z' fill='none' stroke='%23ffffff' stroke-width='0.6' opacity='0.08'/%3E%3Cpath d='M28 166L0 150L0 116L28 100L56 116L56 150L28 166Z' fill='none' stroke='%23ffffff' stroke-width='0.6' opacity='0.08'/%3E%3C/svg%3E");
     background-size: 56px 100px;
   }
 
-  /* Colored hexagonal pattern with brand colors */
   .texture-hexagons-brand {
     position: relative;
   }
@@ -94,7 +147,6 @@
     z-index: 0;
   }
 
-  /* Flow pattern - gradient wave background */
   .texture-flow {
     position: relative;
     overflow: hidden;
@@ -111,32 +163,32 @@
   }
 
   /* ============================================
-     CARD STYLES - Design guide dark mode
+     CARD STYLES
      ============================================ */
 
-  /* Cards use very subtle borders per design guide border policy */
   .card {
-    @apply bg-neutral-900 rounded-xl;
-    border: 1px solid #1e2022;
+    background-color: var(--color-bg-surface);
+    @apply rounded-xl;
+    border: 1px solid var(--color-border);
   }
 
-  /* Card inside card (nested) */
   .card-inner {
-    @apply bg-neutral-850 rounded-lg;
-    border: 1px solid #1e2022;
+    background-color: var(--color-bg-elevated);
+    @apply rounded-lg;
+    border: 1px solid var(--color-border);
   }
 
   .card-hover {
     @apply transition-all duration-200;
   }
   .card-hover:hover {
-    background-color: #1e2022;
-    border-color: #292b2c;
+    background-color: var(--color-bg-elevated);
+    border-color: var(--color-border-strong);
   }
 
-  /* Card with gradient border accent (blue→purple) */
   .card-gradient {
-    @apply bg-neutral-900 rounded-xl relative;
+    background-color: var(--color-bg-surface);
+    @apply rounded-xl relative;
     padding: 1px;
   }
   .card-gradient::before {
@@ -152,9 +204,9 @@
     pointer-events: none;
   }
 
-  /* Card with red gradient border */
   .card-gradient-red {
-    @apply bg-neutral-900 rounded-xl relative;
+    background-color: var(--color-bg-surface);
+    @apply rounded-xl relative;
     padding: 1px;
   }
   .card-gradient-red::before {
@@ -170,9 +222,9 @@
     pointer-events: none;
   }
 
-  /* Card with full brand gradient border (blue→purple→red) */
   .card-gradient-brand {
-    @apply bg-neutral-900 rounded-xl relative;
+    background-color: var(--color-bg-surface);
+    @apply rounded-xl relative;
     padding: 1px;
   }
   .card-gradient-brand::before {
@@ -192,7 +244,6 @@
      GRADIENT ACCENTS & BORDERS
      ============================================ */
 
-  /* Gradient accent bar - brand colors */
   .gradient-bar {
     background: linear-gradient(90deg, #247af2, #b53df2, #e5300b);
   }
@@ -201,30 +252,25 @@
     background: linear-gradient(180deg, #247af2, #b53df2, #e5300b);
   }
 
-  /* Blue→Red gradient (from design guide) */
   .gradient-bar-bp {
     background: linear-gradient(90deg, #247af2, #5b63f2, #b53df2, #d92a2a, #e5300b);
   }
 
-  /* Colored top border accent */
   .border-top-accent {
     border-top: 2px solid;
     border-image: linear-gradient(90deg, #247af2, #b53df2) 1;
   }
 
-  /* Gradient bottom border */
   .border-bottom-accent {
     border-bottom: 2px solid;
     border-image: linear-gradient(90deg, #247af2, #b53df2) 1;
   }
 
-  /* Left gradient border accent */
   .border-left-accent {
     border-left: 2px solid;
     border-image: linear-gradient(180deg, #247af2, #b53df2) 1;
   }
 
-  /* Gradient border - full wrap using pseudo-element */
   .border-gradient {
     position: relative;
   }
@@ -242,10 +288,9 @@
   }
 
   /* ============================================
-     TAG PILLS - Design guide styles
+     TAG PILLS
      ============================================ */
 
-  /* Gradient-filled pills (design guide primary style) */
   .pill-blue {
     @apply rounded-full px-3 py-1 text-sm font-medium text-white;
     background: linear-gradient(135deg, #247af2, #074191);
@@ -275,7 +320,6 @@
     background: linear-gradient(135deg, #247af2, #b53df2);
   }
 
-  /* Neutral gray pills (from design guide gray scale) */
   .pill-neutral-light {
     @apply rounded-full px-3 py-1 text-sm font-medium;
     background: #e5e7eb;
@@ -292,31 +336,38 @@
     color: #c0c5cb;
   }
 
-  /* Outline pills */
   .pill-outline-blue {
-    @apply rounded-full px-3 py-1 text-sm font-medium text-blue-300 bg-transparent;
+    @apply rounded-full px-3 py-1 text-sm font-medium bg-transparent;
+    color: var(--color-chip-text-blue);
     border: 1px solid #247af2;
   }
   .pill-outline-purple {
-    @apply rounded-full px-3 py-1 text-sm font-medium text-purple-300 bg-transparent;
+    @apply rounded-full px-3 py-1 text-sm font-medium bg-transparent;
+    color: var(--color-chip-text-purple);
     border: 1px solid #b53df2;
   }
   .pill-outline-red {
-    @apply rounded-full px-3 py-1 text-sm font-medium text-red-300 bg-transparent;
+    @apply rounded-full px-3 py-1 text-sm font-medium bg-transparent;
+    color: var(--color-chip-text-red);
     border: 1px solid #e5300b;
   }
 
-  /* Subtle/soft pills (existing chip pattern but refined) */
   .chip-blue {
-    @apply bg-blue-500/15 text-blue-300 rounded-full px-3 py-1 text-sm font-medium;
+    @apply rounded-full px-3 py-1 text-sm font-medium;
+    color: var(--color-chip-text-blue);
+    background: rgba(36, 122, 242, 0.1);
     border: 1px solid rgba(36, 122, 242, 0.2);
   }
   .chip-purple {
-    @apply bg-purple-500/15 text-purple-300 rounded-full px-3 py-1 text-sm font-medium;
+    @apply rounded-full px-3 py-1 text-sm font-medium;
+    color: var(--color-chip-text-purple);
+    background: rgba(181, 61, 242, 0.1);
     border: 1px solid rgba(181, 61, 242, 0.2);
   }
   .chip-red {
-    @apply bg-red-500/15 text-red-300 rounded-full px-3 py-1 text-sm font-medium;
+    @apply rounded-full px-3 py-1 text-sm font-medium;
+    color: var(--color-chip-text-red);
+    background: rgba(229, 48, 11, 0.1);
     border: 1px solid rgba(229, 48, 11, 0.2);
   }
   .chip-success {
@@ -332,25 +383,32 @@
     border: 1px solid rgba(240, 68, 56, 0.2);
   }
 
-  /* Backward-compatible chip names */
   .chip-mint {
     @apply bg-success-500/15 text-success-500 rounded-full px-3 py-1 text-sm font-medium;
     border: 1px solid rgba(23, 178, 106, 0.2);
   }
   .chip-lavender {
-    @apply bg-purple-500/15 text-purple-300 rounded-full px-3 py-1 text-sm font-medium;
+    @apply rounded-full px-3 py-1 text-sm font-medium;
+    color: var(--color-chip-text-purple);
+    background: rgba(181, 61, 242, 0.1);
     border: 1px solid rgba(181, 61, 242, 0.2);
   }
   .chip-sky {
-    @apply bg-blue-500/15 text-blue-300 rounded-full px-3 py-1 text-sm font-medium;
+    @apply rounded-full px-3 py-1 text-sm font-medium;
+    color: var(--color-chip-text-blue);
+    background: rgba(36, 122, 242, 0.1);
     border: 1px solid rgba(36, 122, 242, 0.2);
   }
   .chip-peach {
-    @apply bg-red-300/15 text-red-300 rounded-full px-3 py-1 text-sm font-medium;
+    @apply rounded-full px-3 py-1 text-sm font-medium;
+    color: var(--color-chip-text-red);
+    background: rgba(255, 137, 113, 0.1);
     border: 1px solid rgba(255, 137, 113, 0.2);
   }
   .chip-coral {
-    @apply bg-red-500/15 text-red-300 rounded-full px-3 py-1 text-sm font-medium;
+    @apply rounded-full px-3 py-1 text-sm font-medium;
+    color: var(--color-chip-text-red);
+    background: rgba(229, 48, 11, 0.1);
     border: 1px solid rgba(229, 48, 11, 0.2);
   }
   .chip-lemon {
@@ -372,20 +430,26 @@
   }
 
   .btn-secondary {
-    @apply bg-neutral-700 text-neutral-100 hover:bg-neutral-600;
-    border: 1px solid #47494a;
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-primary);
+    @apply hover:opacity-80;
+    border: 1px solid var(--color-border-strong);
   }
 
   .btn-accent {
-    @apply bg-blue-500/20 text-blue-300 hover:bg-blue-500/30;
+    @apply bg-blue-500/20 hover:bg-blue-500/30;
+    color: var(--color-chip-text-blue);
     border: 1px solid rgba(36, 122, 242, 0.3);
   }
 
   .btn-ghost {
-    @apply bg-transparent text-neutral-300 hover:bg-neutral-800 border border-transparent;
+    @apply bg-transparent border border-transparent;
+    color: var(--color-text-secondary);
+  }
+  .btn-ghost:hover {
+    background-color: var(--color-bg-elevated);
   }
 
-  /* Gradient button */
   .btn-gradient {
     @apply text-white font-medium px-4 py-2 rounded-lg transition-all duration-200;
     background: linear-gradient(135deg, #247af2, #b53df2);
@@ -399,62 +463,36 @@
      ============================================ */
 
   .input {
-    @apply bg-neutral-900 rounded-lg px-4 py-2 text-neutral-200
-           placeholder:text-neutral-500 focus:outline-none focus:border-blue-500
+    background-color: var(--color-bg-input);
+    color: var(--color-text-primary);
+    @apply rounded-lg px-4 py-2 placeholder:text-neutral-500 focus:outline-none focus:border-blue-500
            focus:ring-1 focus:ring-blue-500/50 transition-all;
-    border: 1px solid #292b2c;
+    border: 1px solid var(--color-border-strong);
   }
 
   /* ============================================
      INDICATORS & STATUS
      ============================================ */
 
-  .indicator-blue {
-    @apply border-l-2 border-l-blue-500;
-  }
-  .indicator-purple {
-    @apply border-l-2 border-l-purple-500;
-  }
-  .indicator-red {
-    @apply border-l-2 border-l-red-500;
-  }
-  .indicator-success {
-    @apply border-l-2 border-l-success-500;
-  }
-  .indicator-warning {
-    @apply border-l-2 border-l-warning-500;
-  }
-  .indicator-error {
-    @apply border-l-2 border-l-error-500;
-  }
+  .indicator-blue { @apply border-l-2 border-l-blue-500; }
+  .indicator-purple { @apply border-l-2 border-l-purple-500; }
+  .indicator-red { @apply border-l-2 border-l-red-500; }
+  .indicator-success { @apply border-l-2 border-l-success-500; }
+  .indicator-warning { @apply border-l-2 border-l-warning-500; }
+  .indicator-error { @apply border-l-2 border-l-error-500; }
 
-  /* Gradient left indicator */
   .indicator-gradient {
     border-left: 2px solid;
     border-image: linear-gradient(180deg, #247af2, #b53df2) 1;
   }
 
-  /* Backward-compatible indicator names */
-  .indicator-mint {
-    @apply border-l-2 border-l-success-500;
-  }
-  .indicator-lavender {
-    @apply border-l-2 border-l-purple-500;
-  }
-  .indicator-sky {
-    @apply border-l-2 border-l-blue-500;
-  }
-  .indicator-peach {
-    @apply border-l-2 border-l-red-300;
-  }
-  .indicator-coral {
-    @apply border-l-2 border-l-red-500;
-  }
+  .indicator-mint { @apply border-l-2 border-l-success-500; }
+  .indicator-lavender { @apply border-l-2 border-l-purple-500; }
+  .indicator-sky { @apply border-l-2 border-l-blue-500; }
+  .indicator-peach { @apply border-l-2 border-l-red-300; }
+  .indicator-coral { @apply border-l-2 border-l-red-500; }
 
-  /* Status dot */
-  .status-dot {
-    @apply w-2 h-2 rounded-full;
-  }
+  .status-dot { @apply w-2 h-2 rounded-full; }
   .status-dot-blue { @apply bg-blue-500; }
   .status-dot-purple { @apply bg-purple-500; }
   .status-dot-red { @apply bg-red-500; }
@@ -462,7 +500,6 @@
   .status-dot-warning { @apply bg-warning-500; }
   .status-dot-error { @apply bg-error-500; }
 
-  /* Backward-compatible status dot names */
   .status-dot-mint { @apply bg-success-500; }
   .status-dot-lavender { @apply bg-purple-500; }
   .status-dot-sky { @apply bg-blue-500; }
@@ -472,27 +509,99 @@
      SECTION DIVIDERS
      ============================================ */
 
-  /* Gradient divider line */
   .divider-gradient {
     height: 1px;
     background: linear-gradient(90deg, transparent, #247af2, #b53df2, transparent);
   }
 
-  /* Subtle divider */
   .divider-subtle {
     height: 1px;
-    background: #1e2022;
+    background: var(--color-border);
   }
 }
 
 @layer utilities {
-  /* Hexagon shape for icon containers */
+  /* ============================================
+     LIGHT MODE OVERRIDES
+     Remap dark neutral backgrounds/text for light mode
+     ============================================ */
+  .light .bg-neutral-950,
+  .light .bg-dark-950 { background-color: #c5c9cf !important; }
+  .light .bg-neutral-900 { background-color: #e2e4e8 !important; }
+  .light .bg-neutral-900\/50 { background-color: rgba(226, 228, 232, 0.65) !important; }
+  .light .bg-neutral-900\/80 { background-color: rgba(226, 228, 232, 0.88) !important; }
+  .light .bg-neutral-900\/90 { background-color: rgba(226, 228, 232, 0.94) !important; }
+  .light .bg-neutral-850 { background-color: #d4d7dc !important; }
+  .light .bg-neutral-800 { background-color: #babfc5 !important; }
+  .light .bg-neutral-800\/50 { background-color: rgba(186, 191, 197, 0.5) !important; }
+  .light .bg-neutral-700 { background-color: #a8adb4 !important; }
+
+  .light .text-neutral-50,
+  .light .text-neutral-100 { color: #0a0c0e !important; }
+  .light .text-neutral-200 { color: #151719 !important; }
+  .light .text-neutral-300 { color: #1c2024 !important; }
+  .light .text-neutral-400 { color: #363b40 !important; }
+  .light .text-neutral-500 { color: #555a60 !important; }
+  .light .text-neutral-600 { color: #555a60 !important; }
+  .light .text-white { color: #0a0c0e !important; }
+
+  .light .border-neutral-700,
+  .light .border-neutral-800 { border-color: #a8adb4 !important; }
+
+  .light .hover\:bg-neutral-800:hover { background-color: #babfc5 !important; }
+  .light .hover\:bg-neutral-800\/50:hover { background-color: rgba(186, 191, 197, 0.5) !important; }
+  .light .hover\:bg-neutral-700:hover { background-color: #a8adb4 !important; }
+  .light .hover\:text-neutral-300:hover { color: #1c2024 !important; }
+  .light .hover\:text-neutral-200:hover { color: #151719 !important; }
+  .light .hover\:text-red-300:hover { color: #961f07 !important; }
+
+  /* Light mode shadows are softer */
+  .light .shadow-soft { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important; }
+  .light .shadow-soft-lg { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important; }
+
+  /* Fix white text on white bg for pills and buttons that should stay white */
+  .light .pill-blue .text-white,
+  .light .pill-purple .text-white,
+  .light .pill-red .text-white,
+  .light .btn-primary .text-white,
+  .light .btn-gradient .text-white { color: #ffffff !important; }
+  .light .pill-blue,
+  .light .pill-purple,
+  .light .pill-red,
+  .light .pill-success,
+  .light .pill-warning,
+  .light .pill-error,
+  .light .pill-brand,
+  .light .btn-primary,
+  .light .btn-gradient { color: #ffffff !important; }
+
+  /* White/15 and white/5 opacity backgrounds need adjustment */
+  .light .bg-white\/5 { background-color: rgba(0, 0, 0, 0.05) !important; }
+  .light .bg-white\/10 { background-color: rgba(0, 0, 0, 0.06) !important; }
+  .light .bg-white\/15 { background-color: rgba(0, 0, 0, 0.08) !important; }
+
+  /* Gradient bar stays the same in both modes */
+  .light .gradient-bar,
+  .light .gradient-bar-vertical,
+  .light .gradient-bar-bp { color: inherit; }
+
+  /* Theme-aware utility classes */
+  .bg-theme-body { background-color: var(--color-bg-body); }
+  .bg-theme-surface { background-color: var(--color-bg-surface); }
+  .bg-theme-elevated { background-color: var(--color-bg-elevated); }
+  .bg-theme-hover { background-color: var(--color-bg-hover); }
+  .text-theme-primary { color: var(--color-text-primary); }
+  .text-theme-secondary { color: var(--color-text-secondary); }
+  .text-theme-muted { color: var(--color-text-muted); }
+  .text-theme-faint { color: var(--color-text-faint); }
+  .border-theme { border-color: var(--color-border); }
+  .border-theme-strong { border-color: var(--color-border-strong); }
+
   .hex {
     clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
     border-radius: 0 !important;
   }
 
-  /* Active nav item with blue→red gradient border */
   .nav-active {
     position: relative;
     background: transparent;
@@ -518,49 +627,44 @@
     scrollbar-width: none;
   }
 
-  /* Custom scrollbar */
   .scrollbar-dark::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   .scrollbar-dark::-webkit-scrollbar-track {
-    @apply bg-neutral-950;
+    background: var(--color-scrollbar-track);
   }
   .scrollbar-dark::-webkit-scrollbar-thumb {
-    @apply bg-neutral-700 rounded-full;
+    background: var(--color-scrollbar-thumb);
+    border-radius: 9999px;
   }
   .scrollbar-dark::-webkit-scrollbar-thumb:hover {
-    @apply bg-neutral-600;
+    background: var(--color-scrollbar-hover);
   }
 
-  /* Accent text utilities */
   .accent-blue { @apply text-blue-500; }
   .accent-purple { @apply text-purple-500; }
   .accent-red { @apply text-red-500; }
 
-  /* Backward-compatible accent names */
   .accent-mint { @apply text-success-500; }
   .accent-lavender { @apply text-purple-500; }
   .accent-peach { @apply text-red-300; }
   .accent-sky { @apply text-blue-500; }
 
-  /* Subtle borders with brand color */
   .border-accent {
     @apply border-blue-500/30;
   }
 
-  /* Striped background */
   .bg-stripes {
     background-image: repeating-linear-gradient(
       -45deg,
       transparent,
       transparent 4px,
-      rgb(255 255 255 / 0.02) 4px,
-      rgb(255 255 255 / 0.02) 8px
+      var(--color-texture-stripe) 4px,
+      var(--color-texture-stripe) 8px
     );
   }
 
-  /* Glow effects for brand colors */
   .glow-blue {
     box-shadow: 0 0 20px rgba(36, 122, 242, 0.15), 0 0 40px rgba(36, 122, 242, 0.05);
   }

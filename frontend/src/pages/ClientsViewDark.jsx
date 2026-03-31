@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FolderOpen, Search, Loader2, Sparkles, Crown } from 'lucide-react';
+import { Plus, FolderOpen, Search, Loader2, Sparkles, Sun, Moon } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import CreateClientModal from '../components/CreateClientModal';
 import ClientCard from '../components/ClientCardDark';
 import SettingsModal from '../components/SettingsModal';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Pod filter options
 const POD_FILTERS = [
   { value: 'all', label: 'All', color: null },
-  { value: 'superclient', label: 'Superclient', color: 'bg-red-500', textColor: 'text-red-500' },
   { value: '1', label: 'Pod 1', color: 'bg-success-500', textColor: 'text-success-500' },
   { value: '2', label: 'Pod 2', color: 'bg-blue-300', textColor: 'text-blue-300' },
   { value: '3', label: 'Pod 3', color: 'bg-warning-500', textColor: 'text-warning-500' },
@@ -20,10 +20,12 @@ const POD_FILTERS = [
 export default function ClientsView() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const [podFilter, setPodFilter] = useState('all');
   const [editingClient, setEditingClient] = useState(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { theme, toggleTheme } = useTheme();
 
   // Fetch clients
   const { data: clients = [], isLoading } = useQuery({
@@ -42,20 +44,16 @@ export default function ClientsView() {
   // Filter clients based on search, pod filter, and sort with superclients first
   const filteredClients = clients
     .filter((client) => {
-      // Search filter
       if (!client.name.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-      // Pod filter
       if (podFilter === 'all') return true;
       if (podFilter === 'superclient') return client.is_superclient;
       return !client.is_superclient && client.pod_number === parseInt(podFilter);
     })
     .sort((a, b) => {
-      // Superclients always first
       if (a.is_superclient && !b.is_superclient) return -1;
       if (!a.is_superclient && b.is_superclient) return 1;
-      // Then sort by name
       return a.name.localeCompare(b.name);
     });
 
@@ -70,7 +68,6 @@ export default function ClientsView() {
     }
   };
 
-  // Make superclient mutation
   const makeSuperclientMutation = useMutation({
     mutationFn: (clientId) => clientsApi.update(clientId, { is_superclient: true }),
     onSuccess: () => {
@@ -90,101 +87,94 @@ export default function ClientsView() {
     setEditingClient(client);
   };
 
-  // Check if superclient exists
   const superclientExists = clients.some(c => c.is_superclient);
 
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="h-screen bg-neutral-950 flex flex-col">
       {/* Gradient accent bar at top */}
-      <div className="h-0.5 gradient-bar-bp" />
+      <div className="h-0.5 gradient-bar-bp flex-shrink-0" />
 
       {/* Header */}
-      <header className="bg-neutral-900/80 backdrop-blur-sm sticky top-0 z-10" style={{ borderBottom: '1px solid #1e2022' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* Logo/Brand accent */}
-              <div className="w-11 h-11 hex flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(36,122,242,0.2), rgba(181,61,242,0.2))' }}>
-                <Sparkles className="w-5 h-5 text-purple-300" />
+      <header className="bg-neutral-900/80 backdrop-blur-sm sticky top-0 z-10 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
+        <div className="px-6 py-3">
+          <div className="flex items-center gap-4">
+            {/* Left: brand + pod filters */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="w-9 h-9 hex flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(36,122,242,0.2), rgba(181,61,242,0.2))' }}>
+                <Sparkles className="w-4 h-4 text-purple-300" />
               </div>
-              <div>
-                <h1 className="text-2xl font-semibold text-neutral-50">
-                  Clients
-                </h1>
-                <p className="mt-0.5 text-sm text-neutral-500">
-                  Select a client to access their AI agents and data
-                </p>
-              </div>
+              <h1 className="text-lg font-semibold text-neutral-50">Clients</h1>
             </div>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex items-center px-4 py-2.5 bg-success-500/15 hover:bg-success-500/25 text-success-500 font-medium rounded-lg transition-all border border-success-500/25"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Client
-            </button>
-          </div>
 
-          {/* Search bar */}
-          <div className="mt-5">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-500" />
-              <input
-                type="text"
-                placeholder="Search clients..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-neutral-800/50 border border-neutral-700 rounded-lg focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500 text-neutral-200 placeholder-neutral-500 transition-all"
-              />
+            <div className="flex items-center gap-1.5">
+              {POD_FILTERS.map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() => setPodFilter(filter.value)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    podFilter === filter.value
+                      ? filter.color
+                        ? `${filter.color}/20 ${filter.textColor} border border-current`
+                        : 'bg-neutral-700 text-neutral-100 border border-neutral-600'
+                      : 'bg-neutral-800/50 text-neutral-400 border border-transparent hover:bg-neutral-800 hover:text-neutral-300'
+                  }`}
+                >
+                  {filter.color && (
+                    <span className={`w-2 h-2 rounded-full ${filter.color}`} />
+                  )}
+                  {filter.label}
+                </button>
+              ))}
             </div>
-          </div>
 
-          {/* Pod Filter */}
-          <div className="mt-4 flex items-center gap-2">
-            {POD_FILTERS.map((filter) => (
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Right: search, theme, new client */}
+            <div className="flex items-center gap-1.5">
+              {searchOpen ? (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-500" />
+                  <input
+                    type="text"
+                    placeholder="Search clients..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onBlur={() => { if (!searchQuery) setSearchOpen(false); }}
+                    autoFocus
+                    className="w-56 pl-9 pr-4 py-2 bg-neutral-800/50 border border-neutral-700 rounded-lg focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500 text-neutral-200 placeholder-neutral-500 transition-all text-sm"
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800 rounded-lg transition-all"
+                  title="Search"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              )}
               <button
-                key={filter.value}
-                onClick={() => setPodFilter(filter.value)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  podFilter === filter.value
-                    ? filter.color
-                      ? `${filter.color}/20 ${filter.textColor} border border-current`
-                      : 'bg-neutral-700 text-neutral-100 border border-neutral-600'
-                    : 'bg-neutral-800/50 text-neutral-400 border border-neutral-700 hover:bg-neutral-800 hover:text-neutral-300'
-                }`}
+                onClick={toggleTheme}
+                className="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800 rounded-lg transition-all"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                {filter.color ? (
-                  filter.value === 'superclient' ? (
-                    <Crown className="w-3 h-3" />
-                  ) : (
-                    <span className={`w-2.5 h-2.5 rounded-full ${filter.color}`} />
-                  )
-                ) : null}
-                {filter.label}
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-            ))}
-          </div>
-
-          {/* Stats bar */}
-          <div className="mt-4 flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800/50 rounded-lg border border-neutral-700">
-              <span className="w-2 h-2 rounded-full bg-blue-300" />
-              <span className="text-neutral-400">Total:</span>
-              <span className="text-blue-300 font-medium">{clients.length}</span>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="inline-flex items-center px-3 py-2 bg-success-500/15 hover:bg-success-500/25 text-success-500 font-medium rounded-lg transition-all border border-success-500/25 text-sm"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                New Client
+              </button>
             </div>
-            {(searchQuery || podFilter !== 'all') && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800/50 rounded-lg border border-neutral-700">
-                <span className="w-2 h-2 rounded-full bg-purple-300" />
-                <span className="text-neutral-400">Showing:</span>
-                <span className="text-purple-300 font-medium">{filteredClients.length}</span>
-              </div>
-            )}
           </div>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main content - fills remaining space */}
+      <main className="flex-1 overflow-y-auto px-6 py-5">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -218,7 +208,7 @@ export default function ClientsView() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             {filteredClients.map((client, index) => (
               <ClientCard
                 key={client.id}
