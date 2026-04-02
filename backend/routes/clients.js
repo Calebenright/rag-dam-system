@@ -191,11 +191,21 @@ router.post('/', upload.single('thumbnail'), async (req, res) => {
 router.put('/:id', upload.single('thumbnail'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, is_superclient, pod_number } = req.body;
+    const { name, description, is_superclient, pod_number, copy_preferences } = req.body;
 
     const updates = {};
     if (name) updates.name = name;
     if (description !== undefined) updates.description = description;
+
+    // Handle copy_preferences (JSONB array)
+    if (copy_preferences !== undefined) {
+      try {
+        const parsed = typeof copy_preferences === 'string' ? JSON.parse(copy_preferences) : copy_preferences;
+        if (Array.isArray(parsed)) {
+          updates.copy_preferences = parsed;
+        }
+      } catch {}
+    }
 
     // Handle pod_number (1-4)
     if (pod_number !== undefined) {

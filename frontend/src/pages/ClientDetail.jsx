@@ -317,7 +317,7 @@ export default function ClientDetail() {
               onHighlightHandled={() => setHighlightDocumentId(null)}
             />
           ) : agentTab === 'adgen' ? (
-            <AdCopyGenerator clientId={clientId} />
+            <AdCopyGenerator clientId={clientId} client={client} />
           ) : null}
         </main>
       </div>

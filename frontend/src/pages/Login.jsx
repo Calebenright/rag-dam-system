@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -90,6 +90,12 @@ export default function Login() {
           <p className="mt-6 text-xs text-neutral-600">
             Access is limited to Dodeka Digital team members
           </p>
+
+          <div className="mt-4 flex items-center justify-center gap-3 text-xs text-neutral-600">
+            <Link to="/privacy" className="hover:text-neutral-400 transition-colors">Privacy Policy</Link>
+            <span>|</span>
+            <Link to="/terms" className="hover:text-neutral-400 transition-colors">Terms of Service</Link>
+          </div>
         </div>
       </div>
     </div>

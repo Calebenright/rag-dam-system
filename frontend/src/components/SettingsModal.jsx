@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Copy, RefreshCw, Check, Code, Settings, Upload, User, Pipette, Bot, FileText } from 'lucide-react';
+import { X, Copy, RefreshCw, Check, Code, Settings, Upload, User, Pipette, Bot, FileText, Quote, Plus, Trash2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -33,6 +33,12 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
   const canvasRef = useRef(null);
   const queryClient = useQueryClient();
 
+  // Copy preferences state
+  const [copyPreferences, setCopyPreferences] = useState(client?.copy_preferences || []);
+  const [newPrefText, setNewPrefText] = useState('');
+  const [newPrefType, setNewPrefType] = useState('prefer');
+  const [newPrefSource, setNewPrefSource] = useState('');
+
   // Reset form when client changes
   useEffect(() => {
     if (client) {
@@ -42,6 +48,7 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
       setThumbnailPreview(client.thumbnail_url || null);
       setThumbnailFile(null);
       setThumbnailBgColor(client.thumbnail_bg_color || '#000000');
+      setCopyPreferences(client.copy_preferences || []);
       setActiveTab('client');
     }
   }, [client?.id]);
@@ -110,6 +117,36 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
     },
   });
 
+  const saveCopyPrefsMutation = useMutation({
+    mutationFn: async (prefs) => {
+      return clientsApi.update(client.id, { copy_preferences: prefs });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['client', client.id]);
+    },
+  });
+
+  const addCopyPreference = () => {
+    if (!newPrefText.trim()) return;
+    const updated = [...copyPreferences, {
+      id: Date.now().toString(),
+      text: newPrefText.trim(),
+      type: newPrefType,
+      source: newPrefSource.trim() || null,
+      created_at: new Date().toISOString(),
+    }];
+    setCopyPreferences(updated);
+    saveCopyPrefsMutation.mutate(updated);
+    setNewPrefText('');
+    setNewPrefSource('');
+  };
+
+  const removeCopyPreference = (id) => {
+    const updated = copyPreferences.filter(p => p.id !== id);
+    setCopyPreferences(updated);
+    saveCopyPrefsMutation.mutate(updated);
+  };
+
   const copyToClipboard = async (text) => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
@@ -172,21 +209,33 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
           </button>
         </div>
 
-        {/* Tabs - only show if API tab is enabled */}
-        {showApiTab && (
-          <div className="flex border-b border-neutral-800">
-            <button
-              onClick={() => setActiveTab('client')}
-              className={clsx(
-                'flex-1 px-4 py-3 text-sm font-medium transition-all flex items-center justify-center gap-2',
-                activeTab === 'client'
-                  ? `${currentPodColor.text} border-b-2 ${currentPodColor.border}`
-                  : 'text-neutral-400 hover:text-neutral-200'
-              )}
-            >
-              <User className="w-4 h-4" />
-              Client
-            </button>
+        {/* Tabs */}
+        <div className="flex border-b border-neutral-800">
+          <button
+            onClick={() => setActiveTab('client')}
+            className={clsx(
+              'flex-1 px-4 py-3 text-sm font-medium transition-all flex items-center justify-center gap-2',
+              activeTab === 'client'
+                ? `${currentPodColor.text} border-b-2 ${currentPodColor.border}`
+                : 'text-neutral-400 hover:text-neutral-200'
+            )}
+          >
+            <User className="w-4 h-4" />
+            Client
+          </button>
+          <button
+            onClick={() => setActiveTab('copyguide')}
+            className={clsx(
+              'flex-1 px-4 py-3 text-sm font-medium transition-all flex items-center justify-center gap-2',
+              activeTab === 'copyguide'
+                ? `${currentPodColor.text} border-b-2 ${currentPodColor.border}`
+                : 'text-neutral-400 hover:text-neutral-200'
+            )}
+          >
+            <Quote className="w-4 h-4" />
+            Copy Guide
+          </button>
+          {showApiTab && (
             <button
               onClick={() => setActiveTab('api')}
               className={clsx(
@@ -199,12 +248,142 @@ export default function SettingsModal({ isOpen, onClose, client, showApiTab = fa
               <Code className="w-4 h-4" />
               API
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Content */}
         <div className="overflow-y-auto max-h-[calc(85vh-140px)] p-6">
-          {activeTab === 'client' || !showApiTab ? (
+          {activeTab === 'copyguide' ? (
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm text-neutral-400">
+                  Copy preferences are automatically applied when generating ad copy. Add feedback from clients or team members to guide the AI's language choices.
+                </p>
+              </div>
+
+              {/* Existing preferences */}
+              {copyPreferences.length > 0 && (
+                <div className="space-y-2">
+                  {copyPreferences.map((pref) => (
+                    <div
+                      key={pref.id}
+                      className={clsx(
+                        "flex items-start gap-3 p-3 rounded-lg border",
+                        pref.type === 'prefer'
+                          ? "bg-success-500/5 border-success-500/20"
+                          : "bg-red-500/5 border-red-500/20"
+                      )}
+                    >
+                      <div className={clsx(
+                        "mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0",
+                        pref.type === 'prefer' ? "bg-success-500/20" : "bg-red-500/20"
+                      )}>
+                        {pref.type === 'prefer'
+                          ? <ThumbsUp className="w-3 h-3 text-success-500" />
+                          : <ThumbsDown className="w-3 h-3 text-red-400" />
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-neutral-200">{pref.text}</p>
+                        {pref.source && (
+                          <p className="text-xs text-neutral-500 mt-1">Feedback from {pref.source}</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => removeCopyPreference(pref.id)}
+                        className="p-1 text-neutral-600 hover:text-red-400 transition-colors flex-shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {copyPreferences.length === 0 && (
+                <div className="text-center py-6 text-neutral-500 text-sm">
+                  No copy preferences yet. Add feedback below to guide ad generation.
+                </div>
+              )}
+
+              {/* Add new preference */}
+              <div className="border border-neutral-800 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Plus className="w-4 h-4 text-neutral-400" />
+                  <span className="text-sm font-medium text-neutral-200">Add Preference</span>
+                </div>
+
+                {/* Type toggle */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setNewPrefType('prefer')}
+                    className={clsx(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                      newPrefType === 'prefer'
+                        ? "bg-success-500/20 text-success-500 border border-success-500/30"
+                        : "bg-neutral-800 text-neutral-400 border border-transparent hover:text-neutral-300"
+                    )}
+                  >
+                    <ThumbsUp className="w-3 h-3" />
+                    Prefer
+                  </button>
+                  <button
+                    onClick={() => setNewPrefType('avoid')}
+                    className={clsx(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                      newPrefType === 'avoid'
+                        ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                        : "bg-neutral-800 text-neutral-400 border border-transparent hover:text-neutral-300"
+                    )}
+                  >
+                    <ThumbsDown className="w-3 h-3" />
+                    Avoid
+                  </button>
+                </div>
+
+                {/* Feedback text */}
+                <textarea
+                  value={newPrefText}
+                  onChange={(e) => setNewPrefText(e.target.value)}
+                  rows={2}
+                  className="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-4 py-2.5 text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition-colors resize-none text-sm"
+                  placeholder={newPrefType === 'prefer'
+                    ? 'e.g. "Level up your CX" — got really positive feedback'
+                    : 'e.g. "Book a Demo" is too salesy — lean to "Talk to an Expert"'
+                  }
+                />
+
+                {/* Source */}
+                <input
+                  type="text"
+                  value={newPrefSource}
+                  onChange={(e) => setNewPrefSource(e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-4 py-2 text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-neutral-500 transition-colors text-sm"
+                  placeholder="Source (optional) — e.g. Luna, Client feedback call"
+                />
+
+                <button
+                  onClick={addCopyPreference}
+                  disabled={!newPrefText.trim()}
+                  className={clsx(
+                    "w-full py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
+                    newPrefText.trim()
+                      ? `${currentPodColor.bgLight} ${currentPodColor.text} hover:opacity-80`
+                      : "bg-neutral-800 text-neutral-500 cursor-not-allowed"
+                  )}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Preference
+                </button>
+              </div>
+
+              {saveCopyPrefsMutation.isPending && (
+                <p className="text-xs text-neutral-500 flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3 animate-spin" /> Saving...
+                </p>
+              )}
+            </div>
+          ) : activeTab === 'client' ? (
             <div className="space-y-6">
               {/* Thumbnail */}
               <div className="space-y-3">

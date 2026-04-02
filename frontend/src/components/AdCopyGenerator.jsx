@@ -2,11 +2,13 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import {
   Megaphone, Monitor, Linkedin, Globe, Upload, Link2, Image, Sparkles,
-  Loader2, ArrowLeft, Copy, Check, X, FileText, ThumbsUp, ThumbsDown, SlidersHorizontal, History, Trash2, MessageCircle, Sheet, ExternalLink
+  Loader2, ArrowLeft, Copy, Check, X, FileText, ThumbsUp, ThumbsDown, SlidersHorizontal, History, Trash2, MessageCircle, Sheet, ExternalLink, Plus, Quote, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { adgenApi } from '../api/adgen';
+import { clientsApi } from '../api/clients';
 import { AD_FORMATS } from '../constants/adFormats';
 import { AD_STYLE_OPTIONS, getDefaultStyleConfig } from '../constants/adStyleConfig';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CopyableField, GoogleAdPreview, MetaAdPreview, LinkedInAdPreview, RedditAdPreview
 } from './shared/AdPreviewComponents';
@@ -45,8 +47,9 @@ function saveToHistory(clientId, entry) {
   return history;
 }
 
-export default function AdCopyGenerator({ clientId }) {
+export default function AdCopyGenerator({ clientId, client }) {
   const saved = useMemo(() => loadSaved(clientId), [clientId]);
+  const queryClient = useQueryClient();
 
   const [mode, setMode] = useState('input');
   const [platform, setPlatform] = useState(saved?.platform || 'google');
@@ -70,6 +73,35 @@ export default function AdCopyGenerator({ clientId }) {
   const [showHistory, setShowHistory] = useState(false);
   const [pushingToSheet, setPushingToSheet] = useState(false);
   const [pushedToSheet, setPushedToSheet] = useState(false);
+  const [showCopyGuide, setShowCopyGuide] = useState(false);
+  const [newPrefText, setNewPrefText] = useState('');
+  const [newPrefType, setNewPrefType] = useState('prefer');
+  const [newPrefSource, setNewPrefSource] = useState('');
+
+  const copyPreferences = client?.copy_preferences || [];
+
+  const saveCopyPrefsMutation = useMutation({
+    mutationFn: (prefs) => clientsApi.update(clientId, { copy_preferences: prefs }),
+    onSuccess: () => queryClient.invalidateQueries(['client', clientId]),
+  });
+
+  const addCopyPreference = () => {
+    if (!newPrefText.trim()) return;
+    const updated = [...copyPreferences, {
+      id: Date.now().toString(),
+      text: newPrefText.trim(),
+      type: newPrefType,
+      source: newPrefSource.trim() || null,
+      created_at: new Date().toISOString(),
+    }];
+    saveCopyPrefsMutation.mutate(updated);
+    setNewPrefText('');
+    setNewPrefSource('');
+  };
+
+  const removeCopyPreference = (id) => {
+    saveCopyPrefsMutation.mutate(copyPreferences.filter(p => p.id !== id));
+  };
 
   // Persist inputs to localStorage (debounced via effect)
   useEffect(() => {
@@ -768,6 +800,118 @@ export default function AdCopyGenerator({ clientId }) {
               rows={2}
               className="w-full px-2.5 py-1.5 text-[12px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:border-purple-300/40 focus:outline-none focus:ring-1 focus:ring-purple-300/20 resize-none leading-relaxed"
             />
+          </div>
+
+          {/* Copy Guide */}
+          <div className="border border-neutral-800 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setShowCopyGuide(!showCopyGuide)}
+              className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-neutral-800/30 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Quote className="w-3 h-3 text-blue-400" />
+                <span className="text-[10px] uppercase tracking-wider text-neutral-400 font-medium">Copy Guide</span>
+                {copyPreferences.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-medium">
+                    {copyPreferences.length}
+                  </span>
+                )}
+              </div>
+              {showCopyGuide ? <ChevronUp className="w-3 h-3 text-neutral-500" /> : <ChevronDown className="w-3 h-3 text-neutral-500" />}
+            </button>
+
+            {showCopyGuide && (
+              <div className="px-3 pb-3 space-y-2">
+                <p className="text-[11px] text-neutral-500">Persistent preferences from client feedback — automatically applied to every generation.</p>
+
+                {copyPreferences.length > 0 && (
+                  <div className="space-y-1.5">
+                    {copyPreferences.map((pref) => (
+                      <div
+                        key={pref.id}
+                        className={clsx(
+                          "flex items-start gap-2 px-2.5 py-1.5 rounded-lg text-[11px]",
+                          pref.type === 'prefer'
+                            ? "bg-success-500/5 border border-success-500/15"
+                            : "bg-red-500/5 border border-red-500/15"
+                        )}
+                      >
+                        {pref.type === 'prefer'
+                          ? <ThumbsUp className="w-3 h-3 text-success-500 mt-0.5 flex-shrink-0" />
+                          : <ThumbsDown className="w-3 h-3 text-red-400 mt-0.5 flex-shrink-0" />
+                        }
+                        <div className="flex-1 min-w-0">
+                          <span className="text-neutral-200">{pref.text}</span>
+                          {pref.source && <span className="text-neutral-500 ml-1">— {pref.source}</span>}
+                        </div>
+                        <button
+                          onClick={() => removeCopyPreference(pref.id)}
+                          className="p-0.5 text-neutral-600 hover:text-red-400 transition-colors flex-shrink-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Inline add */}
+                <div className="flex items-start gap-2">
+                  <div className="flex gap-1 mt-1">
+                    <button
+                      onClick={() => setNewPrefType('prefer')}
+                      className={clsx(
+                        "p-1 rounded transition-all",
+                        newPrefType === 'prefer' ? "bg-success-500/20 text-success-500" : "text-neutral-600 hover:text-neutral-400"
+                      )}
+                      title="Prefer"
+                    >
+                      <ThumbsUp className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => setNewPrefType('avoid')}
+                      className={clsx(
+                        "p-1 rounded transition-all",
+                        newPrefType === 'avoid' ? "bg-red-500/20 text-red-400" : "text-neutral-600 hover:text-neutral-400"
+                      )}
+                      title="Avoid"
+                    >
+                      <ThumbsDown className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="flex-1 flex gap-1.5">
+                    <input
+                      type="text"
+                      value={newPrefText}
+                      onChange={(e) => setNewPrefText(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addCopyPreference()}
+                      placeholder={newPrefType === 'prefer' ? '"Level up your CX" works well' : '"Book a Demo" too salesy'}
+                      className="flex-1 px-2 py-1.5 text-[11px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
+                    />
+                    <input
+                      type="text"
+                      value={newPrefSource}
+                      onChange={(e) => setNewPrefSource(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addCopyPreference()}
+                      placeholder="Source"
+                      className="w-20 px-2 py-1.5 text-[11px] bg-neutral-800/60 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
+                    />
+                    <button
+                      onClick={addCopyPreference}
+                      disabled={!newPrefText.trim()}
+                      className={clsx(
+                        "px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all",
+                        newPrefText.trim()
+                          ? "bg-blue-500/15 text-blue-400 hover:bg-blue-500/25"
+                          : "bg-neutral-800 text-neutral-600 cursor-not-allowed"
+                      )}
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Error */}

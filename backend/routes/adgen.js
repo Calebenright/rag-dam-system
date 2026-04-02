@@ -8,6 +8,7 @@ import { scrapeUrl } from '../services/urlScraper.js';
 import { AD_FORMATS } from '../constants/adFormats.js';
 import { getDefaultStyleConfig } from '../constants/adStyleConfig.js';
 import { readEntireSheet, writeSheetRange } from '../services/googleSheets.js';
+import { supabase } from '../config/supabase.js';
 import OpenAI from 'openai';
 
 const AD_COPY_SHEET_ID = '1pWA99dxzx-8FyhulLBg00Or5tlwUJMLDlUknSaQUk4c';
@@ -193,7 +194,7 @@ ${emojiRule}
 /**
  * Build the structured prompt for ad generation.
  */
-function buildAdPrompt({ text, urlContent, imageAnalysis, searchResults, formatSpec, platform, variationCount, styleConfig, positiveWords, negativeWords, customPrompt }) {
+function buildAdPrompt({ text, urlContent, imageAnalysis, searchResults, formatSpec, platform, variationCount, styleConfig, positiveWords, negativeWords, customPrompt, copyPreferences }) {
   // Build source context from top chunks
   let sourceContext = '';
   if (searchResults?.chunks?.length > 0) {
@@ -236,6 +237,23 @@ function buildAdPrompt({ text, urlContent, imageAnalysis, searchResults, formatS
     if (negativeWords) wordGuidelines += `MUST AVOID these words/phrases: ${negativeWords}\n`;
   }
 
+  // Build copy preferences from client feedback
+  let copyGuide = '';
+  if (copyPreferences && copyPreferences.length > 0) {
+    const preferItems = copyPreferences.filter(p => p.type === 'prefer');
+    const avoidItems = copyPreferences.filter(p => p.type === 'avoid');
+    const parts = [];
+    if (preferItems.length > 0) {
+      parts.push('PREFERRED language and approaches (use these where natural):\n' +
+        preferItems.map(p => `- "${p.text}"${p.source ? ` (feedback from ${p.source})` : ''}`).join('\n'));
+    }
+    if (avoidItems.length > 0) {
+      parts.push('AVOID these phrases and approaches:\n' +
+        avoidItems.map(p => `- "${p.text}"${p.source ? ` (feedback from ${p.source})` : ''}`).join('\n'));
+    }
+    copyGuide = `\n## Client Copy Preferences (soft guidance from past feedback):\nThese are preferences from real client/team feedback on copy that has been tested. Incorporate where it feels natural, but don't force them — the output should still feel creative and varied:\n${parts.join('\n\n')}\n`;
+  }
+
   const system = `You are an expert advertising copywriter specializing in ${formatSpec.name}. Generate compelling ad copy that converts.
 
 ## Source Documents (PRIORITIZE these for messaging, tone, and strategy):
@@ -245,7 +263,7 @@ ${sourceContext || 'No source documents available - use your expertise and the p
 ${formatDesc}
 
 ${styleInstructions}
-${wordGuidelines}${customPrompt ? `\n## Creative Direction (USER'S CUSTOM INSTRUCTIONS - FOLLOW CLOSELY):\n${customPrompt}\n` : ''}
+${wordGuidelines}${copyGuide}${customPrompt ? `\n## Creative Direction (USER'S CUSTOM INSTRUCTIONS - FOLLOW CLOSELY):\n${customPrompt}\n` : ''}
 ## Instructions:
 1. Generate exactly ${variationCount} complete ad variations as JSON
 2. Each variation must fill ALL required fields
@@ -320,10 +338,11 @@ router.post('/:clientId', adUpload.array('images', 5), async (req, res) => {
     }
 
     // Gather context from all input sources in parallel
-    const [urlContent, imageAnalysis, searchResults] = await Promise.all([
+    const [urlContent, imageAnalysis, searchResults, clientData] = await Promise.all([
       url ? scrapeUrl(url) : null,
       processImages(imageFiles),
       semanticSearch(clientId, buildSearchQuery(text, url, platform), 8, { boostGlobal: true }),
+      supabase.from('clients').select('copy_preferences').eq('id', clientId).single().then(r => r.data),
     ]);
 
     // Build the structured prompt
@@ -339,6 +358,7 @@ router.post('/:clientId', adUpload.array('images', 5), async (req, res) => {
       positiveWords: positiveWords || null,
       negativeWords: negativeWords || null,
       customPrompt: customPrompt?.trim() || null,
+      copyPreferences: clientData?.copy_preferences || [],
     });
 
     // Call OpenAI
