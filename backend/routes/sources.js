@@ -8,6 +8,7 @@ import fs from 'fs/promises';
 import { extractTextFromFile, isValidFileType, isValidFileSize } from '../services/fileProcessor.js';
 import { analyzeDocument } from '../services/claudeService.js';
 import { generateEmbedding, chunkText } from '../services/openaiService.js';
+import { parseDateFromFilename } from '../services/dateParser.js';
 import {
   extractDocId,
   extractSheetId,
@@ -70,6 +71,11 @@ async function processDocumentAsync(documentId, filePath, fileName, fileType) {
       }
     }
 
+    // Determine source_date: filename date wins, then AI-extracted date
+    const fileNameDate = parseDateFromFilename(fileName);
+    const contentDate = analysis.content_date || null;
+    const sourceDate = fileNameDate || contentDate;
+
     await supabase
       .from('documents')
       .update({
@@ -82,11 +88,12 @@ async function processDocumentAsync(documentId, filePath, fileName, fileType) {
         sentiment_score: analysis.sentiment_score,
         embedding: JSON.stringify(docEmbedding),
         chunk_count: chunks.length,
+        source_date: sourceDate,
         processed: true
       })
       .eq('id', documentId);
 
-    console.log(`Source ${documentId} processed successfully`);
+    console.log(`Source ${documentId} processed successfully (source_date: ${sourceDate || 'none'})`);
   } catch (error) {
     console.error(`Error processing source ${documentId}:`, error);
     await supabase
@@ -146,6 +153,11 @@ async function processGoogleDocAsync(documentId, content, title, sourceType) {
       }
     }
 
+    // Determine source_date: filename date wins, then AI-extracted date
+    const fileNameDate = parseDateFromFilename(title);
+    const contentDate = analysis.content_date || null;
+    const sourceDate = fileNameDate || contentDate;
+
     await supabase
       .from('documents')
       .update({
@@ -158,11 +170,12 @@ async function processGoogleDocAsync(documentId, content, title, sourceType) {
         sentiment_score: analysis.sentiment_score,
         embedding: JSON.stringify(docEmbedding),
         chunk_count: chunks.length,
+        source_date: sourceDate,
         processed: true
       })
       .eq('id', documentId);
 
-    console.log(`Google source ${documentId} processed successfully`);
+    console.log(`Google source ${documentId} processed successfully (source_date: ${sourceDate || 'none'})`);
   } catch (error) {
     console.error(`Error processing Google source ${documentId}:`, error.message);
     await supabase

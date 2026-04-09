@@ -158,13 +158,17 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
       ];
     }
 
-    // Format chunks for the AI
-    const formattedChunks = relevantChunks.map(chunk => ({
-      documentTitle: chunk.documentTitle,
-      documentId: chunk.documentId,
-      text: chunk.content,
-      similarity: chunk.similarity_score
-    }));
+    // Format chunks for the AI — include source_date so prompts can show it
+    const formattedChunks = relevantChunks.map(chunk => {
+      const parentDoc = relevantDocs.find(d => d.id === (chunk.document_id || chunk.documentId));
+      return {
+        documentTitle: chunk.documentTitle,
+        documentId: chunk.documentId,
+        text: chunk.content,
+        similarity: chunk.similarity_score,
+        sourceDate: parentDoc?.source_date || null
+      };
+    });
 
     // Process uploaded images
     const uploadedImages = [];
@@ -267,8 +271,8 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
     let sheetOperations = [];
 
     if ((isSheetQuery || mentionsSheet) && !imageFiles.length) {
-      // Use OpenAI with sheet tools for sheet-related queries
-      console.log('Using OpenAI with sheet tools for query:', message);
+      // Use Claude with sheet tools for sheet-related queries
+      console.log('Using Claude with sheet tools for query:', message);
       const claudeResult = await chatWithSheetsFromClaudeService(
         message,
         contextDocs,
@@ -279,7 +283,7 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
       aiResponse = claudeResult.response;
       sheetOperations = claudeResult.operations || [];
     } else {
-      // Use OpenAI for regular queries or queries with images
+      // Use Claude for regular queries or queries with images
       aiResponse = await enhancedChat(
         message,
         contextDocs,

@@ -1,12 +1,18 @@
 import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import * as sheetsService from './googleSheets.js';
 
-dotenv.config();
+dotenv.config({ override: true });
 
+// OpenAI kept only for embeddings (Anthropic doesn't offer an embedding model)
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+});
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 /**
@@ -24,122 +30,108 @@ function getDateContext() {
 - **Today**: ${formatted}
 - **ISO**: ${iso}
 - **Quarter**: Q${quarter} ${year}
-Use this to understand relative time references like "this week", "last month", "recently", etc.`;
+Use this to understand relative time references like "this week", "last month", "recently", etc.
+When documents have a "Source Date", that is the date the content is actually from (e.g., when a meeting took place), NOT when it was uploaded. Use source dates to answer time-based questions like "what did we discuss last month" or "the January meeting".`;
 }
 
-// Define tools for Google Sheets operations
+// Define tools for Google Sheets operations (Anthropic tool format)
 const sheetTools = [
   {
-    type: "function",
-    function: {
-      name: "read_sheet",
-      description: "Read data from a Google Sheet. Use this to see current contents before making changes.",
-      parameters: {
-        type: "object",
-        properties: {
-          range: {
-            type: "string",
-            description: "The A1 notation range to read (e.g., 'Sheet1!A1:D10' or just 'A1:D10')"
-          },
-          sheet_name: {
-            type: "string",
-            description: "The name of the sheet/tab (default: Sheet1)"
-          }
+    name: "read_sheet",
+    description: "Read data from a Google Sheet. Use this to see current contents before making changes.",
+    input_schema: {
+      type: "object",
+      properties: {
+        range: {
+          type: "string",
+          description: "The A1 notation range to read (e.g., 'Sheet1!A1:D10' or just 'A1:D10')"
         },
-        required: []
-      }
+        sheet_name: {
+          type: "string",
+          description: "The name of the sheet/tab (default: Sheet1)"
+        }
+      },
+      required: []
     }
   },
   {
-    type: "function",
-    function: {
-      name: "write_cells",
-      description: "Write data to specific cells in a Google Sheet. Overwrites existing data in the specified range.",
-      parameters: {
-        type: "object",
-        properties: {
-          range: {
-            type: "string",
-            description: "The A1 notation range to write to (e.g., 'Sheet1!A1:C3')"
-          },
-          values: {
+    name: "write_cells",
+    description: "Write data to specific cells in a Google Sheet. Overwrites existing data in the specified range.",
+    input_schema: {
+      type: "object",
+      properties: {
+        range: {
+          type: "string",
+          description: "The A1 notation range to write to (e.g., 'Sheet1!A1:C3')"
+        },
+        values: {
+          type: "array",
+          items: {
             type: "array",
-            items: {
-              type: "array",
-              items: { type: "string" }
-            },
-            description: "2D array of values to write, row by row"
-          }
-        },
-        required: ["range", "values"]
-      }
+            items: { type: "string" }
+          },
+          description: "2D array of values to write, row by row"
+        }
+      },
+      required: ["range", "values"]
     }
   },
   {
-    type: "function",
-    function: {
-      name: "append_rows",
-      description: "Append new rows to the end of data in a Google Sheet. Great for adding new entries.",
-      parameters: {
-        type: "object",
-        properties: {
-          sheet_name: {
-            type: "string",
-            description: "The name of the sheet/tab"
-          },
-          values: {
+    name: "append_rows",
+    description: "Append new rows to the end of data in a Google Sheet. Great for adding new entries.",
+    input_schema: {
+      type: "object",
+      properties: {
+        sheet_name: {
+          type: "string",
+          description: "The name of the sheet/tab"
+        },
+        values: {
+          type: "array",
+          items: {
             type: "array",
-            items: {
-              type: "array",
-              items: { type: "string" }
-            },
-            description: "2D array of rows to append"
-          }
-        },
-        required: ["values"]
-      }
+            items: { type: "string" }
+          },
+          description: "2D array of rows to append"
+        }
+      },
+      required: ["values"]
     }
   },
   {
-    type: "function",
-    function: {
-      name: "update_cell",
-      description: "Update a single cell in a Google Sheet.",
-      parameters: {
-        type: "object",
-        properties: {
-          cell: {
-            type: "string",
-            description: "The cell reference (e.g., 'A1', 'B5')"
-          },
-          value: {
-            type: "string",
-            description: "The value to set (can be text, number, or formula starting with =)"
-          },
-          sheet_name: {
-            type: "string",
-            description: "The name of the sheet/tab (default: Sheet1)"
-          }
+    name: "update_cell",
+    description: "Update a single cell in a Google Sheet.",
+    input_schema: {
+      type: "object",
+      properties: {
+        cell: {
+          type: "string",
+          description: "The cell reference (e.g., 'A1', 'B5')"
         },
-        required: ["cell", "value"]
-      }
+        value: {
+          type: "string",
+          description: "The value to set (can be text, number, or formula starting with =)"
+        },
+        sheet_name: {
+          type: "string",
+          description: "The name of the sheet/tab (default: Sheet1)"
+        }
+      },
+      required: ["cell", "value"]
     }
   },
   {
-    type: "function",
-    function: {
-      name: "clear_range",
-      description: "Clear all values in a range of cells.",
-      parameters: {
-        type: "object",
-        properties: {
-          range: {
-            type: "string",
-            description: "The A1 notation range to clear (e.g., 'Sheet1!A1:D10')"
-          }
-        },
-        required: ["range"]
-      }
+    name: "clear_range",
+    description: "Clear all values in a range of cells.",
+    input_schema: {
+      type: "object",
+      properties: {
+        range: {
+          type: "string",
+          description: "The A1 notation range to clear (e.g., 'Sheet1!A1:D10')"
+        }
+      },
+      required: ["range"]
     }
   }
 ];
@@ -222,62 +214,59 @@ export function chunkText(text, chunkSize = 1000, overlap = 200) {
 }
 
 /**
- * Analyze an image using OpenAI Vision API (gpt-4o-mini)
- * Supports local file paths or base64 data
+ * Parse a data URL or file path into { mediaType, base64Data } for Anthropic's image format.
+ */
+async function resolveImageSource(imageSource) {
+  if (imageSource.startsWith('data:')) {
+    const match = imageSource.match(/^data:(image\/[^;]+);base64,(.+)$/s);
+    if (match) return { mediaType: match[1], base64Data: match[2] };
+    throw new Error('Invalid data URL format');
+  }
+
+  if (imageSource.startsWith('http')) {
+    const response = await fetch(imageSource);
+    if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    return { mediaType: contentType, base64Data: buffer.toString('base64') };
+  }
+
+  // Local file path
+  const imageBuffer = await fs.readFile(imageSource);
+  const ext = imageSource.split('.').pop().toLowerCase();
+  const mimeTypes = {
+    'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+    'gif': 'image/gif', 'webp': 'image/webp'
+  };
+  return { mediaType: mimeTypes[ext] || 'image/jpeg', base64Data: imageBuffer.toString('base64') };
+}
+
+/**
+ * Analyze an image using Claude's vision capabilities
+ * Supports local file paths, URLs, or base64 data
  */
 export async function analyzeImage(imageSource, question = "What's in this image?") {
   try {
-    let imageUrl;
+    const { mediaType, base64Data } = await resolveImageSource(imageSource);
 
-    // Check if imageSource is a base64 string or a file path
-    if (imageSource.startsWith('data:')) {
-      // Already a data URL
-      imageUrl = imageSource;
-    } else if (imageSource.startsWith('http')) {
-      // Remote URL - use directly
-      imageUrl = imageSource;
-    } else {
-      // Local file path - read and convert to base64
-      const imageBuffer = await fs.readFile(imageSource);
-      const base64Image = imageBuffer.toString('base64');
-
-      // Detect mime type from file extension
-      const ext = imageSource.split('.').pop().toLowerCase();
-      const mimeTypes = {
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'png': 'image/png',
-        'gif': 'image/gif',
-        'webp': 'image/webp'
-      };
-      const mimeType = mimeTypes[ext] || 'image/jpeg';
-
-      imageUrl = `data:${mimeType};base64,${base64Image}`;
-    }
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: question },
-            {
-              type: "image_url",
-              image_url: {
-                url: imageUrl,
-                detail: "auto"
-              },
-            },
-          ],
-        },
-      ],
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
       max_tokens: 1500,
+      messages: [{
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: { type: "base64", media_type: mediaType, data: base64Data }
+          },
+          { type: "text", text: question }
+        ]
+      }]
     });
 
-    return response.choices[0].message.content;
+    return response.content[0].text;
   } catch (error) {
-    console.error('Error analyzing image with OpenAI:', error);
+    console.error('Error analyzing image with Claude:', error);
     throw new Error(`Image analysis failed: ${error.message}`);
   }
 }
@@ -289,52 +278,29 @@ export async function analyzeMultipleImages(imageSources, question = "Describe t
   try {
     const imageContents = await Promise.all(
       imageSources.map(async (source) => {
-        let imageUrl;
-
-        if (source.startsWith('data:') || source.startsWith('http')) {
-          imageUrl = source;
-        } else {
-          const imageBuffer = await fs.readFile(source);
-          const base64Image = imageBuffer.toString('base64');
-          const ext = source.split('.').pop().toLowerCase();
-          const mimeTypes = {
-            'jpg': 'image/jpeg',
-            'jpeg': 'image/jpeg',
-            'png': 'image/png',
-            'gif': 'image/gif',
-            'webp': 'image/webp'
-          };
-          const mimeType = mimeTypes[ext] || 'image/jpeg';
-          imageUrl = `data:${mimeType};base64,${base64Image}`;
-        }
-
+        const { mediaType, base64Data } = await resolveImageSource(source);
         return {
-          type: "image_url",
-          image_url: {
-            url: imageUrl,
-            detail: "auto"
-          }
+          type: "image",
+          source: { type: "base64", media_type: mediaType, data: base64Data }
         };
       })
     );
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: question },
-            ...imageContents
-          ],
-        },
-      ],
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
       max_tokens: 2000,
+      messages: [{
+        role: "user",
+        content: [
+          ...imageContents,
+          { type: "text", text: question }
+        ]
+      }]
     });
 
-    return response.choices[0].message.content;
+    return response.content[0].text;
   } catch (error) {
-    console.error('Error analyzing multiple images with OpenAI:', error);
+    console.error('Error analyzing multiple images with Claude:', error);
     throw new Error(`Multi-image analysis failed: ${error.message}`);
   }
 }
@@ -386,7 +352,7 @@ Respond with a JSON object containing:
 
 /**
  * Chat with document context, optional images, and source images
- * Supports multimodal conversations with gpt-4o-mini
+ * Supports multimodal conversations with Claude
  */
 export async function enhancedChat(userMessage, contextDocuments, conversationHistory = [], imageAnalysis = null, documentChunks = [], uploadedImages = [], sourceImages = []) {
   try {
@@ -397,8 +363,9 @@ export async function enhancedChat(userMessage, contextDocuments, conversationHi
     if (documentChunks && documentChunks.length > 0) {
       contextText += "## Relevant Document Excerpts:\n\n";
       documentChunks.forEach((chunk, idx) => {
-        contextText += `### [Source ${idx + 1}: ${chunk.documentTitle}]\n`;
-        contextText += `${chunk.text}\n\n`;
+        contextText += `### [Source ${idx + 1}: ${chunk.documentTitle}]`;
+        if (chunk.sourceDate) contextText += ` (Date: ${chunk.sourceDate})`;
+        contextText += `\n${chunk.text}\n\n`;
       });
       contextText += "---\n\n";
     }
@@ -407,7 +374,9 @@ export async function enhancedChat(userMessage, contextDocuments, conversationHi
     if (contextDocuments && contextDocuments.length > 0) {
       contextText += "## Document Summaries:\n\n";
       contextDocuments.forEach((doc, idx) => {
-        contextText += `**${doc.title}** (ID: ${doc.id})\n`;
+        contextText += `**${doc.title}**`;
+        if (doc.source_date) contextText += ` — Source Date: ${doc.source_date}`;
+        contextText += `\n`;
         contextText += `Summary: ${doc.summary}\n`;
         if (doc.keywords && doc.keywords.length > 0) {
           contextText += `Keywords: ${doc.keywords.join(', ')}\n`;
@@ -456,19 +425,18 @@ If you cannot find relevant information in the provided documents, say: "I could
     // Build the user message content (text + any inline images)
     let userContent = [];
 
-    // Add text message
-    userContent.push({ type: "text", text: userMessage });
-
     // Add uploaded images inline for multimodal understanding
     if (uploadedImages && uploadedImages.length > 0) {
       for (const img of uploadedImages) {
-        userContent.push({
-          type: "image_url",
-          image_url: {
-            url: img.url,
-            detail: "auto"
-          }
-        });
+        try {
+          const { mediaType, base64Data } = await resolveImageSource(img.url);
+          userContent.push({
+            type: "image",
+            source: { type: "base64", media_type: mediaType, data: base64Data }
+          });
+        } catch (e) {
+          console.error('Error resolving uploaded image:', e);
+        }
       }
     }
 
@@ -476,20 +444,24 @@ If you cannot find relevant information in the provided documents, say: "I could
     if (sourceImages && sourceImages.length > 0) {
       for (const img of sourceImages) {
         if (img.url) {
-          userContent.push({
-            type: "image_url",
-            image_url: {
-              url: img.url,
-              detail: "auto"
-            }
-          });
+          try {
+            const { mediaType, base64Data } = await resolveImageSource(img.url);
+            userContent.push({
+              type: "image",
+              source: { type: "base64", media_type: mediaType, data: base64Data }
+            });
+          } catch (e) {
+            console.error('Error resolving source image:', e);
+          }
         }
       }
     }
 
-    // Build conversation history
+    // Add text message last (after images, per Anthropic best practice)
+    userContent.push({ type: "text", text: userMessage });
+
+    // Build conversation history (Anthropic uses system as top-level param, not in messages)
     const messages = [
-      { role: "system", content: systemPrompt },
       ...conversationHistory.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -500,14 +472,14 @@ If you cannot find relevant information in the provided documents, say: "I could
       }
     ];
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      system: systemPrompt,
       messages: messages,
-      temperature: 0.7,
       max_tokens: 2000,
     });
 
-    return response.choices[0].message.content;
+    return response.content[0].text;
   } catch (error) {
     console.error('Error in enhanced chat:', error);
     throw new Error(`Chat failed: ${error.message}`);
@@ -560,7 +532,6 @@ ${docContext}
 When the user asks you to modify the sheet, use the appropriate tool functions.`;
 
     const messages = [
-      { role: "system", content: systemPrompt },
       ...conversationHistory.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -569,30 +540,35 @@ When the user asks you to modify the sheet, use the appropriate tool functions.`
     ];
 
     // First call - may include tool calls
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    let response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      system: systemPrompt,
       messages: messages,
       tools: sheetTools,
-      tool_choice: "auto",
-      temperature: 0.7,
       max_tokens: 2000,
     });
 
-    const assistantMessage = response.choices[0].message;
+    // Handle tool use in a loop (up to 5 iterations)
+    const executedOperations = [];
+    const allToolCalls = [];
+    let iterations = 0;
+    const maxIterations = 5;
 
-    // Check if the model wants to call tools
-    if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-      // Execute each tool call
+    while (response.stop_reason === 'tool_use' && iterations < maxIterations) {
+      iterations++;
+
+      // Extract tool use blocks from the response
+      const toolUseBlocks = response.content.filter(b => b.type === 'tool_use');
       const toolResults = [];
-      const executedOperations = [];
 
-      for (const toolCall of assistantMessage.tool_calls) {
-        const functionName = toolCall.function.name;
-        const args = JSON.parse(toolCall.function.arguments);
+      for (const toolUse of toolUseBlocks) {
+        const args = toolUse.input;
         let result;
 
+        allToolCalls.push({ function: toolUse.name, arguments: args });
+
         try {
-          switch (functionName) {
+          switch (toolUse.name) {
             case 'read_sheet':
               if (args.range) {
                 result = await sheetsService.readSheetRange(spreadsheetId, args.range);
@@ -606,11 +582,12 @@ When the user asks you to modify the sheet, use the appropriate tool functions.`
               executedOperations.push({ type: 'write', range: args.range, cells: result.updatedCells });
               break;
 
-            case 'append_rows':
+            case 'append_rows': {
               const appendRange = args.sheet_name ? `${args.sheet_name}!A:Z` : 'Sheet1!A:Z';
               result = await sheetsService.appendToSheet(spreadsheetId, appendRange, args.values);
               executedOperations.push({ type: 'append', rows: args.values.length });
               break;
+            }
 
             case 'update_cell':
               result = await sheetsService.updateCell(
@@ -628,48 +605,40 @@ When the user asks you to modify the sheet, use the appropriate tool functions.`
               break;
 
             default:
-              result = { error: `Unknown function: ${functionName}` };
+              result = { error: `Unknown function: ${toolUse.name}` };
           }
         } catch (error) {
           result = { error: error.message };
         }
 
         toolResults.push({
-          tool_call_id: toolCall.id,
-          role: "tool",
+          type: "tool_result",
+          tool_use_id: toolUse.id,
           content: JSON.stringify(result)
         });
       }
 
-      // Second call with tool results
-      const messagesWithTools = [
-        ...messages,
-        assistantMessage,
-        ...toolResults
-      ];
-
-      const finalResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: messagesWithTools,
-        temperature: 0.7,
+      // Continue conversation with tool results
+      response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        system: systemPrompt,
+        messages: [
+          ...messages,
+          { role: "assistant", content: response.content },
+          { role: "user", content: toolResults }
+        ],
+        tools: sheetTools,
         max_tokens: 2000,
       });
-
-      return {
-        response: finalResponse.choices[0].message.content,
-        operations: executedOperations,
-        toolCalls: assistantMessage.tool_calls.map(tc => ({
-          function: tc.function.name,
-          arguments: JSON.parse(tc.function.arguments)
-        }))
-      };
     }
 
-    // No tool calls, just return the response
+    // Extract final text response
+    const textBlock = response.content.find(b => b.type === 'text');
+
     return {
-      response: assistantMessage.content,
-      operations: [],
-      toolCalls: []
+      response: textBlock?.text || '',
+      operations: executedOperations,
+      toolCalls: allToolCalls
     };
 
   } catch (error) {

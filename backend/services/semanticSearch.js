@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { generateEmbedding, cosineSimilarity } from './openaiService.js';
+import { resolveTimeReference } from './dateParser.js';
 
 /**
  * Perform semantic search to find relevant documents and chunks.
@@ -27,6 +28,9 @@ export async function semanticSearch(clientId, query, limit = 5, { boostGlobal =
   if (!documents || documents.length === 0) {
     return { documents: [], chunks: [] };
   }
+
+  // Resolve any time references in the query to a date range for boosting
+  const timeRange = resolveTimeReference(query);
 
   // Extract meaningful keywords from the query for title/keyword matching.
   // Remove common stop words so we match on substantive terms.
@@ -92,6 +96,16 @@ export async function semanticSearch(clientId, query, limit = 5, { boostGlobal =
       }
     }
 
+    // Date-aware boost: if the user's query contains a time reference and
+    // this document has a source_date within that range, boost it significantly.
+    let dateBoost = 0;
+    if (timeRange && doc.source_date) {
+      const docDate = doc.source_date.split('T')[0]; // normalize to YYYY-MM-DD
+      if (docDate >= timeRange.start && docDate <= timeRange.end) {
+        dateBoost = 0.30; // Strong boost — the user is asking for this time period
+      }
+    }
+
     // Global/playbook source boost for ad generation
     let globalBoost = 0;
     if (boostGlobal) {
@@ -106,7 +120,7 @@ export async function semanticSearch(clientId, query, limit = 5, { boostGlobal =
 
     return {
       ...doc,
-      similarity_score: Math.min(similarity + titleBoost + globalBoost, 1.0) // Cap at 1.0
+      similarity_score: Math.min(similarity + titleBoost + dateBoost + globalBoost, 1.0) // Cap at 1.0
     };
   });
 

@@ -9,12 +9,12 @@ import { AD_FORMATS } from '../constants/adFormats.js';
 import { getDefaultStyleConfig } from '../constants/adStyleConfig.js';
 import { readEntireSheet, writeSheetRange } from '../services/googleSheets.js';
 import { supabase } from '../config/supabase.js';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 
 const AD_COPY_SHEET_ID = '1pWA99dxzx-8FyhulLBg00Or5tlwUJMLDlUknSaQUk4c';
 
 const router = express.Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const adUpload = multer({
   dest: os.tmpdir(),
@@ -361,21 +361,21 @@ router.post('/:clientId', adUpload.array('images', 5), async (req, res) => {
       copyPreferences: clientData?.copy_preferences || [],
     });
 
-    // Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    // Call Claude
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      system: prompt.system,
       messages: [
-        { role: 'system', content: prompt.system },
         { role: 'user', content: prompt.user },
       ],
-      temperature: 0.7,
       max_tokens: 4000,
-      response_format: { type: 'json_object' },
     });
 
     let generated;
     try {
-      generated = JSON.parse(response.choices[0].message.content);
+      const text = response.content[0].text;
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      generated = JSON.parse(jsonMatch ? jsonMatch[0] : text);
     } catch {
       return res.status(500).json({ success: false, error: 'Failed to parse AI response' });
     }
@@ -475,18 +475,18 @@ router.post('/:clientId/regenerate', async (req, res) => {
       styleGuide += `\nTone: ${shortToneMap[sc.tone] || 'conversational'}. Write close to the character limit.`;
     }
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      system: styleGuide,
       messages: [
-        { role: 'system', content: styleGuide },
         { role: 'user', content: prompt },
       ],
-      temperature: 0.7,
       max_tokens: 500,
-      response_format: { type: 'json_object' },
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const responseText = response.content[0].text;
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const result = JSON.parse(jsonMatch ? jsonMatch[0] : responseText);
 
     res.json({
       success: true,

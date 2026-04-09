@@ -302,6 +302,89 @@ router.put('/:id', upload.single('thumbnail'), async (req, res) => {
 });
 
 /**
+ * PUT /api/clients/:id/thumbnail
+ * Swap the client's thumbnail image (deletes old, uploads new)
+ */
+router.put('/:id/thumbnail', upload.single('thumbnail'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No thumbnail file provided'
+      });
+    }
+
+    // Fetch existing client to get current thumbnail URL
+    const { data: client, error: fetchError } = await supabase
+      .from('clients')
+      .select('thumbnail_url')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      });
+    }
+
+    // Delete old thumbnail from storage if it exists
+    if (client.thumbnail_url) {
+      const oldPath = client.thumbnail_url.split('/client-assets/')[1];
+      if (oldPath) {
+        await supabase.storage.from('client-assets').remove([oldPath]);
+      }
+    }
+
+    // Upload new thumbnail
+    const fileExt = path.extname(req.file.originalname);
+    const fileName = `${uuidv4()}${fileExt}`;
+    const filePath = `thumbnails/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('client-assets')
+      .upload(filePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('client-assets')
+      .getPublicUrl(filePath);
+
+    // Update client record
+    const { data, error } = await supabase
+      .from('clients')
+      .update({
+        thumbnail_url: publicUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (error) {
+    console.error('Error swapping client thumbnail:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * POST /api/clients/:id/api-key
  * Generate or regenerate API key for a client
  */
