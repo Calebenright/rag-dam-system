@@ -79,7 +79,7 @@ async function processDocumentAsync(documentId, filePath, fileName, fileType) {
     await supabase
       .from('documents')
       .update({
-        title: fileName,
+        title: analysis.title || fileName,
         summary: analysis.summary,
         tags: analysis.tags,
         keywords: analysis.keywords,

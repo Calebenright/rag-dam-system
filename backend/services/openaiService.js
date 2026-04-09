@@ -178,24 +178,87 @@ export function cosineSimilarity(vecA, vecB) {
 }
 
 /**
- * Chunk text into smaller pieces for better retrieval
- * Uses overlapping chunks for context preservation
+ * Detect if text looks like a meeting transcript (has speaker labels).
+ */
+function isTranscriptFormat(text) {
+  // Common patterns: "Speaker Name:", "John:", "[00:12:34] Speaker:", "Speaker (00:12):"
+  const speakerPattern = /^[A-Z][a-zA-Z\s]{1,30}[:(]/m;
+  const timestampPattern = /\[\d{1,2}:\d{2}(:\d{2})?\]/;
+  const matches = (text.match(speakerPattern) || []).length;
+  return matches >= 3 || timestampPattern.test(text);
+}
+
+/**
+ * Chunk a transcript by speaker turns, merging small turns into groups.
+ */
+function chunkTranscript(text, targetSize = 1000) {
+  // Split on speaker labels (e.g., "Speaker Name:" at start of line)
+  const turns = text.split(/(?=^[A-Z][a-zA-Z\s]{1,30}[:]\s)/m).filter(t => t.trim());
+
+  const chunks = [];
+  let current = '';
+  let startIndex = 0;
+
+  for (const turn of turns) {
+    if (current.length + turn.length > targetSize && current.length > 200) {
+      chunks.push({
+        text: current.trim(),
+        startIndex,
+        endIndex: startIndex + current.length
+      });
+      startIndex += current.length;
+      current = turn;
+    } else {
+      current += turn;
+    }
+  }
+
+  if (current.trim()) {
+    chunks.push({
+      text: current.trim(),
+      startIndex,
+      endIndex: startIndex + current.length
+    });
+  }
+
+  return chunks;
+}
+
+/**
+ * Chunk text into smaller pieces for better retrieval.
+ * Uses transcript-aware splitting for meeting notes, fixed-size with
+ * sentence-boundary overlap for everything else.
  */
 export function chunkText(text, chunkSize = 1000, overlap = 200) {
+  // Use transcript-aware chunking if the text looks like a meeting transcript
+  if (isTranscriptFormat(text)) {
+    return chunkTranscript(text, chunkSize);
+  }
+
   const chunks = [];
   let start = 0;
 
   while (start < text.length) {
     let end = start + chunkSize;
 
-    // Try to break at sentence boundary
+    // Try to break at a paragraph or sentence boundary
     if (end < text.length) {
-      const lastPeriod = text.lastIndexOf('.', end);
+      // Prefer paragraph breaks (double newline), then single newline, then period
+      const lastParagraph = text.lastIndexOf('\n\n', end);
       const lastNewline = text.lastIndexOf('\n', end);
-      const breakPoint = Math.max(lastPeriod, lastNewline);
+      const lastPeriod = text.lastIndexOf('.', end);
 
-      if (breakPoint > start + chunkSize / 2) {
-        end = breakPoint + 1;
+      let breakPoint = -1;
+      if (lastParagraph > start + chunkSize / 2) {
+        breakPoint = lastParagraph + 2; // after the double newline
+      } else if (lastNewline > start + chunkSize / 2) {
+        breakPoint = lastNewline + 1;
+      } else if (lastPeriod > start + chunkSize / 2) {
+        breakPoint = lastPeriod + 1;
+      }
+
+      if (breakPoint > start) {
+        end = breakPoint;
       }
     }
 
@@ -365,6 +428,7 @@ export async function enhancedChat(userMessage, contextDocuments, conversationHi
       documentChunks.forEach((chunk, idx) => {
         contextText += `### [Source ${idx + 1}: ${chunk.documentTitle}]`;
         if (chunk.sourceDate) contextText += ` (Date: ${chunk.sourceDate})`;
+        if (chunk.position) contextText += ` [from ${chunk.position} of document]`;
         contextText += `\n${chunk.text}\n\n`;
       });
       contextText += "---\n\n";

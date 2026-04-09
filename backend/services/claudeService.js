@@ -199,87 +199,6 @@ Respond ONLY with valid JSON, no additional text.`;
   }
 }
 
-/**
- * Generate embedding for text (placeholder - use openaiService.js for real embeddings)
- */
-export async function generateEmbedding(text) {
-  try {
-    const words = text.toLowerCase().split(/\s+/).slice(0, 500);
-    const embedding = new Array(1536).fill(0);
-
-    words.forEach((word, idx) => {
-      const hash = hashString(word);
-      const position = hash % 1536;
-      embedding[position] += 1 / (idx + 1);
-    });
-
-    const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-    return embedding.map(val => val / (magnitude || 1));
-  } catch (error) {
-    console.error('Error generating embedding:', error);
-    throw new Error(`Embedding generation failed: ${error.message}`);
-  }
-}
-
-/**
- * Chat with RAG context
- */
-export async function chatWithContext(userMessage, contextDocuments, conversationHistory = []) {
-  try {
-    const contextText = contextDocuments.map((doc, idx) => {
-      let header = `[Document ${idx + 1}: ${doc.title}]`;
-      if (doc.source_date) header += ` (Source Date: ${doc.source_date})`;
-      return `${header}\n${doc.summary}\n\nKey points: ${doc.keywords.join(', ')}`;
-    }).join('\n\n---\n\n');
-
-    const systemPrompt = `You are a helpful AI assistant with access to the user's document library. Use the provided document context to answer questions accurately. Always cite which documents you're referencing.
-
-${getDateContext()}
-
-Available Documents:
-${contextText}
-
-Guidelines:
-- Answer based on the provided documents when relevant
-- If the documents don't contain relevant information, say so
-- Cite documents by their titles when referencing them
-- Be concise but comprehensive`;
-
-    const messages = [
-      ...conversationHistory.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      })),
-      {
-        role: 'user',
-        content: userMessage
-      }
-    ];
-
-    const response = await getClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
-      system: systemPrompt,
-      max_tokens: 2000,
-      messages: messages
-    });
-
-    return response.content[0].text;
-  } catch (error) {
-    console.error('Error in chat:', error);
-    throw new Error(`Chat failed: ${error.message}`);
-  }
-}
-
-// Simple string hash function
-function hashString(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash);
-}
 
 /**
  * Chat with Google Sheets access using OpenAI tool use
@@ -450,6 +369,7 @@ export async function enhancedChatWithContext(userMessage, contextDocuments, con
       documentChunks.forEach((chunk, idx) => {
         contextText += `### [Source ${idx + 1}: ${chunk.documentTitle}]`;
         if (chunk.sourceDate) contextText += ` (Date: ${chunk.sourceDate})`;
+        if (chunk.position) contextText += ` [from ${chunk.position} of document]`;
         contextText += `\n${chunk.text}\n\n`;
       });
       contextText += "---\n\n";

@@ -261,24 +261,49 @@ function SourceCitations({ sources, onNavigateToSource }) {
                     : <FileText className={clsx('w-3 h-3', styles.text)} />
                   }
                 </div>
-                {/* Tooltip on hover */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-neutral-800 rounded-lg text-xs text-neutral-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border border-neutral-700">
-                  <div className="font-medium truncate max-w-[180px]">{source.title || 'Untitled'}</div>
-                  {(source.usage || source.similarity) && (
-                    <div className={clsx('text-[10px]', styles.text)}>
-                      {source.usage
-                        ? `${Math.round(source.usage * 100)}% used`
-                        : `${Math.round(source.similarity * 100)}% match`
-                      }
+                {/* Tooltip on hover — shows source title, usage, and exact pulled excerpts */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-neutral-800 rounded-lg text-xs text-neutral-200 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border border-neutral-700 w-80 max-h-[400px] flex flex-col">
+                  <div className="px-3 pt-2 pb-1.5 border-b border-neutral-700/50 shrink-0">
+                    <div className="font-medium truncate">{source.title || 'Untitled'}</div>
+                    {(source.usage || source.similarity) && (
+                      <div className={clsx('text-[10px] mt-0.5', styles.text)}>
+                        {source.usage
+                          ? `${Math.round(source.usage * 100)}% used`
+                          : `${Math.round(source.similarity * 100)}% match`
+                        }
+                        {source.chunkCount > 0 && ` · ${source.chunkCount} excerpt${source.chunkCount > 1 ? 's' : ''} pulled`}
+                      </div>
+                    )}
+                    {isGoogle && (
+                      <div className="text-[10px] text-neutral-400 mt-0.5 flex items-center gap-1">
+                        <ExternalLink className="w-2.5 h-2.5" />
+                        Google source
+                      </div>
+                    )}
+                  </div>
+                  {source.excerpts && source.excerpts.length > 0 && (
+                    <div className="overflow-y-auto px-3 py-2 space-y-2 min-h-0">
+                      <div className="text-[10px] text-neutral-500 uppercase tracking-wider">Exact context pulled</div>
+                      {source.excerpts.map((excerpt, eidx) => (
+                        <div key={eidx} className="whitespace-normal">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className={clsx('text-[9px] font-mono px-1 py-0.5 rounded shrink-0', styles.bgLight, styles.text)}>
+                              Chunk #{excerpt.chunkIndex + 1}
+                            </span>
+                            <span className="text-[9px] text-neutral-500">
+                              {Math.round((excerpt.similarity || 0) * 100)}% match
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-neutral-400 leading-relaxed bg-neutral-900/50 rounded px-2 py-1.5 border border-neutral-700/30">
+                            {excerpt.text}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
-                  {isGoogle && (
-                    <div className="text-[10px] text-neutral-400 mt-0.5 flex items-center gap-1">
-                      <ExternalLink className="w-2.5 h-2.5" />
-                      Google source
-                    </div>
-                  )}
-                  <div className="text-[10px] text-neutral-500 mt-0.5">Click to view in Sources</div>
+                  <div className="px-3 py-1.5 border-t border-neutral-700/50 shrink-0">
+                    <div className="text-[10px] text-neutral-500">Click to view in Sources</div>
+                  </div>
                   <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-neutral-800" />
                 </div>
               </div>

@@ -3,6 +3,53 @@ import { generateEmbedding, cosineSimilarity } from './openaiService.js';
 import { resolveTimeReference } from './dateParser.js';
 
 /**
+ * Calculate rough text overlap ratio between two strings.
+ * Used to detect near-duplicate adjacent chunks.
+ */
+function textOverlap(textA, textB) {
+  if (!textA || !textB) return 0;
+  const shorter = textA.length < textB.length ? textA : textB;
+  const longer = textA.length < textB.length ? textB : textA;
+  // Check if the end of one matches the start of the other (overlap region)
+  const checkLen = Math.min(300, Math.floor(shorter.length * 0.4));
+  const endOfShorter = shorter.substring(shorter.length - checkLen);
+  const startOfLonger = longer.substring(0, checkLen);
+  if (longer.includes(endOfShorter) || shorter.includes(startOfLonger)) return 0.5;
+  // Fallback: word-level Jaccard similarity
+  const wordsA = new Set(textA.toLowerCase().split(/\s+/));
+  const wordsB = new Set(textB.toLowerCase().split(/\s+/));
+  let intersection = 0;
+  for (const w of wordsA) { if (wordsB.has(w)) intersection++; }
+  const union = wordsA.size + wordsB.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+
+/**
+ * Build a richer search query from the current message + recent conversation.
+ * Handles follow-ups like "tell me more about that" by pulling key terms from context.
+ */
+function buildConversationAwareQuery(message, conversationHistory = []) {
+  // If the message is already long/specific enough, use it as-is
+  if (message.split(/\s+/).length >= 8) return message;
+
+  // Detect vague follow-ups that need context
+  const vaguePatterns = /\b(that|this|it|those|these|more|again|same|previous|above|earlier|last one)\b/i;
+  if (!vaguePatterns.test(message) && message.split(/\s+/).length >= 4) return message;
+
+  // Pull the last few user messages to enrich the query
+  const recentUserMessages = conversationHistory
+    .filter(m => m.role === 'user')
+    .slice(-3)
+    .map(m => m.content);
+
+  if (recentUserMessages.length === 0) return message;
+
+  // Combine: current message + last user message (most relevant context)
+  const contextMessage = recentUserMessages[recentUserMessages.length - 1];
+  return `${message} ${contextMessage}`.substring(0, 500);
+}
+
+/**
  * Perform semantic search to find relevant documents and chunks.
  *
  * @param {string} clientId - Client ID to search within
@@ -10,11 +57,15 @@ import { resolveTimeReference } from './dateParser.js';
  * @param {number} limit - Max documents to return (default 5)
  * @param {object} options
  * @param {boolean} options.boostGlobal - Boost global/playbook sources in ranking (default false)
+ * @param {Array} options.conversationHistory - Recent messages for context-aware retrieval
  * @returns {{ documents: Array, chunks: Array }}
  */
-export async function semanticSearch(clientId, query, limit = 5, { boostGlobal = false } = {}) {
-  // Generate embedding for the query
-  const queryEmbedding = await generateEmbedding(query);
+export async function semanticSearch(clientId, query, limit = 5, { boostGlobal = false, conversationHistory = [] } = {}) {
+  // Build a context-aware search query for follow-up messages
+  const enrichedQuery = buildConversationAwareQuery(query, conversationHistory);
+
+  // Generate embedding for the enriched query
+  const queryEmbedding = await generateEmbedding(enrichedQuery);
 
   // Get all processed documents for this client (including global sources)
   const { data: documents, error: docError } = await supabase
@@ -44,7 +95,7 @@ export async function semanticSearch(clientId, query, limit = 5, { boostGlobal =
     'create', 'make', 'get', 'me', 'i', 'we', 'you', 'they', 'some',
     'all', 'any', 'each', 'just', 'also', 'so', 'if', 'up', 'out',
   ]);
-  const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+  const queryWords = enrichedQuery.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
 
   // Score documents by combining embedding similarity with title/keyword matching
   const scoredDocs = documents.map(doc => {
@@ -152,19 +203,41 @@ export async function semanticSearch(clientId, query, limit = 5, { boostGlobal =
       const similarity = cosineSimilarity(queryEmbedding, embedding);
       const parentDoc = topDocs.find(d => d.id === chunk.document_id);
 
+      // Tag chunk with its position in the document
+      const totalChunksInDoc = chunks.filter(c => c.document_id === chunk.document_id).length;
+      let position = 'middle';
+      if (chunk.chunk_index === 0) position = 'beginning';
+      else if (totalChunksInDoc > 0 && chunk.chunk_index >= totalChunksInDoc - 1) position = 'end';
+
       return {
         ...chunk,
         similarity_score: similarity,
         documentTitle: parentDoc?.title || parentDoc?.file_name || 'Unknown',
-        documentId: chunk.document_id
+        documentId: chunk.document_id,
+        position
       };
     });
 
-    // Get top chunks (most relevant excerpts)
-    relevantChunks = scoredChunks
-      .filter(c => c.similarity_score > 0.3) // Only include reasonably relevant chunks
-      .sort((a, b) => b.similarity_score - a.similarity_score)
-      .slice(0, 8);
+    // Filter to relevant chunks (raised threshold from 0.3 to 0.4)
+    const filtered = scoredChunks
+      .filter(c => c.similarity_score > 0.4)
+      .sort((a, b) => b.similarity_score - a.similarity_score);
+
+    // Deduplicate overlapping chunks from the same document.
+    // Adjacent chunks share ~200 chars of overlap — keep the higher-scoring one.
+    const deduped = [];
+    for (const chunk of filtered) {
+      const isDuplicate = deduped.some(existing =>
+        existing.document_id === chunk.document_id &&
+        Math.abs(existing.chunk_index - chunk.chunk_index) === 1 &&
+        textOverlap(existing.content, chunk.content) > 0.3
+      );
+      if (!isDuplicate) {
+        deduped.push(chunk);
+      }
+    }
+
+    relevantChunks = deduped.slice(0, 6);
   }
 
   return {

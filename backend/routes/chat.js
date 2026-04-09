@@ -135,8 +135,8 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
     // Reverse to get chronological order
     const conversationHistory = (history || []).reverse();
 
-    // Perform semantic search to find relevant documents and chunks
-    const { documents: relevantDocs, chunks: relevantChunks } = await semanticSearch(clientId, message, 5);
+    // Perform semantic search with conversation context for better follow-up handling
+    const { documents: relevantDocs, chunks: relevantChunks } = await semanticSearch(clientId, message, 5, { conversationHistory });
 
     // Fetch connected sheets for this client
     const { data: connectedSheets } = await supabase
@@ -158,7 +158,7 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
       ];
     }
 
-    // Format chunks for the AI — include source_date so prompts can show it
+    // Format chunks for the AI — include source_date and position context
     const formattedChunks = relevantChunks.map(chunk => {
       const parentDoc = relevantDocs.find(d => d.id === (chunk.document_id || chunk.documentId));
       return {
@@ -166,7 +166,8 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
         documentId: chunk.documentId,
         text: chunk.content,
         similarity: chunk.similarity_score,
-        sourceDate: parentDoc?.source_date || null
+        sourceDate: parentDoc?.source_date || null,
+        position: chunk.position || 'middle'
       };
     });
 
@@ -356,6 +357,17 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
           usagePercent = totalSimilarity > 0 ? d.similarity_score / totalSimilarity : 0;
         }
 
+        // Collect the exact chunk excerpts that were pulled from this document
+        const docChunks = (relevantChunks || [])
+          .filter(c => (c.document_id || c.documentId) === d.id)
+          .sort((a, b) => (b.similarity_score || 0) - (a.similarity_score || 0))
+          .slice(0, 3) // Top 3 most relevant excerpts per source
+          .map(c => ({
+            text: c.content || '',
+            chunkIndex: c.chunk_index,
+            similarity: c.similarity_score
+          }));
+
         return {
           id: d.id,
           title: d.title || d.file_name || 'Untitled',
@@ -364,7 +376,8 @@ router.post('/:clientId', chatUpload.array('images', 5), async (req, res) => {
           chunkCount: chunkCountByDoc[d.id] || 0,
           isImage: isImageFile(d.file_type),
           fileUrl: d.file_url || null,
-          sourceType: d.source_type || null
+          sourceType: d.source_type || null,
+          excerpts: docChunks
         };
       })
       // Normalize so percentages add up to 100%
