@@ -590,10 +590,12 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
   const [activeConversationId, setActiveConversationId] = useState(conversationId);
   const [quickPrompts, setQuickPrompts] = useState(() => getQuickPrompts(clientId));
   const [showEditPrompts, setShowEditPrompts] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
+  const dragCounterRef = useRef(0);
   const queryClient = useQueryClient();
 
   // Sync conversationId prop with state
@@ -754,6 +756,66 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
     }
   };
 
+  // Process an image file from drag-drop or clipboard paste
+  const processImageFile = (file) => {
+    if (file && file.type.startsWith('image/')) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current += 1;
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    dragCounterRef.current = 0;
+
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find((f) => f.type.startsWith('image/'));
+    if (imageFile) {
+      processImageFile(imageFile);
+    }
+  };
+
+  // Clipboard paste handler
+  const handlePaste = (e) => {
+    const items = Array.from(e.clipboardData?.items || []);
+    const imageItem = items.find((item) => item.type.startsWith('image/'));
+    if (imageItem) {
+      e.preventDefault();
+      const file = imageItem.getAsFile();
+      if (file) processImageFile(file);
+    }
+  };
+
   // Send a quick prompt as if the user typed it
   const sendQuickPrompt = (promptText) => {
     if (sendMutation.isPending) return;
@@ -791,7 +853,24 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
   };
 
   return (
-    <div className="flex flex-col h-full bg-neutral-950">
+    <div
+      className="flex flex-col h-full bg-neutral-950 relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drag overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 z-50 bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center gap-3 p-8 rounded-2xl border-2 border-dashed border-blue-400/50 bg-blue-400/5">
+            <ImageIcon className="w-10 h-10 text-blue-400" />
+            <p className="text-sm font-medium text-blue-300">Drop image here</p>
+            <p className="text-xs text-neutral-500">Supports JPG, PNG, GIF, WebP</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-neutral-800 bg-neutral-900/50">
         <div className="flex items-center gap-3">
@@ -1020,6 +1099,7 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
                   handleSubmit(e);
                 }
               }}
+              onPaste={handlePaste}
               placeholder="Ask a question..."
               rows={1}
               disabled={sendMutation.isPending}
@@ -1063,7 +1143,7 @@ export default function EnhancedChatInterface({ clientId, client, selectedSheetI
           </button>
         </form>
         <p className="mt-2 text-xs text-neutral-600 text-center">
-          <span className="text-blue-300">Enter</span> to send · <span className="text-purple-300">Shift+Enter</span> for new line
+          <span className="text-blue-300">Enter</span> to send · <span className="text-purple-300">Shift+Enter</span> for new line · <span className="text-neutral-500">Drop or paste images</span>
         </p>
       </div>
 

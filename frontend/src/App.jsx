@@ -4,6 +4,7 @@ import ClientDetail from './pages/ClientDetail';
 import Login from './pages/Login';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import BugReport from './pages/BugReport';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -29,6 +30,14 @@ function App() {
         />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route
+          path="/report"
+          element={
+            <ProtectedRoute>
+              <BugReport />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Plus, FolderOpen, Search, Loader2, Sparkles, Sun, Moon } from 'lucide-react';
 import { clientsApi } from '../api/clients';
 import CreateClientModal from '../components/CreateClientModal';
@@ -224,6 +224,13 @@ export default function ClientsView() {
           </div>
         )}
       </main>
+
+      {/* Subtle footer */}
+      <div className="flex-shrink-0 px-6 py-2 text-center">
+        <Link to="/report" className="text-[11px] text-neutral-700 hover:text-neutral-500 transition-colors">
+          Report a bug
+        </Link>
+      </div>
 
       {/* Create Client Modal */}
       <CreateClientModal
