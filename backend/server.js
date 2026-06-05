@@ -34,6 +34,8 @@ const allowedOrigins = [
   'http://localhost:3004',
   'http://localhost:5173',
   'https://app.clickup.com',
+  'https://dodo.dodekadigital.com',
+  'https://dodeka.up.railway.app',
 ];
 if (process.env.FRONTEND_URL) allowedOrigins.push(process.env.FRONTEND_URL);
 
