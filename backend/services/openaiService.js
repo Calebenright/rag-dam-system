@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import { CLAUDE_MODEL } from '../config/models.js';
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import * as sheetsService from './googleSheets.js';
@@ -313,7 +314,7 @@ export async function analyzeImage(imageSource, question = "What's in this image
     const { mediaType, base64Data } = await resolveImageSource(imageSource);
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: CLAUDE_MODEL,
       max_tokens: 1500,
       messages: [{
         role: "user",
@@ -350,7 +351,7 @@ export async function analyzeMultipleImages(imageSources, question = "Describe t
     );
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: CLAUDE_MODEL,
       max_tokens: 2000,
       messages: [{
         role: "user",
@@ -537,7 +538,7 @@ If you cannot find relevant information in the provided documents, say: "I could
     ];
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: CLAUDE_MODEL,
       system: systemPrompt,
       messages: messages,
       max_tokens: 2000,
@@ -605,7 +606,7 @@ When the user asks you to modify the sheet, use the appropriate tool functions.`
 
     // First call - may include tool calls
     let response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: CLAUDE_MODEL,
       system: systemPrompt,
       messages: messages,
       tools: sheetTools,
@@ -684,7 +685,7 @@ When the user asks you to modify the sheet, use the appropriate tool functions.`
 
       // Continue conversation with tool results
       response = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODEL,
         system: systemPrompt,
         messages: [
           ...messages,

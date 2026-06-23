@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import * as sheetsService from './googleSheets.js';
+import { CLAUDE_MODEL } from '../config/models.js';
 
 // Lazy initialization to ensure env vars are loaded
 let anthropic = null;
@@ -158,7 +159,7 @@ Please analyze this document and respond with a JSON object containing:
 Respond ONLY with valid JSON, no additional text.`;
 
     const response = await getClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_MODEL,
       max_tokens: 4000,
       messages: [{
         role: 'user',
@@ -264,7 +265,7 @@ Be helpful, accurate, and always fetch real data rather than guessing about shee
 
     // First call with tools
     let response = await getClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_MODEL,
       system: systemPrompt,
       max_tokens: 4000,
       messages: messages,
@@ -312,7 +313,7 @@ Be helpful, accurate, and always fetch real data rather than guessing about shee
 
       // Continue conversation with tool results
       response = await getClient().messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: CLAUDE_MODEL,
         system: systemPrompt,
         max_tokens: 4000,
         messages: [
@@ -424,7 +425,7 @@ ${sheetContext}
     ];
 
     const response = await getClient().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_MODEL,
       system: systemPrompt,
       max_tokens: 2000,
       messages: messages

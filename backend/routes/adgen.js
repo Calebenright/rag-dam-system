@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import { CLAUDE_MODEL } from '../config/models.js';
 import os from 'os';
 import fs from 'fs/promises';
 import { analyzeMultipleImages, analyzeImage } from '../services/openaiService.js';
@@ -363,7 +364,7 @@ router.post('/:clientId', adUpload.array('images', 5), async (req, res) => {
 
     // Call Claude
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_MODEL,
       system: prompt.system,
       messages: [
         { role: 'user', content: prompt.user },
@@ -476,7 +477,7 @@ router.post('/:clientId/regenerate', async (req, res) => {
     }
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_MODEL,
       system: styleGuide,
       messages: [
         { role: 'user', content: prompt },
